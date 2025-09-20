@@ -89,7 +89,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/Dashboard/Analysis.vue'),
+        // component: () => import('@/views/websiteSettings/index.vue'),
         name: 'websiteSettingsList',
         meta: {
           title: '网站设置',
@@ -106,7 +106,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/Dashboard/Analysis.vue'),
+        component: () => import('@/views/VulnerabilityProtection/index.vue'),
         name: 'vulnerabilityProtectionList',
         meta: {
           title: '漏洞防护',
@@ -123,7 +123,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/Dashboard/Analysis.vue'),
+        // component: () => import('@/views/Dashboard/Analysis.vue'),
         name: 'LogManagementList',
         meta: {
           title: '日志管理',
