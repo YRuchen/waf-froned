@@ -188,16 +188,16 @@ const signIn = async () => {
           userStore.setRememberMe(unref(remember))
           userStore.setUserInfo(res.data)
           // 是否使用动态路由
-          if (appStore.getDynamicRouter) {
-            getRole()
-          } else {
-            await permissionStore.generateRoutes('static').catch(() => {})
-            permissionStore.getAddRouters.forEach((route) => {
-              addRoute(route as RouteRecordRaw) // 动态添加可访问路由表
-            })
-            permissionStore.setIsAddRouters(true)
-            push({ path: redirect.value || permissionStore.addRouters[0].path })
-          }
+          // if (appStore.getDynamicRouter) {
+          //   getRole()
+          // } else {
+          await permissionStore.generateRoutes('static').catch(() => {})
+          permissionStore.getAddRouters.forEach((route) => {
+            addRoute(route as RouteRecordRaw) // 动态添加可访问路由表
+          })
+          permissionStore.setIsAddRouters(true)
+          push({ path: redirect.value || permissionStore.addRouters[0].path })
+          // }
         }
       } finally {
         loading.value = false
