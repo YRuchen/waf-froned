@@ -66,17 +66,17 @@ export const constantRouterMap: AppRouteRecordRaw[] = [
         }
       }
     ]
-  },
-  {
-    path: '/404',
-    component: () => import('@/views/Error/404.vue'),
-    name: 'NoFind',
-    meta: {
-      hidden: true,
-      title: '404',
-      noTagsView: true
-    }
   }
+  // {
+  //   path: '/404',
+  //   component: () => import('@/views/Error/404.vue'),
+  //   name: 'NoFind',
+  //   meta: {
+  //     hidden: true,
+  //     title: '404',
+  //     noTagsView: true
+  //   }
+  // }
 ]
 
 export const asyncRouterMap: AppRouteRecordRaw[] = [

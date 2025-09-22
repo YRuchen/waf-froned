@@ -6,11 +6,11 @@
 
   --left-menu-min-width: 64px;
 
-  --left-menu-bg-color: #001529;
+  --left-menu-bg-color: #f6f8fa;
 
   --left-menu-bg-light-color: #0f2438;
 
-  --left-menu-bg-active-color: var(--el-color-primary);
+  --left-menu-bg-active-color: rgba(22,100,255,.08);
 
   --left-menu-text-color: #bfcbd9;
 
@@ -32,7 +32,7 @@
 
   --top-header-hover-color: #f6f6f6;
 
-  --top-tool-height: var(--logo-height);
+  --top-tool-height: 0;
 
   --top-tool-p-x: 0;
 

@@ -84,7 +84,7 @@ export const useRenderLayout = () => {
               }
             ]}
           >
-            <div
+            {/* <div
               class={[
                 {
                   'fixed top-0 left-0 z-10': fixedHeader.value,
@@ -109,7 +109,7 @@ export const useRenderLayout = () => {
               {tagsView.value ? (
                 <TagsView class="layout-border__bottom layout-border__top"></TagsView>
               ) : undefined}
-            </div>
+            </div> */}
 
             <AppView></AppView>
           </ElScrollbar>

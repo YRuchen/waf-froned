@@ -65,21 +65,21 @@ export const useAppStore = defineStore('app', {
       currentSize: 'default', // 组件尺寸
       theme: {
         // 主题色
-        elColorPrimary: '#409eff',
+        elColorPrimary: '#1664ff',
         // 左侧菜单边框颜色
         leftMenuBorderColor: 'inherit',
         // 左侧菜单背景颜色
-        leftMenuBgColor: '#001529',
+        leftMenuBgColor: '#f6f8fa',
         // 左侧菜单浅色背景颜色
-        leftMenuBgLightColor: '#0f2438',
+        leftMenuBgLightColor: '#f6f8fa',
         // 左侧菜单选中背景颜色
-        leftMenuBgActiveColor: 'var(--el-color-primary)',
+        leftMenuBgActiveColor: 'rgba(22,100,255,.08)',
         // 左侧菜单收起选中背景颜色
-        leftMenuCollapseBgActiveColor: 'var(--el-color-primary)',
+        leftMenuCollapseBgActiveColor: '#f6f8fa',
         // 左侧菜单字体颜色
-        leftMenuTextColor: '#bfcbd9',
+        leftMenuTextColor: '#0c0d0e',
         // 左侧菜单选中字体颜色
-        leftMenuTextActiveColor: '#fff',
+        leftMenuTextActiveColor: '#0c0d0e',
         // logo字体颜色
         logoTitleTextColor: '#fff',
         // logo边框颜色
