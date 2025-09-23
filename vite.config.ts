@@ -14,6 +14,7 @@ import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { createStyleImportPlugin, ElementPlusResolve } from 'vite-plugin-style-import'
 import UnoCSS from 'unocss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
+import qiankun from 'vite-plugin-qiankun'
 
 // https://vitejs.dev/config/
 const root = process.cwd()
@@ -92,9 +93,14 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       ViteEjsPlugin({
         title: env.VITE_APP_TITLE
       }),
-      UnoCSS()
+      UnoCSS(),
+      qiankun('waf', {
+        useDevMode: true, // 开发模式下 true，子应用可以独立运行
+      }),
     ],
-
+  build: {
+    outDir: 'dist',
+  },
     css: {
       preprocessorOptions: {
         less: {
@@ -153,7 +159,8 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       hmr: {
         overlay: false
       },
-      host: '0.0.0.0'
+      host: '0.0.0.0',
+      origin: 'http://localhost:4000',
     },
     optimizeDeps: {
       include: [
