@@ -1,5 +1,7 @@
 import 'vue/jsx'
 
+import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
+
 // 引入windi css
 import '@/plugins/unocss'
 
@@ -36,23 +38,43 @@ import App from './App.vue'
 
 import './permission'
 
+let app: any = null
 // 创建实例
-const setupAll = async () => {
-  const app = createApp(App)
+async function render(props: any = {}) {
+  app = createApp(App)
 
   await setupI18n(app)
-
   setupStore(app)
-
   setupGlobCom(app)
-
   setupElementPlus(app)
-
   setupRouter(app)
-
   setupPermission(app)
 
-  app.mount('#app')
+  // qiankun 下，容器要挂到 props.container 内部
+  app.mount(props.container ? props.container.querySelector('#app') : '#app')
+}
+// 独立运行时，直接执行 render()
+if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  render()
 }
 
-setupAll()
+// ✅ qiankun 生命周期钩子
+renderWithQiankun({
+  bootstrap() {
+    console.log('子应用 bootstrap')
+  },
+  mount(props) {
+    console.log('子应用 mount', props)
+    render(props)
+  },
+  unmount() {
+    console.log('子应用 unmount')
+    if (app) {
+      app.unmount()
+      app = null
+    }
+  },
+  update(props) {
+    console.log('子应用 update', props)
+  }
+})

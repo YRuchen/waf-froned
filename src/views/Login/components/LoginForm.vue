@@ -192,10 +192,10 @@ const signIn = async () => {
           //   getRole()
           // } else {
           await permissionStore.generateRoutes('static').catch(() => {})
-          permissionStore.getAddRouters.forEach((route) => {
+          await permissionStore.getAddRouters.forEach((route) => {
             addRoute(route as RouteRecordRaw) // 动态添加可访问路由表
           })
-          permissionStore.setIsAddRouters(true)
+          await permissionStore.setIsAddRouters(true)
           push({ path: redirect.value || permissionStore.addRouters[0].path })
           // }
         }
