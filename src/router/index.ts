@@ -89,7 +89,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        // component: () => import('@/views/websiteSettings/index.vue'),
+        component: () => import('@/views/websiteSettings/websiteSetting.vue'),
         name: 'websiteSettingsList',
         meta: {
           title: '网站设置',
