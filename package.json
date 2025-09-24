@@ -104,7 +104,6 @@
     "rimraf": "^6.0.1",
     "rollup": "^4.30.1",
     "rollup-plugin-visualizer": "^5.14.0",
-    "sass-embedded": "^1.93.0",
     "stylelint": "^16.12.0",
     "stylelint-config-html": "^1.1.0",
     "stylelint-config-recommended": "^14.0.1",

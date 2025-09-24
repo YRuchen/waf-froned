@@ -48,12 +48,7 @@ const onExpand = () => {
   >
     {{ t('common.reset') }}
   </BaseButton>
-  <BaseButton
-    v-if="showExpand"
-    :icon="useIcon({ icon: visible ? 'vi-ep:arrow-up' : 'vi-ep:arrow-down' })"
-    text
-    @click="onExpand"
-  >
-    {{ t(visible ? 'common.shrink' : 'common.expand') }}
+  <BaseButton v-if="showExpand" :icon="useIcon({ icon: 'vi-ep:filter' })" plain @click="onExpand">
+    {{ t('common.advancedFilter') }}
   </BaseButton>
 </template>

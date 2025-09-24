@@ -4,9 +4,10 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { Table, TableColumn } from '@/components/Table'
 import { getTableListApi } from '@/api/table'
 import { TableData } from '@/api/table/types'
-import { ref, h } from 'vue'
+import { ref, h, reactive } from 'vue'
+import { FormSchema } from '@/components/Form'
 import { ElTag, ElCard, ElDivider } from 'element-plus'
-import styles from './index.module.scss'
+import { Search } from '@/components/Search'
 
 interface Params {
   pageIndex?: number
@@ -83,10 +84,6 @@ const getTableList = async (params?: Params) => {
 }
 
 getTableList()
-
-const actionFn = (data: any) => {
-  console.log(data)
-}
 // el-card
 // “正常”、“未接入”、“配置失败”、“回源失败”
 const cardsType = ref([
@@ -113,13 +110,23 @@ const statusList = ref([
   { name: '配置失败', count: 3, color: '#F56C6C' },
   { name: '回源失败', count: 1, color: '#909399' }
 ])
+const searchSchema = reactive<FormSchema[]>([
+  {
+    field: 'roleName',
+    label: t('role.roleName'),
+    component: 'Input'
+  }
+])
+const searchParams = ref({})
+const setSearchParams = (data: any) => {
+  searchParams.value = data
+  // getList()
+}
 </script>
 
 <template>
   <ContentWrap :title="t('tableDemo.table')" :message="t('tableDemo.tableDes')">
     <div class="flex w-full mb-4">
-      <!-- <ElCard class="flex-1 mr-4 h-100px"> Hover </ElCard>
-      <ElCard class="flex-1 h-100px"> Hover </ElCard> -->
       <ElCard
         :class="[
           'flex-1 h-24 flex items-center p-4',
@@ -155,6 +162,15 @@ const statusList = ref([
         </div>
       </ElCard>
     </div>
+
+    <Search
+      :schema="searchSchema"
+      :expandField="searchSchema"
+      @reset="setSearchParams"
+      @search="setSearchParams"
+      :showSearch="false"
+      :showExpand="true"
+    />
     <Table
       :columns="columns"
       :data="tableDataList"

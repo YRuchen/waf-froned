@@ -11,7 +11,7 @@ export const constantRouterMap: AppRouteRecordRaw[] = [
   {
     path: '/',
     component: Layout,
-    redirect: '/websiteSettings/index',
+    redirect: '/login',
     name: 'Root',
     meta: {
       hidden: true
