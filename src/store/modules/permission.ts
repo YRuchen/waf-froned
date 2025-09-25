@@ -52,6 +52,7 @@ export const usePermissionStore = defineStore('permission', {
         } else {
           // 直接读取静态路由表
           routerMap = cloneDeep(asyncRouterMap)
+          console.log(asyncRouterMap, 666666)
         }
         // 动态路由，404一定要放到最后面
         this.addRouters = routerMap.concat([

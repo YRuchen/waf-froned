@@ -22,7 +22,7 @@ const props = defineProps({
   // 表单label宽度
   labelWidth: propTypes.oneOfType([String, Number]).def('auto'),
   // 操作按钮风格位置
-  layout: propTypes.string.validate((v: string) => ['inline', 'bottom'].includes(v)).def('inline'),
+  layout: propTypes.string.validate((v: string) => ['inline', 'bottom'].includes(v)).def(''),
   // 底部按钮的对齐方式
   buttonPosition: propTypes.string
     .validate((v: string) => ['left', 'center', 'right'].includes(v))

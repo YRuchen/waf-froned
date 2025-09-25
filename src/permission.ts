@@ -31,13 +31,13 @@ router.beforeEach(async (to, from, next) => {
       const roleRouters = userStore.getRoleRouters || []
 
       // 是否使用动态路由
-      if (appStore.getDynamicRouter) {
-        appStore.serverDynamicRouter
-          ? await permissionStore.generateRoutes('server', roleRouters as AppCustomRouteRecordRaw[])
-          : await permissionStore.generateRoutes('frontEnd', roleRouters as string[])
-      } else {
-        await permissionStore.generateRoutes('static')
-      }
+      // if (appStore.getDynamicRouter) {
+      //   appStore.serverDynamicRouter
+      //     ? await permissionStore.generateRoutes('server', roleRouters as AppCustomRouteRecordRaw[])
+      //     : await permissionStore.generateRoutes('frontEnd', roleRouters as string[])
+      // } else {
+      await permissionStore.generateRoutes('static')
+      // }
 
       permissionStore.getAddRouters.forEach((route) => {
         router.addRoute(route as unknown as RouteRecordRaw) // 动态添加可访问路由表

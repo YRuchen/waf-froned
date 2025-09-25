@@ -11,7 +11,7 @@ export const constantRouterMap: AppRouteRecordRaw[] = [
   {
     path: '/',
     component: Layout,
-    redirect: '/login',
+    redirect: '/websiteSettings/index',
     name: 'Root',
     meta: {
       hidden: true
@@ -123,7 +123,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        // component: () => import('@/views/Dashboard/Analysis.vue'),
+        component: () => import('@/views/websiteSettings/websiteSetting.vue'),
         name: 'LogManagementList',
         meta: {
           title: '日志管理',

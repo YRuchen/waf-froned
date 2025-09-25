@@ -58,15 +58,16 @@ export enum ComponentNameEnum {
   UPLOAD = 'Upload',
   JSON_EDITOR = 'JsonEditor',
   ICON_PICKER = 'IconPicker',
-  I_AGREE = 'IAgree'
+  I_AGREE = 'IAgree',
+  SELECT_LABEL = 'SelectWithLabel'
 }
 
 type CamelCaseComponentName = keyof typeof ComponentNameEnum extends infer K
   ? K extends string
-    ? K extends `${infer A}_${infer B}`
-      ? `${Capitalize<Lowercase<A>>}${Capitalize<Lowercase<B>>}`
-      : Capitalize<Lowercase<K>>
-    : never
+  ? K extends `${infer A}_${infer B}`
+  ? `${Capitalize<Lowercase<A>>}${Capitalize<Lowercase<B>>}`
+  : Capitalize<Lowercase<K>>
+  : never
   : never
 
 export type ComponentName = CamelCaseComponentName
@@ -606,28 +607,28 @@ export interface FormSchema {
    * 表单组件属性，具体可以查看element-plus文档
    */
   componentProps?:
-    | InputComponentProps
-    | AutocompleteComponentProps
-    | InputNumberComponentProps
-    | SelectComponentProps
-    | SelectV2ComponentProps
-    | CascaderComponentProps
-    | SwitchComponentProps
-    | RateComponentProps
-    | ColorPickerComponentProps
-    | TransferComponentProps
-    | RadioGroupComponentProps
-    | RadioButtonComponentProps
-    | DividerComponentProps
-    | DatePickerComponentProps
-    | DateTimePickerComponentProps
-    | TimePickerComponentProps
-    | InputPasswordComponentProps
-    | TreeSelectComponentProps
-    | UploadComponentProps
-    | JsonEditorProps
-    | IAgreeProps
-    | any
+  | InputComponentProps
+  | AutocompleteComponentProps
+  | InputNumberComponentProps
+  | SelectComponentProps
+  | SelectV2ComponentProps
+  | CascaderComponentProps
+  | SwitchComponentProps
+  | RateComponentProps
+  | ColorPickerComponentProps
+  | TransferComponentProps
+  | RadioGroupComponentProps
+  | RadioButtonComponentProps
+  | DividerComponentProps
+  | DatePickerComponentProps
+  | DateTimePickerComponentProps
+  | TimePickerComponentProps
+  | InputPasswordComponentProps
+  | TreeSelectComponentProps
+  | UploadComponentProps
+  | JsonEditorProps
+  | IAgreeProps
+  | any
 
   /**
    * formItem组件属性，具体可以查看element-plus文档

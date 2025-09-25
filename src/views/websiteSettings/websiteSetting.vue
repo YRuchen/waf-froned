@@ -6,9 +6,10 @@ import { getTableListApi } from '@/api/table'
 import { TableData } from '@/api/table/types'
 import { ref, h, reactive } from 'vue'
 import { FormSchema } from '@/components/Form'
-import { ElTag, ElCard, ElDivider } from 'element-plus'
+import { useIcon } from '@/hooks/web/useIcon'
+import { ElTag, ElCard, ElButton } from 'element-plus'
 import { Search } from '@/components/Search'
-
+const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 interface Params {
   pageIndex?: number
   pageSize?: number
@@ -64,23 +65,26 @@ const columns: TableColumn[] = [
 ]
 
 const loading = ref(true)
+const resetLoading = ref(false)
+const isShowFilter = ref(false)
 
 const tableDataList = ref<TableData[]>([])
 
 const getTableList = async (params?: Params) => {
-  const res = await getTableListApi(
-    params || {
-      pageIndex: 1,
-      pageSize: 10
-    }
-  )
-    .catch(() => {})
-    .finally(() => {
-      loading.value = false
-    })
-  if (res) {
-    tableDataList.value = res.data.list
-  }
+  // const res = await getTableListApi(
+  //   params || {
+  //     pageIndex: 1,
+  //     pageSize: 10
+  //   }
+  // )
+  //   .catch(() => {})
+  //   .finally(() => {
+  //     loading.value = false
+  //   })
+  // if (res) {
+  //   tableDataList.value = res.data.list
+  // }
+  loading.value = false
 }
 
 getTableList()
@@ -112,15 +116,82 @@ const statusList = ref([
 ])
 const searchSchema = reactive<FormSchema[]>([
   {
-    field: 'roleName',
-    label: t('role.roleName'),
+    field: 'webName',
+    component: 'Input',
+    componentProps: {
+      slots: {
+        prepend: () => <>防护网站</>
+      }
+    }
+  },
+  {
+    field: 'runStatus',
+    // label: '接入状态',
+    component: 'SelectLabel',
+    componentProps: {
+      placeholder: '请选择',
+      label: '接入方式',
+      options: [
+        { label: '正常', value: '1' },
+        { label: '未接入', value: '2' },
+        { label: '配置失败', value: '3' },
+        { label: '回源失败', value: '4' }
+      ]
+    }
+  }
+])
+const filterSchema = reactive<FormSchema[]>([
+  {
+    field: 'IPAdress',
+    label: 'IP地址',
     component: 'Input'
+  },
+  {
+    field: 'runType',
+    label: '接入方式',
+    component: 'Select'
+  },
+  {
+    field: 'threeDays',
+    label: '3天攻击监控',
+    component: 'Select'
+  },
+  {
+    field: 'pretendModule',
+    label: '防护模式',
+    component: 'Select'
+  },
+  {
+    field: 'logsCollection',
+    label: '日志采集',
+    component: 'Select'
+  },
+  {
+    field: 'originMethod',
+    label: '回源方式',
+    component: 'Select'
+  },
+  {
+    field: 'VPCID',
+    label: 'VPC ID',
+    component: 'Input'
+  },
+  {
+    field: 'responseData',
+    label: '响应数据检测',
+    component: 'Select'
   }
 ])
 const searchParams = ref({})
-const setSearchParams = (data: any) => {
-  searchParams.value = data
+const resetSearchParams = (data: any) => {
+  // searchParams.value = data
   // getList()
+}
+const onExpand = () => {
+  isShowFilter.value = !isShowFilter.value
+}
+const getList = () => {
+  console.log(6666)
 }
 </script>
 
@@ -162,15 +233,27 @@ const setSearchParams = (data: any) => {
         </div>
       </ElCard>
     </div>
-
-    <Search
-      :schema="searchSchema"
-      :expandField="searchSchema"
-      @reset="setSearchParams"
-      @search="setSearchParams"
-      :showSearch="false"
-      :showExpand="true"
-    />
+    <div class="flex justify-between">
+      <div class="flex">
+        <Search :schema="searchSchema" :showSearch="false" :showReset="false" />
+        <BaseButton :icon="filterIcon" plain @click="onExpand">
+          {{ t('common.advancedFilter') }}
+        </BaseButton>
+        <BaseButton
+          :loading="resetLoading"
+          plain
+          :icon="useIcon({ icon: 'vi-ep:refresh-right' })"
+          @click="resetSearchParams"
+        >
+          {{ t('common.reset') }}
+        </BaseButton>
+      </div>
+      <div>
+        <ElButton>批量导入</ElButton>
+        <ElButton>新建站点</ElButton>
+      </div>
+    </div>
+    <Search :schema="filterSchema" :showSearch="false" :showReset="false" v-if="isShowFilter" />
     <Table
       :columns="columns"
       :data="tableDataList"
