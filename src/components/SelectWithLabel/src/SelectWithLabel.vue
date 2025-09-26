@@ -10,6 +10,8 @@ const props = defineProps({
   placeholder: propTypes.string.def('请选择'),
   // 左侧label
   label: propTypes.string.def(''),
+  // 是都多选
+  multiple: propTypes.bool.def(false),
   // option
   options: {
     type: Array as () => { label: string; value: string | number }[],
@@ -26,7 +28,7 @@ const modelValueRef = computed({
 <template>
   <div class="custom-select">
     <div class="label">{{ props.label }}</div>
-    <ElSelect v-model="modelValueRef" :placeholder="props.placeholder">
+    <ElSelect v-model="modelValueRef" :placeholder="props.placeholder" :multiple="props.multiple">
       <ElOption
         v-for="option in props.options"
         :key="option.value"
@@ -43,16 +45,20 @@ const modelValueRef = computed({
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   overflow: hidden;
-  width: 300px;
+  width: 300px !important;
 }
 .custom-select .label {
   padding: 0 12px;
   background-color: #fff !important; /* 白色背景 */
   border-right: 1px solid #dcdfe6;
-  white-space: nowrap;
+  /* white-space: nowrap; */
 }
 .custom-select .el-select {
   flex: 1;
   border: none;
 }
+/* .custom-select .el-select__tags {
+  display: flex;
+  flex-wrap: wrap;
+} */
 </style>
