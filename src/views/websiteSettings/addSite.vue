@@ -1,86 +1,77 @@
 <script setup lang="tsx">
-import { ContentWrap } from '@/components/ContentWrap'
-import { useI18n } from '@/hooks/web/useI18n'
-import { Table, TableColumn } from '@/components/Table'
-import { getTableListApi } from '@/api/table'
-import { TableData } from '@/api/table/types'
-import { ref, h, reactive } from 'vue'
-import { FormSchema } from '@/components/Form'
-import { useIcon } from '@/hooks/web/useIcon'
-import { Icon } from '@iconify/vue'
-import {
-  ElTag,
-  ElCard,
-  ElButton,
-  ElDropdown,
-  ElDropdownMenu,
-  ElDropdownItem,
-  ElIcon,
-  ElRow,
-  ElCol,
-  ElAnchor,
-  ElAnchorLink
-} from 'element-plus'
-import { BaseButton } from '@/components/Button'
-import { Search } from '@/components/Search'
-const filterIcon = useIcon({ icon: 'vi-ep:filter' })
-const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
+import { ref, onMounted, onUnmounted } from 'vue'
+import { ElAnchor, ElAnchorLink } from 'element-plus'
+import siteForm from './components/siteForm.vue'
 
-const { t } = useI18n()
 const containerRef = ref<HTMLElement | null>(null)
+const bannerRef = ref<HTMLElement | null>(null)
+const anchorRef = ref<InstanceType<typeof ElAnchor> | null>(null)
 
+const navTop = ref(0)
+const sections = [
+  { id: 'part1', title: 'part1', height: '300px', bg: 'rgba(255, 0, 0, 0.02)' },
+  { id: 'part2', title: 'part2', height: '300px', bg: 'rgba(0, 255, 0, 0.02)' },
+  { id: 'part3', title: 'part3', height: '300px', bg: 'rgba(0, 0, 255, 0.02)' },
+  {
+    id: 'part4',
+    title: 'part4',
+    height: '100%',
+    bg: 'rgba(0, 0, 255, 0.02)',
+    content: 'part5555555555555'
+  }
+]
 const handleClick = (e: MouseEvent) => {
   e.preventDefault()
 }
-</script>
+const updateNavTop = () => {
+  if (!bannerRef.value || !containerRef.value) return
+  const bannerHeight = bannerRef.value.offsetHeight
+  const scrollY = containerRef.value.scrollTop
+  // 横幅消失后，导航贴顶
+  navTop.value = Math.max(bannerHeight - scrollY, 0)
+}
 
+onMounted(() => {
+  containerRef.value?.addEventListener('scroll', updateNavTop)
+  updateNavTop()
+})
+
+onUnmounted(() => {
+  containerRef.value?.removeEventListener('scroll', updateNavTop)
+})
+</script>
 <template>
   <div class="flex">
-    <ElRow class="flex-1">
-      <ElCol :span="6">
+    <div ref="containerRef" class="h-screen overflow-y-auto relative flex-1">
+      <!-- 顶部横幅 -->
+      <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
+        顶部横幅
+      </div>
+
+      <div class="flex relative">
+        <!-- 左侧导航 -->
         <ElAnchor
+          ref="anchorRef"
           :container="containerRef"
-          direction="vertical"
-          type="default"
-          :bound="320"
-          :default-active="'#part1'"
+          :offset="0"
+          class="w-48 mt-6"
+          type="underline"
+          style="position: fixed; z-index: 10"
+          :style="{ top: `${navTop}px` }"
           @click="handleClick"
         >
-          <ElAnchorLink href="#part1" title="part1" />
-          <ElAnchorLink href="#part2" title="part2" />
-          <ElAnchorLink href="#part3" title="part3" />
-          <ElAnchorLink href="#part4" title="part4" />
+          <ElAnchorLink
+            v-for="section in sections"
+            :key="section.id"
+            :href="`#${section.id}`"
+            :title="section.title"
+          />
         </ElAnchor>
-      </ElCol>
-      <ElCol :span="18">
-        <div ref="containerRef" class="h-screen overflow-y-auto">
-          <div
-            id="part1"
-            style="height: 300px; background: rgba(255, 0, 0, 0.02); margin-top: 30px"
-          >
-            part1
-          </div>
-          <div
-            id="part2"
-            style="height: 300px; background: rgba(0, 255, 0, 0.02); margin-top: 30px"
-          >
-            part2
-          </div>
-          <div
-            id="part3"
-            style="height: 300px; background: rgba(0, 0, 255, 0.02); margin-top: 30px"
-          >
-            part3
-          </div>
-          <div
-            id="part4"
-            style="height: 300px; background: rgba(0, 0, 255, 0.02); margin-top: 30px"
-          >
-            part5555555555555
-          </div>
-        </div>
-      </ElCol>
-    </ElRow>
+
+        <!-- 右侧内容 -->
+        <siteForm></siteForm>
+      </div>
+    </div>
     <div class="w-20%"> </div>
   </div>
 </template>

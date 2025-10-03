@@ -282,7 +282,6 @@ const filterSchema = reactive<FormSchema[]>([
     }
   }
 ])
-const searchParams = ref({})
 const resetSearchParams = (data: any) => {
   // searchParams.value = data
   // getList()
