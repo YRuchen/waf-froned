@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElAnchor, ElAnchorLink } from 'element-plus'
-import siteForm from './components/siteForm.vue'
+import siteForm from './components/SiteFormPanel.vue'
 
 const containerRef = ref<HTMLElement | null>(null)
 const bannerRef = ref<HTMLElement | null>(null)
