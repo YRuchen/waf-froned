@@ -89,7 +89,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/W/WebsiteSettingPanel.vue'),
+        component: () => import('@/views/WebsiteSettings/WebsiteSettingPanel.vue'),
         name: 'WebsiteSetting',
         meta: {
           title: '网站设置',
@@ -98,7 +98,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
       },
       {
         path: 'addSite',
-        component: () => import('@/views/W/AddSitePanel.vue'),
+        component: () => import('@/views/WebsiteSettings/AddSitePanel.vue'),
         name: 'AddSite',
         meta: {
           title: '网站设置',
@@ -116,7 +116,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/L/LogsConfigure.vue'),
+        component: () => import('@/views/LogsConfigures/LogsConfigure.vue'),
         name: 'logsConfigure',
         meta: {
           title: '日志管理',
