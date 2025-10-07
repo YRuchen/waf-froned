@@ -89,10 +89,37 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/websiteSettings/addSite.vue'),
-        name: 'websiteSettingsList',
+        component: () => import('@/views/websiteSettings/websiteSetting.vue'),
+        name: 'WebsiteSettingsList',
         meta: {
           title: '网站设置',
+          icon: 'vi-ep:management'
+        }
+      },
+      {
+        path: 'addSite',
+        component: () => import('@/views/websiteSettings/addSite.vue'),
+        name: 'AddSite',
+        meta: {
+          title: '网站设置',
+          icon: 'vi-ep:management'
+        }
+      },
+    ]
+  },
+  {
+    path: '/logsConfigures',
+    component: Layout,
+    name: 'logsConfigures',
+    meta: {},
+    redirect: '/logsConfigures/index',
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/logsConfigures/LogsConfigure.vue'),
+        name: 'logsConfigure',
+        meta: {
+          title: '日志管理',
           icon: 'vi-ep:management'
         }
       }
@@ -123,7 +150,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/websiteSettings/websiteSetting.vue'),
+        component: () => import('@/views/websiteSettings/WebsiteSetting.vue'),
         name: 'LogManagementList',
         meta: {
           title: '日志管理',

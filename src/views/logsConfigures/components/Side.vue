@@ -6,10 +6,10 @@ import {
   FormInstance,
   FormRules,
   ElMessage,
-  ElPopover,
+  ElCard,
   ElButton,
   ElIcon,
-  ElEmpty,
+  ElTree,
   ElScrollbar,
   ElDialog,
   ElForm,
@@ -60,8 +60,6 @@ interface menuItem {
 const menuData = ref<OriginItem[]>(props.originList)
 const addDialogRef = ref()
 const activeGroupId = ref(menuData.value[0]?.id)
-const searchName = ref<any>('')
-const searchNameList = ref<Array<menuItem>>([])
 
 onBeforeMount(() => {
   getLDict()
@@ -103,7 +101,9 @@ const editDictsort = (data) => {
   Object.assign(form, data)
 }
 
-const handleSerch = (data) => {}
+const selectAction = (data) => {
+  curTreeData.value = data
+}
 
 const remove = (row) => {
   ElMessageBox.confirm('你确定要删除当前项吗?', '温馨提示', {
@@ -166,26 +166,7 @@ onMounted(() => {
 <template>
   <div class="menu-wrap">
     <div class="flex flex-justify-between">
-      <ElPopover placement="bottom-start" width="300">
-        <template #reference>
-          <ElButton link class="m-y-2"> 分组 <Icon icon="vi-ep:search"></Icon> </ElButton>
-        </template>
-        <template #default>
-          <ElInput v-model="searchName" placeholder="请填写" />
-          <template v-if="searchNameList.length !== 0">
-            <p class="m-2" v-for="item in searchNameList" :key="item.id">{{ item.label }}</p>
-          </template>
-          <template v-else>
-            <ElEmpty>
-              <template #description v-if="searchName && searchNameList.length === 0">
-                暂无搜索结果，<ElButton link type="primary" @click="searchName = ''"
-                  >清空搜索条件</ElButton
-                >
-              </template>
-            </ElEmpty>
-          </template>
-        </template>
-      </ElPopover>
+      <ElButton link> 分组 <Icon icon="vi-ep:search"></Icon> </ElButton>
       <BaseButton link :icon="plusIcon" @click="addDict">添加</BaseButton>
     </div>
 

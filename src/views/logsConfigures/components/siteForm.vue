@@ -1,7 +1,5 @@
 <script lang="tsx" setup>
-import { reactive, ref, h, nextTick, watch, onMounted } from 'vue'
-
-import { Table, TableColumn } from '@/components/Table'
+import { reactive, ref } from 'vue'
 import {
   ElForm,
   ElFormItem,
@@ -18,14 +16,6 @@ import {
   ElCol,
   ElSelect,
   ElOption,
-  ElDescriptions,
-  ElDescriptionsItem,
-  ElTag,
-  ElDialog,
-  ElEmpty,
-  ElTable,
-  ElTableColumn,
-  ElCheckboxGroup,
   type FormInstance,
   type FormRules,
   type FormItemRule
@@ -33,27 +23,6 @@ import {
 
 import originConfigure from './originConfigure.vue'
 import { OriginItem } from '../types'
-import { log } from 'console'
-const columns: TableColumn[] = [
-  {
-    field: 'selection',
-    type: 'selection'
-  },
-  {
-    field: 'name',
-    label: '加密套件'
-  },
-  {
-    field: 'nameList',
-    label: 'TLS协议版本',
-    formatter: (_: Recordable, __: TableColumn, cellValue: Array<string>) => {
-      return cellValue.map((item) =>
-        h(ElTag, { type: 'info', style: 'margin-right: 4px' }, () => item)
-      )
-    }
-  }
-]
-
 interface RuleForm {
   name: string
   region: string
@@ -67,20 +36,13 @@ interface RuleForm {
   resource: string
   desc: string
   book: string
-  SNLConfigure: boolean
   numberInput: number
   bodyNum: number
   createOverTime: number
   writeOverTime: number
   readOverTime: number
   retryCount: number
-  customClient: string
-  customizeHeader: string
   originList: OriginItem[]
-}
-interface RuleFormTLS {
-  checkList: Array<string>
-  tableList: Array<any>
 }
 const sections = [
   { id: 'part1', title: '防护域名' },
@@ -135,19 +97,6 @@ const getRules = (items: any): FormItemRule[] => {
 const parentFormRef = ref<FormInstance>()
 const isSelectHttps = ref<boolean>()
 const isSelectHttp = ref<boolean>()
-const showTLSDialog = ref<boolean>(false)
-const total = ref<number>(0)
-const ruleFormTLS = ref<RuleFormTLS>({
-  checkList: [],
-  tableList: [{ name: '111', nameList: ['2222', '333'] }]
-})
-const filteredTLS = ref<Array<string>>(['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
-const openTLSConfigure = ref<boolean>(true)
-const loading = ref<boolean>(false)
-const showErrorTips = ref<boolean>(false)
-const selected = ref<Array<any>>([])
-const ruleFormTLSRef = ref<FormInstance>()
-const tableRef = ref<InstanceType<typeof ElTable>>()
 const childRef = ref<InstanceType<typeof originConfigure>>()
 const ruleForm = reactive<RuleForm>({
   name: 'Hello',
@@ -160,11 +109,8 @@ const ruleForm = reactive<RuleForm>({
   http: ['80'],
   https: [],
   resource: '',
-  customClient: '',
-  customizeHeader: '',
   desc: '',
-  book: '', // 证书选择
-  SNLConfigure: false,
+  book: '',
   numberInput: 0,
   bodyNum: 60,
   createOverTime: 30,
@@ -279,20 +225,6 @@ const resetForm = () => {
   if (!parentFormRef.value) return
   parentFormRef.value.resetFields()
 }
-const handlrEditTLS = () => {
-  showTLSDialog.value = true
-}
-const handleCloseDialog = () => {
-  showTLSDialog.value = false
-}
-const onRegister = (_parent: any, elTableRef: any) => {
-  tableRef.value = elTableRef.value
-}
-const handleSubmit = () => {
-  selected.value = tableRef.value?.getSelectionRows?.() || []
-  showErrorTips.value = !(ruleFormTLS.value.checkList.length !== 0 && selected.value.length !== 0)
-  showTLSDialog.value = false
-}
 </script>
 <template>
   <div class="ml-48 flex-1 p-6 flex flex-col">
@@ -377,37 +309,12 @@ const handleSubmit = () => {
               <ElButton link type="primary">刷新</ElButton>
               <ElButton link type="primary">新增证书</ElButton>
             </ElFormItem>
-            <ElFormItem label="SNL配置" prop="SNLConfigure">
-              <ElSwitch v-model="ruleForm.SNLConfigure" />
-              <ElInput
-                v-if="ruleForm.SNLConfigure"
-                placeholder="可自定义SNL的host，若不填写则跟随流量中的host"
-              ></ElInput>
+            <ElFormItem label="SNL配置" prop="delivery">
+              <ElSwitch v-model="ruleForm.delivery" />
+              <ElInput placeholder="可自定义SNL的host，若不填写则跟随流量中的host"></ElInput>
             </ElFormItem>
             <ElFormItem label="TLS配置" prop="delivery">
-              <div class="flex flex-col items-start">
-                <ElButton link type="primary" @click="openTLSConfigure = !openTLSConfigure">
-                  {{ openTLSConfigure ? '展开配置' : '收起配置' }}
-                  <Icon
-                    :icon="openTLSConfigure ? 'ep:arrow-down' : 'ep:arrow-up'"
-                    class="m-r-2"
-                  ></Icon>
-                </ElButton>
-                <div class="flex flex-col" v-if="!openTLSConfigure">
-                  <div>
-                    <span>允许使用的TLS加密版本和加密套件，不匹配请求将默认丢弃</span>
-                    <ElButton link type="primary" @click="handlrEditTLS">编辑配置</ElButton>
-                  </div>
-                  <ElDescriptions class="margin-top" :column="1">
-                    <ElDescriptionsItem label="TLS协议">
-                      <ElTag size="small">School</ElTag>
-                    </ElDescriptionsItem>
-                    <ElDescriptionsItem label="加密套件">
-                      <ElTag size="small">School</ElTag>
-                    </ElDescriptionsItem>
-                  </ElDescriptions>
-                </div>
-              </div>
+              <ElButton link type="primary">展开配置</ElButton>
             </ElFormItem>
           </template>
           <ElFormItem label="负载均衡" prop="resource">
@@ -434,23 +341,6 @@ const handleSubmit = () => {
                 <ElRadio value="Venue">否</ElRadio>
               </ElRadioGroup>
               <span>是否使用代理，变更客户端IP获取地址</span>
-            </div>
-          </ElFormItem>
-          <ElFormItem
-            label="自定义获取客户端IP"
-            prop="customClient"
-            v-if="ruleForm.resource === 'Sponsorship'"
-          >
-            <ElRadioGroup v-model="ruleForm.customClient">
-              <ElRadio value="Sponsorship">X-forwarded-For</ElRadio>
-              <ElRadio value="Venue">自定义Header</ElRadio>
-            </ElRadioGroup>
-          </ElFormItem>
-          <ElFormItem label=" " prop="customizeHeader" v-if="ruleForm.customClient === 'Venue'">
-            <div class="flex flex-col">
-              <ElInput v-model="ruleForm.customizeHeader" placeholder="请填写" />
-              <p> 1.按匹配字段添加顺序获取客户端 IP并将其作为客户端真实 IP </p>
-              <p>2.如匹配字段无法获取客户端 IP，则将通过XFF字段获取 </p>
             </div>
           </ElFormItem>
         </template>
@@ -488,43 +378,4 @@ const handleSubmit = () => {
       <ElButton @click="resetForm()">Reset</ElButton>
     </div>
   </div>
-  <ElDialog
-    v-model="showTLSDialog"
-    title="xiug修改TLS配置"
-    width="600"
-    :before-close="handleCloseDialog"
-  >
-    <ElForm ref="ruleFormTLSRef" :model="ruleFormTLS" label-width="auto" label-position="left">
-      <ElFormItem label="TLS协议" prop="resource">
-        <ElCheckboxGroup v-model="ruleFormTLS.checkList">
-          <ElCheckbox v-for="item in filteredTLS" :key="item" :value="item">
-            {{ item }}
-          </ElCheckbox>
-        </ElCheckboxGroup>
-      </ElFormItem>
-
-      <Table
-        ref="tableRef"
-        :columns="columns"
-        :data="ruleFormTLS.tableList"
-        :loading="loading"
-        :pagination="{
-          total: total
-        }"
-        @register="onRegister"
-      >
-        <template #append>
-          <span class="color-[red]" v-if="showErrorTips">
-            TLSv1、TLSv1.1至少有一个对应的加密事件
-          </span>
-        </template>
-      </Table>
-    </ElForm>
-    <template #footer>
-      <div class="dialog-footer">
-        <ElButton size="small" @click="showTLSDialog = false">取消</ElButton>
-        <ElButton size="small" type="primary" @click="handleSubmit">确定</ElButton>
-      </div>
-    </template>
-  </ElDialog>
 </template>
