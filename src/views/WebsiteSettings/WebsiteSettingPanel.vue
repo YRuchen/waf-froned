@@ -1,10 +1,12 @@
 <script setup lang="tsx">
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
+import { useRouter } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
 import { getTableListApi } from '@/api/table'
+import { useTable } from '@/hooks/web/useTable'
 import { TableData } from '@/api/table/types'
-import { ref, h, reactive } from 'vue'
+import { ref, h, reactive, unref } from 'vue'
 import { FormSchema } from '@/components/Form'
 import { useIcon } from '@/hooks/web/useIcon'
 import { Icon } from '@iconify/vue'
@@ -15,50 +17,221 @@ import {
   ElDropdown,
   ElDropdownMenu,
   ElDropdownItem,
-  ElIcon
+  ElDialog,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElRadioGroup,
+  ElRadio,
+  ElFormItem,
+  ElForm,
+  ElRow,
+  ElCol,
+  ElMessage,
+  ElSwitch,
+  ElInputTag,
+  ElMessageBox
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
+const { tableRegister, tableState, tableMethods } = useTable({
+  fetchDataApi: async () => {
+    const { currentPage, pageSize } = tableState
+    const res = await getTableListApi({
+      pageIndex: unref(currentPage),
+      pageSize: unref(pageSize)
+    })
+    return {
+      list: res.data.list,
+      total: res.data.total
+    }
+  }
+})
+const { loading, dataList, total, currentPage, pageSize } = tableState
+dataList.value = [
+  {
+    id: '1',
+    author: 'string',
+    title: 'string',
+    content: 'string',
+    importance: 3,
+    protectionMode: '2',
+    responsiveDetection: true,
+    logsCollection: true,
+    pageviews: 11
+  }
+]
+const { getList, getElTableExpose, delList } = tableMethods
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 interface Params {
   pageIndex?: number
   pageSize?: number
 }
+interface RuleForm {
+  openProtect: string
+}
+interface LogsConfigureForm {
+  recordHeader: boolean
+  othersHeader: Array<string>
+  statistics: Array<string>
+}
 
 const { t } = useI18n()
-
-const columns: TableColumn[] = [
+const accessConfiguration = reactive<any>({
+  username: '接入方式',
+  telephone: '接入协议'
+})
+const configureText = [
+  {
+    title: '接入配置',
+    descriptionsItem: [
+      {
+        label: '接入方式',
+        prop: 'username',
+        isTag: false
+      },
+      {
+        label: '接入协议',
+        prop: 'telephone',
+        isTag: true
+      }
+    ]
+  }
+]
+const columns = reactive<TableColumn[]>([
+  {
+    field: 'selection',
+    type: 'selection'
+  },
+  {
+    field: 'expand',
+    type: 'expand',
+    slots: {
+      default: (data: any) => {
+        // const row = data.row
+        return (
+          <div class="grid grid-cols-3 mx-16 mt-4 mb-8">
+            <div>
+              {configureText.map((items) => (
+                <ElDescriptions title={items.title} column={1}>
+                  {items.descriptionsItem.map((item) => (
+                    <ElDescriptionsItem label={item.label}>
+                      {item.isTag ? (
+                        <ElTag type="info">{accessConfiguration[item.prop]}</ElTag>
+                      ) : (
+                        accessConfiguration[item.prop]
+                      )}
+                    </ElDescriptionsItem>
+                  ))}
+                </ElDescriptions>
+              ))}
+            </div>
+          </div>
+        )
+      }
+    }
+  },
   {
     field: 'title',
     label: '防护网站',
-    sortable: true
+    sortable: true,
+    formatter: (_: Recordable, __: TableColumn, cellValue: string) => {
+      return h('span', { class: 'text-blue-500 cursor-pointer' }, cellValue)
+    }
   },
   {
     field: 'importance',
     label: '接入状态',
     formatter: (_: Recordable, __: TableColumn, cellValue: number) => {
+      const status = statusList.value.find((item) => item.count === cellValue)
       return h(
         ElTag,
         {
-          type: cellValue === 1 ? 'success' : cellValue === 2 ? 'warning' : 'danger'
+          type: cellValue === 1 ? 'success' : cellValue === 2 ? 'info' : 'danger'
         },
-        () =>
-          cellValue === 1
-            ? t('tableDemo.important')
-            : cellValue === 2
-              ? t('tableDemo.good')
-              : t('tableDemo.commonly')
+        () => status?.name || '未知状态'
       )
     }
   },
   {
-    field: 'display_time',
-    label: '防护模式'
+    field: 'protectionMode',
+    label: '防护模式',
+    slots: {
+      default: (data: any) => {
+        // const row = data.row
+        return (
+          <div class="flex items-center">
+            <Icon
+              icon={data.row.protectionMode == 1 ? 'ep:circle-check-filled' : 'ep:remove-filled'}
+              class={data.row.protectionMode == 1 ? 'text-[#1ee319]' : ''}
+            />
+            <div
+              class="ml-2 group flex items-center cursor-pointer"
+              onClick={(event) => handleEdit(event, data.row.protectionMode)}
+            >
+              <span>{data.row.protectionMode == 1 ? '启用防护' : '暂停防护'}</span>
+              <Icon
+                icon="ep:edit-pen"
+                class={dialogVisible.value ? 'ml-2' : 'hidden group-hover:block ml-2'}
+              />
+            </div>
+          </div>
+        )
+      }
+    }
   },
   {
-    field: 'pageviews',
-    label: '响应式检测'
+    field: 'responsiveDetection',
+    label: '响应式检测',
+    slots: {
+      default: (data: any) => {
+        // const row = data.row
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <ElSwitch
+              modelValue={data.row.responsiveDetection}
+              size="large"
+              onChange={() => {
+                const oldValue = data.row.responsiveDetection
+                ElMessageBox({
+                  title: '更改相应数据检测',
+                  message: (
+                    <div>
+                      {data.row.responsiveDetection
+                        ? '关闭后将导致部分功能和规则失效'
+                        : '打开后可能因缓存导致客户端收到信息延迟'}
+                      {/* <span
+                        style={{ color: '#409EFF', cursor: 'pointer' }}
+                        onClick={() => {
+                          // 点击“查看详情”后的操作
+                          ElMessage.info('这里可以先留位置')
+                        }}
+                      >
+                        查看详情
+                      </span> */}
+                    </div>
+                  ),
+                  confirmButtonText: oldValue ? '确定关闭' : '确定开启',
+                  cancelButtonText: '取消',
+                  type: 'warning',
+                  showCancelButton: true,
+                  confirmButtonClass: oldValue ? 'button-red' : ''
+                })
+                  .then(() => {
+                    data.row.responsiveDetection = !oldValue
+                  })
+                  .catch(() => {
+                    ElMessage({
+                      type: 'info',
+                      message: '已取消'
+                    })
+                  })
+              }}
+            />
+          </div>
+        )
+      }
+    }
   },
   {
     field: 'pageviews',
@@ -74,7 +247,7 @@ const columns: TableColumn[] = [
         // const row = data.row
         return (
           <div class="flex">
-            <ElButton type="primary" link>
+            <ElButton type="primary" link onClick={() => action(data.row, 'edit')}>
               {t('exampleDemo.edit')}
             </ElButton>
             <ElDropdown
@@ -83,10 +256,46 @@ const columns: TableColumn[] = [
               v-slots={{
                 dropdown: () => (
                   <ElDropdownMenu>
-                    <ElDropdownItem command="protect">防护设置</ElDropdownItem>
-                    <ElDropdownItem command="enableLog">开启日志采集</ElDropdownItem>
-                    <ElDropdownItem command="disableLog">关闭日志采集</ElDropdownItem>
-                    <ElDropdownItem command="delete">删除</ElDropdownItem>
+                    <ElDropdownItem command="protect" onClick={() => action(data.row, 'edit')}>
+                      防护设置
+                    </ElDropdownItem>
+                    <ElDropdownItem
+                      command="enableLog"
+                      onClick={() =>
+                        action(data.row, data.row.logsCollection ? 'closeLog' : 'openLog')
+                      }
+                    >
+                      {data.row.logsCollection ? '关闭日志采集' : '开启日志采集'}
+                    </ElDropdownItem>
+                    <ElDropdownItem
+                      command="delete"
+                      onClick={() => {
+                        ElMessageBox.confirm(
+                          '删除后网站将不再受到保护，并且安全策略将丢失，是否确认删除？',
+                          '网站删除',
+                          {
+                            confirmButtonText: '删除',
+                            cancelButtonText: '取消',
+                            confirmButtonClass: 'button-red',
+                            type: 'warning'
+                          }
+                        )
+                          .then(() => {
+                            ElMessage({
+                              type: 'success',
+                              message: 'Delete completed'
+                            })
+                          })
+                          .catch(() => {
+                            ElMessage({
+                              type: 'info',
+                              message: 'Delete canceled'
+                            })
+                          })
+                      }}
+                    >
+                      删除
+                    </ElDropdownItem>
                   </ElDropdownMenu>
                 )
               }}
@@ -96,11 +305,11 @@ const columns: TableColumn[] = [
                 <Icon icon="ep:arrow-down" />
               </ElButton>
               {/* <template v-slot:dropdown>
-                <ElDropdownMenu>
-                  <ElDropdownItem>操作1</ElDropdownItem>
-                  <ElDropdownItem>操作2</ElDropdownItem>
-                </ElDropdownMenu>
-              </template> */}
+                  <ElDropdownMenu>
+                    <ElDropdownItem>操作1</ElDropdownItem>
+                    <ElDropdownItem>操作2</ElDropdownItem>
+                  </ElDropdownMenu>
+                </template> */}
             </ElDropdown>
           </div>
         )
@@ -112,44 +321,25 @@ const columns: TableColumn[] = [
     //   }
     // }
   }
-]
+])
 
-const loading = ref(true)
 const resetLoading = ref(false)
 const isShowFilter = ref(false)
-
-const tableDataList = ref<TableData[]>([
-  {
-    id: '1',
-    author: 'string',
-    title: 'string',
-    content: 'string',
-    importance: 1,
-    display_time: '222',
-    pageviews: 11
-  }
-])
-const handleCommand = (cmd) => {}
-const getTableList = async (params?: Params) => {
-  // const res = await getTableListApi(
-  //   params || {
-  //     pageIndex: 1,
-  //     pageSize: 10
-  //   }
-  // )
-  //   .catch(() => {})
-  //   .finally(() => {
-  //     loading.value = false
-  //   })
-  // if (res) {
-  //   tableDataList.value = res.data.list
-  // }
-  loading.value = false
-}
-
-getTableList()
+const dialogVisible = ref(false)
+const showLogsConfigure = ref(false)
+const logsConfigureForm = ref<LogsConfigureForm>({
+  recordHeader: false,
+  othersHeader: [],
+  statistics: []
+})
+const ruleForm = ref<RuleForm>({
+  openProtect: '1'
+})
+const dialogTitle = ref<string>('')
+const tableRef = ref<InstanceType<typeof Table>>()
+const totalSelection = ref<number>(0)
+const { push } = useRouter()
 // el-card
-// “正常”、“未接入”、“配置失败”、“回源失败”
 const cardsType = ref([
   {
     name: '域名总数',
@@ -168,6 +358,7 @@ const cardsType = ref([
     unreachableNum: 2
   }
 ])
+// “正常”、“未接入”、“配置失败”、“回源失败”
 const statusList = ref([
   { name: '正常', count: 1, color: '#67C23A' },
   { name: '未接入', count: 2, color: '#E6A23C' },
@@ -282,18 +473,77 @@ const filterSchema = reactive<FormSchema[]>([
     }
   }
 ])
+
+const handleCommand = (cmd) => {}
+const getTableList = async (params?: Params) => {
+  loading.value = false
+}
+
+getTableList()
 const resetSearchParams = (data: any) => {
   // searchParams.value = data
   // getList()
 }
+/**高级筛选事件 */
 const onExpand = () => {
   isShowFilter.value = !isShowFilter.value
 }
-const getList = () => {
-  console.log(6666)
+/**tbale的点击下拉事件 */
+const toggleRowExpansion = (row: Recordable) => {
+  if (!tableRef.value) return
+  ;(tableRef.value as any).elTableRef?.toggleRowExpansion(row)
+}
+/**编辑防护模式 */
+const handleEdit = (event, protectionMode: string) => {
+  event.stopPropagation()
+  dialogVisible.value = true
+  dialogTitle.value = protectionMode === '1' ? '启用防护' : '编辑防护'
+}
+/**提交编辑防护模式 */
+const handleSubmitEdit = () => {
+  ElMessage.success('编辑成功')
+}
+/**列表操作 */
+const action = (row, name) => {
+  switch (name) {
+    case 'edit':
+      push({
+        path: '/websiteSettings/addSitePanel',
+        query: { type: name }
+      })
+      break
+    case 'openLog':
+      break
+    case 'edit':
+      push({
+        path: '/websiteSettings/addSitePanel',
+        query: { type: name }
+      })
+      break
+
+    default:
+      break
+  }
+}
+/**列表多选监听 */
+const handleSelectionChange = (val) => {
+  totalSelection.value = val?.length
+}
+/**日志管理 */
+const logsConfigure = () => {
+  showLogsConfigure.value = true
+}
+/**回车分隔 */
+const handleEnter = () => {
+  showLogsConfigure.value = true
 }
 </script>
-
+<style>
+.button-red {
+  background-color: #d50d0d !important;
+  border-color: #d50d0d !important;
+}
+</style>
 <template>
   <ContentWrap :title="t('tableDemo.table')" :message="t('tableDemo.tableDes')">
     <div class="flex w-full mb-4">
@@ -328,13 +578,13 @@ const getList = () => {
           </div>
 
           <!-- 箭头图标 -->
-          <el-icon><ArrowRight /></el-icon>
+          <Icon icon="ep:arrow-right"></Icon>
         </div>
       </ElCard>
     </div>
     <div class="flex justify-between">
       <div class="flex">
-        <Search :schema="searchSchema" :showSearch="false" :showReset="false" />
+        <Search :schema="searchSchema" :showSearch="false" :showReset="false" labelWidth="160px" />
         <BaseButton :icon="filterIcon" plain @click="onExpand">
           {{ t('common.advancedFilter') }}
         </BaseButton>
@@ -344,15 +594,82 @@ const getList = () => {
       </div>
       <div>
         <ElButton>批量导入</ElButton>
-        <ElButton type="primary">新建站点</ElButton>
+        <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')">新建站点</ElButton>
       </div>
     </div>
-    <Search :schema="filterSchema" :showSearch="false" :showReset="false" v-if="isShowFilter" />
+    <div v-if="isShowFilter">
+      <Search :schema="filterSchema" :showSearch="false" :showReset="false" labelWidth="160px" />
+    </div>
     <Table
+      ref="tableRef"
       :columns="columns"
-      :data="tableDataList"
+      :data="dataList"
       :loading="loading"
-      :defaultSort="{ prop: 'display_time', order: 'descending' }"
+      @row-click="toggleRowExpansion"
+      @selection-change="handleSelectionChange"
+      row-key="title"
+      :defaultSort="{ prop: 'protectionMode', order: 'descending' }"
     />
+    <div class="mt-4">
+      <span class="mr-4">已选择{{ totalSelection }}条</span>
+      <ElButton size="large" :disabled="totalSelection === 0">添加到域名组</ElButton>
+      <ElButton size="large" :disabled="totalSelection === 0" @click="logsConfigure"
+        >日志配置</ElButton
+      >
+    </div>
   </ContentWrap>
+  <ElDialog v-model="dialogVisible" :title="dialogTitle" width="600">
+    <ElForm ref="ruleFormRef" :model="ruleForm" label-width="auto" label-position="left">
+      <ElFormItem label="域名名称" prop="name">
+        <ElRadioGroup v-model="ruleForm.openProtect">
+          <ElRow>
+            <ElCol :span="24">
+              <ElRadio value="1">启用防护</ElRadio>
+              <span class="text-xs text-gray-500 ml-6">按WAF当前策略配置开启防护</span>
+            </ElCol>
+            <ElCol :span="24">
+              <ElRadio value="2">暂停防护</ElRadio>
+              <span class="text-xs text-gray-500 ml-6">
+                仅执行转发不进行检测，该模式下已配置的防护策略不生效
+              </span>
+            </ElCol>
+          </ElRow>
+        </ElRadioGroup>
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <div class="dialog-footer">
+        <ElButton size="large">取消</ElButton>
+        <ElButton size="large" type="primary" @click="handleSubmitEdit">确定</ElButton>
+      </div>
+    </template>
+  </ElDialog>
+  <!-- 日志配置 -->
+  <ElDialog v-model="showLogsConfigure" :title="dialogTitle" width="600">
+    <ElForm ref="ruleFormRef" :model="logsConfigureForm" label-width="auto" label-position="left">
+      <ElFormItem label="域名名称" prop="recordHeader">
+        <ElSwitch v-model="logsConfigureForm.recordHeader" />
+      </ElFormItem>
+      <ElFormItem label=" " prop="othersHeader">
+        <ElInputTag
+          v-model="logsConfigureForm.othersHeader"
+          :max="10"
+          placeholder="请输入，回车分隔"
+        />
+      </ElFormItem>
+      <ElFormItem label=" " prop="statistics">
+        <ElInputTag
+          v-model="logsConfigureForm.statistics"
+          :max="10"
+          placeholder="请输入，回车分隔"
+        />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <div class="dialog-footer">
+        <ElButton size="large">取消</ElButton>
+        <ElButton size="large" type="primary" @click="handleSubmitEdit">确定</ElButton>
+      </div>
+    </template>
+  </ElDialog>
 </template>

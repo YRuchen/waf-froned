@@ -90,37 +90,31 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
       {
         path: 'index',
         component: () => import('@/views/WebsiteSettings/WebsiteSettingPanel.vue'),
-        name: 'WebsiteSetting',
+        name: 'WebsiteSettingPanel',
         meta: {
           title: '网站设置',
           icon: 'vi-ep:management'
         }
       },
       {
-        path: 'addSite',
+        path: 'addSitePanel',
         component: () => import('@/views/WebsiteSettings/AddSitePanel.vue'),
-        name: 'AddSite',
+        name: 'AddSitePanel',
         meta: {
-          title: '网站设置',
-          icon: 'vi-ep:management'
+          title: '新建站点',
+          icon: 'vi-ep:management',
+          hidden: true
         }
       },
-    ]
-  },
-  {
-    path: '/logsConfigures',
-    component: Layout,
-    name: 'logsConfigures',
-    meta: {},
-    redirect: '/logsConfigures/index',
-    children: [
+
       {
-        path: 'index',
-        component: () => import('@/views/LogsConfigures/LogsConfigure.vue'),
-        name: 'logsConfigure',
+        path: 'configureDone',
+        component: () => import('@/views/WebsiteSettings/ConfigureDone.vue'),
+        name: 'ConfigureDone',
         meta: {
-          title: '日志管理',
-          icon: 'vi-ep:management'
+          title: '提交配置',
+          icon: 'vi-ep:management',
+          hidden: true
         }
       }
     ]
@@ -143,22 +137,23 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     ]
   },
   {
-    path: '/logManagement',
+    path: '/logsConfigures',
     component: Layout,
-    name: 'LogManagement',
+    name: 'logsConfigures',
     meta: {},
+    redirect: '/logsConfigures/index',
     children: [
       {
         path: 'index',
-        component: () => import('@/views/websiteSettings/WebsiteSetting.vue'),
-        name: 'LogManagementList',
+        component: () => import('@/views/LogsConfigures/LogsConfigure.vue'),
+        name: 'logsConfigure',
         meta: {
           title: '日志管理',
-          icon: 'vi-clarity:document-solid'
+          icon: 'vi-ep:management'
         }
       }
     ]
-  }
+  },
   // {
   //   path: '/authorization',
   //   component: Layout,

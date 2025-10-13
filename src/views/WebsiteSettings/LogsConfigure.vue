@@ -328,7 +328,7 @@ const getList = () => {
           </div>
 
           <!-- 箭头图标 -->
-          <el-icon><ArrowRight /></el-icon>
+          <!-- <el-icon><ArrowRight /></el-icon> -->
         </div>
       </ElCard>
     </div>

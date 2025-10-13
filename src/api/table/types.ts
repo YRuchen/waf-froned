@@ -4,6 +4,6 @@ export type TableData = {
   title: string
   content: string
   importance: number
-  display_time: string
+  protectionMode: string
   pageviews: number
 }

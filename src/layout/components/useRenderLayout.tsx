@@ -77,11 +77,11 @@ export const useRenderLayout = () => {
           <ElScrollbar
             v-loading={pageLoading.value}
             class={[
-              `${prefixCls}-content-scrollbar`,
-              {
-                '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
-                  fixedHeader.value
-              }
+              `${prefixCls}-content-scrollbar`
+              // {
+              //   '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
+              //     fixedHeader.value
+              // }
             ]}
           >
             {/* <div

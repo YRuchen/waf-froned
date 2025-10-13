@@ -9,16 +9,12 @@ const anchorRef = ref<InstanceType<typeof ElAnchor> | null>(null)
 
 const navTop = ref(0)
 const sections = [
-  { id: 'part1', title: 'part1', height: '300px', bg: 'rgba(255, 0, 0, 0.02)' },
-  { id: 'part2', title: 'part2', height: '300px', bg: 'rgba(0, 255, 0, 0.02)' },
-  { id: 'part3', title: 'part3', height: '300px', bg: 'rgba(0, 0, 255, 0.02)' },
-  {
-    id: 'part4',
-    title: 'part4',
-    height: '100%',
-    bg: 'rgba(0, 0, 255, 0.02)',
-    content: 'part5555555555555'
-  }
+  { id: 'part1', title: '防护域名' },
+  { id: 'part2', title: '基础配置' },
+  { id: 'part3', title: '源站配置' },
+  { id: 'part4', title: '代理配置' },
+  { id: 'part5', title: '日志配置' },
+  { id: 'part6', title: '网络参数配置', height: '100%' }
 ]
 const handleClick = (e: MouseEvent) => {
   e.preventDefault()
@@ -69,7 +65,7 @@ onUnmounted(() => {
         </ElAnchor>
 
         <!-- 右侧内容 -->
-        <siteForm></siteForm>
+        <siteForm :sections="sections"></siteForm>
       </div>
     </div>
     <div class="w-20%"> </div>

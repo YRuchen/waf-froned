@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
-import { reactive, ref, h, nextTick, watch, onMounted } from 'vue'
-
+import { reactive, ref, h } from 'vue'
+import { useRoute } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
 import {
   ElForm,
@@ -31,9 +31,15 @@ import {
   type FormItemRule
 } from 'element-plus'
 
-import originConfigure from './originConfigure.vue'
+import originSideConfigure from './OriginSideConfigure.vue'
 import { OriginItem } from '../types'
-import { log } from 'console'
+const route = useRoute()
+const props = defineProps({
+  sections: {
+    type: Array<any>,
+    default: () => []
+  }
+})
 const columns: TableColumn[] = [
   {
     field: 'selection',
@@ -82,14 +88,6 @@ interface RuleFormTLS {
   checkList: Array<string>
   tableList: Array<any>
 }
-const sections = [
-  { id: 'part1', title: '防护域名' },
-  { id: 'part2', title: '基础配置' },
-  { id: 'part3', title: '源站配置' },
-  { id: 'part4', title: '代理配置' },
-  { id: 'part5', title: '日志配置' },
-  { id: 'part6', title: '网络参数配置', height: '100%' }
-]
 
 const createConfig = (
   title: string,
@@ -108,6 +106,7 @@ const createConfig = (
   describe: `${title}，支持 ${min}–${max} ${unit}，默认：${defaultValue} ${unit}`
 })
 
+const type = route.query.type as string
 const InternetParamsConfiguration = [
   createConfig('请求body最大值', 'bodyNum', 'MB', 1, 10240, 60),
   createConfig('建连超时时间', 'createOverTime', '秒', 4, 120, 30),
@@ -148,7 +147,7 @@ const showErrorTips = ref<boolean>(false)
 const selected = ref<Array<any>>([])
 const ruleFormTLSRef = ref<FormInstance>()
 const tableRef = ref<InstanceType<typeof ElTable>>()
-const childRef = ref<InstanceType<typeof originConfigure>>()
+const childRef = ref<InstanceType<typeof originSideConfigure>>()
 const ruleForm = reactive<RuleForm>({
   name: 'Hello',
   region: '',
@@ -305,7 +304,7 @@ const handleSubmit = () => {
       label-position="left"
     >
       <div
-        v-for="section in sections"
+        v-for="section in props.sections"
         :key="section.id"
         :id="section.id"
         :style="`height: ${section.height};`"
@@ -317,20 +316,24 @@ const handleSubmit = () => {
           <span class="font-size-4">{{ section.title }}</span>
         </div>
         <template v-if="section.title == '防护域名'">
-          <ElFormItem label="防护名称" prop="name">
-            <div class="flex flex-items-center w-full">
-              <ElTooltip
-                effect="dark"
-                content="如需同时配置泛域名和域名主体本身，请分别配置。如：需要同时配置*.b.a.com和b.a.com，需要分别接入域名并配置策略。"
-                placement="top-start"
-              >
-                <Icon icon="ep:question-filled" class="m-r-2"></Icon>
-              </ElTooltip>
-              <ElInput
-                v-model="ruleForm.name"
-                placeholder="请填写需要防护的域名，支持泛域名或精确域名"
-              />
-            </div>
+          <ElFormItem prop="name">
+            <template #label>
+              <div class="flex flex-items-center">
+                <span>防护名称</span>
+                <ElTooltip
+                  effect="dark"
+                  content="如需同时配置泛域名和域名主体本身，请分别配置。如：需要同时配置*.b.a.com和b.a.com，需要分别接入域名并配置策略。"
+                  placement="top-start"
+                >
+                  <Icon icon="ep:question-filled" class="ml-1" />
+                </ElTooltip>
+              </div>
+            </template>
+            <ElInput
+              v-model="ruleForm.name"
+              placeholder="请填写需要防护的域名，支持泛域名或精确域名"
+              :disabled="type == 'edit'"
+            />
           </ElFormItem>
         </template>
         <template v-if="section.title == '基础配置'">
@@ -349,7 +352,7 @@ const handleSubmit = () => {
               </ElCol>
               <ElCol v-if="isSelectHttp">
                 <ElFormItem prop="http">
-                  <ElInputTag v-model="ruleForm.http" :max="10" prefix-icon="Search"> </ElInputTag>
+                  <ElInputTag v-model="ruleForm.http" :max="10" prefix-icon="Search" />
                 </ElFormItem>
               </ElCol>
               <ElCol>
@@ -359,7 +362,7 @@ const handleSubmit = () => {
               </ElCol>
               <ElCol v-if="isSelectHttps">
                 <ElFormItem prop="https">
-                  <ElInputTag v-model="ruleForm.https" :max="10" prefix-icon="Search"> </ElInputTag>
+                  <ElInputTag v-model="ruleForm.https" :max="10" prefix-icon="Search" />
                 </ElFormItem>
               </ElCol>
             </ElRow>
@@ -382,16 +385,13 @@ const handleSubmit = () => {
               <ElInput
                 v-if="ruleForm.SNLConfigure"
                 placeholder="可自定义SNL的host，若不填写则跟随流量中的host"
-              ></ElInput>
+              />
             </ElFormItem>
             <ElFormItem label="TLS配置" prop="delivery">
               <div class="flex flex-col items-start">
                 <ElButton link type="primary" @click="openTLSConfigure = !openTLSConfigure">
                   {{ openTLSConfigure ? '展开配置' : '收起配置' }}
-                  <Icon
-                    :icon="openTLSConfigure ? 'ep:arrow-down' : 'ep:arrow-up'"
-                    class="m-r-2"
-                  ></Icon>
+                  <Icon :icon="openTLSConfigure ? 'ep:arrow-down' : 'ep:arrow-up'" class="m-r-2" />
                 </ElButton>
                 <div class="flex flex-col" v-if="!openTLSConfigure">
                   <div>
@@ -419,12 +419,12 @@ const handleSubmit = () => {
           </ElFormItem>
         </template>
         <template v-if="section.title == '源站配置'">
-          <originConfigure
+          <originSideConfigure
             ref="childRef"
             :originList="ruleForm.originList"
             :http="ruleForm.http"
             :https="ruleForm.https"
-          ></originConfigure>
+          />
         </template>
         <template v-if="section.title == '代理配置'">
           <ElFormItem label="代理配置" prop="resource">
@@ -490,7 +490,7 @@ const handleSubmit = () => {
   </div>
   <ElDialog
     v-model="showTLSDialog"
-    title="xiug修改TLS配置"
+    title="修改TLS配置"
     width="600"
     :before-close="handleCloseDialog"
   >
