@@ -36,9 +36,9 @@ router.beforeEach(async (to, from, next) => {
       //     ? await permissionStore.generateRoutes('server', roleRouters as AppCustomRouteRecordRaw[])
       //     : await permissionStore.generateRoutes('frontEnd', roleRouters as string[])
       // } else {
-      await permissionStore.generateRoutes('static')
+      //   await permissionStore.generateRoutes('static')
       // }
-
+      await permissionStore.generateRoutes('static')
       permissionStore.getAddRouters.forEach((route) => {
         router.addRoute(route as unknown as RouteRecordRaw) // 动态添加可访问路由表
       })
@@ -46,6 +46,7 @@ router.beforeEach(async (to, from, next) => {
       const redirect = decodeURIComponent(redirectPath as string)
       const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect }
       permissionStore.setIsAddRouters(true)
+      console.log(nextData)
       next(nextData)
     }
   } else {

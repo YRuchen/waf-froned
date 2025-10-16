@@ -28,6 +28,7 @@
     "icon": "esno ./scripts/icon.ts"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@iconify/iconify": "^3.1.1",
     "@iconify/vue": "^4.3.0",
     "@vueuse/core": "^12.3.0",
@@ -51,6 +52,7 @@
     "qrcode": "^1.5.4",
     "qs": "^6.13.1",
     "url": "^0.11.4",
+    "vite-plugin-qiankun": "^1.0.15",
     "vue": "3.5.13",
     "vue-draggable-plus": "^0.6.0",
     "vue-i18n": "11.0.1",

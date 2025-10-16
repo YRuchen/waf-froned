@@ -173,37 +173,32 @@ const signIn = async () => {
       const formData = await getFormData<UserType>()
 
       try {
-        // const res = await loginApi(formData)
-        // if (res) {
-        //   // 是否记住我
-        //   if (unref(remember)) {
-        //     userStore.setLoginInfo({
-        //       username: formData.username,
-        //       password: formData.password
-        //     })
-        //   } else {
-        //     userStore.setLoginInfo(undefined)
-        //   }
-        //   userStore.setRememberMe(unref(remember))
-        // userStore.setUserInfo(res.data)
-        // 是否使用动态路由
-        // if (appStore.getDynamicRouter) {
-        //   getRole()
-        // } else {
-        userStore.setUserInfo({
-          username: 'admin',
-          password: 'admin',
-          role: 'admin',
-          roleId: '1'
-        }) // 需要放开注释掉时候，这行要删掉
-        await permissionStore.generateRoutes('static').catch(() => {})
-        permissionStore.getAddRouters.forEach((route) => {
-          addRoute(route as RouteRecordRaw) // 动态添加可访问路由表
-        })
-        permissionStore.setIsAddRouters(true)
-        push({ path: redirect.value || permissionStore.addRouters[0].path })
-        // }
-        // }
+        const res = await loginApi(formData)
+
+        if (res) {
+          // 是否记住我
+          if (unref(remember)) {
+            userStore.setLoginInfo({
+              username: formData.username,
+              password: formData.password
+            })
+          } else {
+            userStore.setLoginInfo(undefined)
+          }
+          userStore.setRememberMe(unref(remember))
+          userStore.setUserInfo(res.data)
+          // 是否使用动态路由
+          // if (appStore.getDynamicRouter) {
+          //   getRole()
+          // } else {
+          await permissionStore.generateRoutes('static').catch(() => {})
+          await permissionStore.getAddRouters.forEach((route) => {
+            addRoute(route as RouteRecordRaw) // 动态添加可访问路由表
+          })
+          await permissionStore.setIsAddRouters(true)
+          push({ path: redirect.value || permissionStore.addRouters[0].path })
+          // }
+        }
       } finally {
         loading.value = false
       }

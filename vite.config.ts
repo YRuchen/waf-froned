@@ -14,6 +14,7 @@ import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { createStyleImportPlugin, ElementPlusResolve } from 'vite-plugin-style-import'
 import UnoCSS from 'unocss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
+import qiankun from 'vite-plugin-qiankun'
 
 // https://vitejs.dev/config/
 const root = process.cwd()
@@ -44,20 +45,20 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       progress(),
       env.VITE_USE_ALL_ELEMENT_PLUS_STYLE === 'false'
         ? createStyleImportPlugin({
-          resolves: [ElementPlusResolve()],
-          libs: [
-            {
-              libraryName: 'element-plus',
-              esModule: true,
-              resolveStyle: (name) => {
-                if (name === 'click-outside') {
-                  return ''
+            resolves: [ElementPlusResolve()],
+            libs: [
+              {
+                libraryName: 'element-plus',
+                esModule: true,
+                resolveStyle: (name) => {
+                  if (name === 'click-outside') {
+                    return ''
+                  }
+                  return `element-plus/es/components/${name.replace(/^el-/, '')}/style/css`
                 }
-                return `element-plus/es/components/${name.replace(/^el-/, '')}/style/css`
               }
-            }
-          ]
-        })
+            ]
+          })
         : undefined,
       EslintPlugin({
         cache: false,
@@ -78,23 +79,25 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       PurgeIcons(),
       env.VITE_USE_MOCK === 'true'
         ? viteMockServe({
-          ignore: /^\_/,
-          mockPath: 'mock',
-          localEnabled: !isBuild,
-          prodEnabled: isBuild,
-          injectCode: `
+            ignore: /^\_/,
+            mockPath: 'mock',
+            localEnabled: !isBuild,
+            prodEnabled: isBuild,
+            injectCode: `
           import { setupProdMockServer } from '../mock/_createProductionServer'
 
           setupProdMockServer()
           `
-        })
+          })
         : undefined,
       ViteEjsPlugin({
         title: env.VITE_APP_TITLE
       }),
-      UnoCSS()
+      UnoCSS(),
+      qiankun('waf', {
+        useDevMode: true // 开发模式下 true，子应用可以独立运行
+      })
     ],
-
     css: {
       preprocessorOptions: {
         less: {
@@ -152,7 +155,8 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       hmr: {
         overlay: false
       },
-      host: '0.0.0.0'
+      host: '0.0.0.0',
+      origin: 'http://localhost:4000'
     },
     optimizeDeps: {
       include: [
