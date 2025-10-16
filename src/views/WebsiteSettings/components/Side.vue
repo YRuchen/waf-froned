@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
 import { onBeforeMount, ref, PropType, reactive, onMounted } from 'vue'
-
+import { debounce } from 'lodash-es'
 import {
   ElMessageBox,
   FormInstance,
@@ -16,15 +16,16 @@ import {
   ElFormItem,
   ElInput,
   ElMenu,
-  ElMenuItem
+  ElMenuItem,
+  type PopoverInstance
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
-import { OriginItem } from '../types'
+import { serverGroupItem } from '@/api/websiteSettingPanel/types'
 const props = defineProps({
   originList: {
-    type: Array as PropType<OriginItem[]>,
+    type: Array as PropType<serverGroupItem[]>,
     default: () => []
   }
 })
@@ -52,17 +53,13 @@ const rules = reactive<FormRules<RuleForm>>({
     { min: 3, max: 30, message: '长度在 3 到 30 个字符', trigger: 'blur' }
   ]
 })
-interface menuItem {
-  id: string
-  label: string
-}
 
-const menuData = ref<OriginItem[]>(props.originList)
+const menuData = ref<serverGroupItem[]>(props.originList)
 const addDialogRef = ref()
-const activeGroupId = ref(menuData.value[0]?.id)
+const activeGroupId = ref(menuData.value[0]?.groupName)
 const searchName = ref<any>('')
-const searchNameList = ref<Array<menuItem>>([])
-
+const searchNameList = ref<Array<serverGroupItem>>([])
+const popoverRef = ref<PopoverInstance>()
 onBeforeMount(() => {
   getLDict()
 })
@@ -73,25 +70,27 @@ const addDashBoard = (item) => {
 }
 
 // 搜索
-const filterNode = (value: string, data: menuItem) => {
-  if (!value) return true
-  return data.label.includes(value)
-}
+const filterNode = debounce((val: string) => {
+  if (!val) {
+    searchNameList.value = []
+    return
+  }
+  searchNameList.value = menuData.value.filter((item) => item.groupName.includes(val))
+}, 500)
 
-const addDict = () => {
+const addDict = (index) => {
   menuData.value.push({
-    id: Date.now().toString(),
-    label: '自定义分组',
-    tableList: [
+    groupName: '自定义分组' + index,
+    servers: [
       {
-        name: '1',
-        region: '',
-        count: '',
-        desc: ''
+        address: '',
+        port: '',
+        weight: '',
+        protol: ''
       }
     ],
-    http: [],
-    https: []
+    accessPorts: index == 1 ? ['80', '443', '4433'] : ['99'],
+    protocol: 'HTTP'
   })
 }
 const submitForm = async (formEl: FormInstance | undefined) => {}
@@ -103,7 +102,11 @@ const editDictsort = (data) => {
   Object.assign(form, data)
 }
 
-const handleSerch = (data) => {}
+const handleClosePover = (item) => {
+  popoverRef.value?.hide()
+  handleSelect(item)
+  activeGroupId.value = item.groupName
+}
 
 const remove = (row) => {
   ElMessageBox.confirm('你确定要删除当前项吗?', '温馨提示', {
@@ -115,7 +118,7 @@ const remove = (row) => {
     .then(async () => {})
     .catch(() => {})
 }
-const handleSelect = (data: OriginItem) => {
+const handleSelect = (data: serverGroupItem) => {
   emit('change', data)
 }
 onMounted(() => {
@@ -166,14 +169,21 @@ onMounted(() => {
 <template>
   <div class="menu-wrap">
     <div class="flex flex-justify-between">
-      <ElPopover placement="bottom-start" width="300">
+      <ElPopover ref="popoverRef" placement="bottom-start" width="300" trigger="click">
         <template #reference>
           <ElButton link class="m-y-2"> 分组 <Icon icon="vi-ep:search"></Icon> </ElButton>
         </template>
         <template #default>
-          <ElInput v-model="searchName" placeholder="请填写" />
+          <ElInput v-model="searchName" placeholder="请填写" @input="filterNode" />
           <template v-if="searchNameList.length !== 0">
-            <p class="m-2" v-for="item in searchNameList" :key="item.id">{{ item.label }}</p>
+            <p
+              class="m-2 cursor-pointer"
+              v-for="item in searchNameList"
+              :key="item.groupName"
+              @click="handleClosePover(item)"
+            >
+              {{ item.groupName }}
+            </p>
           </template>
           <template v-else>
             <ElEmpty>
@@ -186,18 +196,18 @@ onMounted(() => {
           </template>
         </template>
       </ElPopover>
-      <BaseButton link :icon="plusIcon" @click="addDict">添加</BaseButton>
+      <BaseButton link :icon="plusIcon" @click="addDict(menuData.length)">添加</BaseButton>
     </div>
 
     <ElScrollbar class="scrollbar">
       <ElMenu :default-active="activeGroupId" text-color="#333" active-text-color="#ededed">
         <ElMenuItem
           v-for="item in menuData"
-          :key="item.id"
-          :index="item.id"
+          :key="item.groupName"
+          :index="item.groupName"
           @click="handleSelect(item)"
         >
-          <span class="label">{{ item.label }}</span>
+          <span class="label">{{ item.groupName }}</span>
           <p class="button-wrap">
             <Icon icon="vi-ep:edit"></Icon>
             <Icon icon="vi-ep:delete"></Icon>

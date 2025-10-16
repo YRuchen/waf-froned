@@ -26,23 +26,23 @@ import { useIcon } from '@/hooks/web/useIcon'
 
 import { Table, TableColumn } from '@/components/Table'
 import { BaseButton } from '@/components/Button'
-import { OriginItem, TableItem } from '../types'
+import { serverGroupItem, TableItem } from '@/api/websiteSettingPanel/types'
 const { t } = useI18n()
 const copyIcon = useIcon({ icon: 'vi-ep:copy-document' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
 const plusIcon = useIcon({ icon: 'vi-ep:plus' })
 const columns: TableColumn[] = [
   {
-    field: 'name',
+    field: 'protol',
     label: '源站协议',
     slots: {
       default: ({ row, $index }) => {
         return (
           <ElFormItem
-            prop={`${$index}.name`}
+            prop={`${$index}.protol`}
             rules={[{ required: true, validator: validateName, trigger: 'change' }]}
           >
-            <ElSelect v-model={row.name}>
+            <ElSelect v-model={row.protol}>
               <ElOption label="HTTP" value="1" />
               <ElOption label="HTTPS" value="2" />
             </ElSelect>
@@ -52,49 +52,49 @@ const columns: TableColumn[] = [
     }
   },
   {
-    field: 'region',
+    field: 'address',
     label: '源站地址',
     minWidth: '200',
     slots: {
       default: ({ row, $index }) => {
         return (
           <ElFormItem
-            prop={`${$index}.region`}
+            prop={`${$index}.address`}
             rules={[{ required: true, validator: validateRegion, trigger: 'blur' }]}
           >
-            <ElInput v-model={row.region} placeholder="请填写源站地址" />
+            <ElInput v-model={row.address} placeholder="请填写源站地址" />
           </ElFormItem>
         )
       }
     }
   },
   {
-    field: 'count',
+    field: 'port',
     label: '源站端口',
     slots: {
       default: ({ row, $index }) => {
         return (
           <ElFormItem
-            prop={`${$index}.count`}
+            prop={`${$index}.port`}
             rules={[{ required: true, validator: validateCount, trigger: 'blur' }]}
           >
-            <ElInput v-model={row.count} placeholder="请填写源站端口" />
+            <ElInput v-model={row.port} placeholder="请填写源站端口" />
           </ElFormItem>
         )
       }
     }
   },
   {
-    field: 'desc',
+    field: 'weight',
     label: '权重',
     slots: {
       default: ({ row, $index }) => {
         return (
           <ElFormItem
-            prop={`${$index}.desc`}
+            prop={`${$index}.weight`}
             rules={[{ required: true, validator: validatDesc, trigger: 'blur' }]}
           >
-            <ElInput v-model={row.desc} placeholder="请填写权重" />
+            <ElInput v-model={row.weight} placeholder="请填写权重" />
           </ElFormItem>
         )
       }
@@ -129,14 +129,14 @@ const columns: TableColumn[] = [
 
 const props = defineProps({
   originList: {
-    type: Array as PropType<OriginItem[]>,
+    type: Array as PropType<serverGroupItem[]>,
     default: () => []
   },
-  http: {
+  httpPorts: {
     type: Array<string>,
     default: () => []
   },
-  https: {
+  httpsPorts: {
     type: Array<string>,
     default: () => []
   }
@@ -150,8 +150,8 @@ const validateName = (rule: any, value: any, callback: any) => {
   if (value === '') {
     callback(new Error('请输入源站协议'))
   } else {
-    if (new Set(tableDataList.value.map((item) => item.name)).size !== 1)
-      tableDataList.value.map((item) => (item.name = value))
+    if (new Set(tableDataList.value.map((item) => item.protol)).size !== 1)
+      tableDataList.value.map((item) => (item.protol = value))
     callback()
   }
 }
@@ -171,10 +171,10 @@ const validateRegion = (rule: any, value: any, callback: any) => {
     return callback(new Error('源站地址格式不对，请输入正确的域名地址或IP地址'))
   }
 
-  const nonEmptyRegions = tableDataList.value.filter((item) => item.region)
+  const nonEmptyRegions = tableDataList.value.filter((item) => item.address)
 
-  const allDomains = nonEmptyRegions.every((item) => domainRegex.test(item.region))
-  const allIps = nonEmptyRegions.every((item) => ipRegex.test(item.region))
+  const allDomains = nonEmptyRegions.every((item) => domainRegex.test(item.address))
+  const allIps = nonEmptyRegions.every((item) => ipRegex.test(item.address))
 
   if ((isDomain && !allDomains) || (isIp && !allIps)) {
     return callback(new Error('源地址不支持混合回源'))
@@ -210,7 +210,6 @@ const submitForm = (): Promise<boolean> => {
 }
 
 const resetForm = () => {
-  console.log(3333)
   return false
 }
 // **********************************************
@@ -218,72 +217,68 @@ const resetForm = () => {
 const checkList = ref<string[]>([])
 const inputTagList = ref<string[]>([])
 const selectedHttp = ref<string[]>([])
-const selectedHttps = ref<string[]>([])
 const tableDataList = ref<TableItem[]>([])
-const originListItem = ref<Partial<OriginItem>>({})
-const originList = ref<OriginItem[]>(props.originList)
+const originListItem = ref<Partial<serverGroupItem>>({})
+const originList = ref<serverGroupItem[]>(props.originList)
+const allUsedPorts = ref<string[]>([])
 
 const action = (name: string, row?: TableItem, index?: number) => {
   if (name === 'edit' && row) {
     allcount.value--
-    tableDataList.value.push({ ...row, count: '' })
+    tableDataList.value.push({ ...row, port: '' })
   } else if (name === 'delete' && index !== undefined) {
     allcount.value++
     tableDataList.value.splice(index, 1)
   } else if (name === 'add') {
     allcount.value--
     tableDataList.value.push({
-      name: '1',
-      region: '',
-      count: '',
-      desc: ''
+      address: '',
+      port: '',
+      weight: '',
+      protol: ''
     })
   }
 }
-const getTableList = (data: OriginItem) => {
-  // ruleFormRef.value?.resetFields()
-  originListItem.value = data
-  tableDataList.value = data.tableList
-  if (activeProtocol.value === 'HTTP') {
-    inputTagList.value = checkList.value = data.http
-  } else {
-    inputTagList.value = checkList.value = data.https
-  }
-}
 const activeProtocol = ref('HTTP')
-const ports = computed(() => {
-  console.log({ HTTP: props.http, HTTPS: props.https }, 55566)
-  return { HTTP: props.http, HTTPS: props.https }
-})
+
+const ports = computed(() => ({ HTTP: [...props.httpPorts], HTTPS: [...props.httpsPorts] }))
 
 const filteredPorts = ref<string[]>([])
+/**过滤数据 */
+const filterPort = () => {
+  const protocolPorts: string[] = ports.value[activeProtocol.value]
+  // 使用中端口号
+  const port = (originListItem.value?.accessPorts ?? []).filter((port) =>
+    protocolPorts.includes(port)
+  )
 
+  inputTagList.value = port
+  checkList.value = port
+  const result = protocolPorts.filter((port) => !allUsedPorts.value.includes(port)).concat(port)
+  filteredPorts.value = protocolPorts.filter((port) => result.includes(port))
+}
+const getTableList = (data: serverGroupItem) => {
+  originListItem.value = data
+  tableDataList.value = data.servers.map((item) => ({
+    ...item,
+    protol: data.protocol == 'PROTOCOL_UNSPECIFIED' ? '' : data.protocol
+  }))
+  allUsedPorts.value = originList.value.map((items) => items.accessPorts).flat()
+  filterPort()
+}
+/***自定义接入端的端口选择 */
 const handleSelect = (index: string) => {
   activeProtocol.value = index
-  if (activeProtocol.value === 'HTTP') {
-    inputTagList.value = checkList.value = originListItem.value.http ?? []
-  } else {
-    inputTagList.value = checkList.value = originListItem.value.https ?? []
-  }
+  filterPort()
 }
 const selectPort = (isCheck, port) => {
   if (isCheck) {
     inputTagList.value.push(port)
-    if (activeProtocol.value === 'HTTP') {
-      selectedHttp.value.push(port)
-    } else {
-      selectedHttps.value.push(port)
-    }
+    selectedHttp.value.push(port)
   } else {
     inputTagList.value.splice(inputTagList.value.indexOf(port), 1)
-    if (activeProtocol.value === 'HTTP') {
-      selectedHttp.value = selectedHttp.value.filter((p) => p !== port)
-    } else {
-      selectedHttps.value = selectedHttps.value.filter((p) => p !== port)
-    }
+    selectedHttp.value = selectedHttp.value.filter((p) => p !== port)
   }
-  // keyword.value = port
-  // showPanel.value = false
 }
 const handleChange = (val: string[]) => {
   // 拦截输入，只保留原来的标签（删除时还是会生效）
@@ -297,28 +292,14 @@ const handleChange = (val: string[]) => {
   }
 }
 watch(
-  () => tableDataList.value.map((item) => item.region),
+  () => tableDataList.value.map((item) => item.address),
   () => {
     nextTick(() => {
       // 对每一行触发验证
       tableDataList.value.forEach((item, index) => {
-        if (item.region) ruleFormRef.value?.validateField(`${index}.region`)
+        if (item.address) ruleFormRef.value?.validateField(`${index}.address`)
       })
     })
-  },
-  { deep: true }
-)
-watch(
-  [originListItem, activeProtocol],
-  () => {
-    const list = ports.value[activeProtocol.value] || []
-    const keepHttp = list.filter((p) => !selectedHttp.value.includes(p)) //查出属于当前项中，还没有被使用的tag
-    const keepHttps = list.filter((p) => !selectedHttps.value.includes(p)) //查出属于当前项中，还没有被使用的tag
-    if (activeProtocol.value === 'HTTP') {
-      filteredPorts.value = keepHttp.concat(inputTagList.value)
-    } else {
-      filteredPorts.value = keepHttps.concat(inputTagList.value)
-    }
   },
   { deep: true }
 )
@@ -339,9 +320,9 @@ defineExpose({
     <div class="flex-1 p-20px border-1 border-solid border-#ebeef5">
       <div class="m-b-2">
         <ElTag type="info" effect="dark" class="m-r-2">如果</ElTag>
-        <span>接入端口输入：</span>
+        <span>接入端口输入</span>
       </div>
-      <div class="p-2 bg-[#ededed] m-b-6" v-if="originListItem.id === '1'">
+      <div class="p-2 bg-[#ededed] m-b-6" v-if="originListItem.groupName === '默认分组'">
         <p>全部端口</p>
         <p class="color-[#7e7777]">
           无需设置生效的接入端口范围，默认应用到所有未自定义配置回源规则的接入端口上
@@ -366,7 +347,7 @@ defineExpose({
             </div>
           </template>
           <template #default>
-            <div class="flex h-40 w-100vw">
+            <div class="flex h-40 w-full">
               <!-- 左侧协议分类 -->
               <div class="w-40 border-r h-full">
                 <ElMenu
@@ -399,7 +380,7 @@ defineExpose({
                   </ElCheckboxGroup>
                 </template>
                 <template v-else>
-                  <ElEmpty description="该协议下无端口" />
+                  <ElEmpty description="该协议下无端口" class="w-full" :image-size="40" />
                 </template>
               </div>
             </div>

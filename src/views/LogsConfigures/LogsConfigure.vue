@@ -9,18 +9,18 @@ import { FormSchema } from '@/components/Form'
 import { useIcon } from '@/hooks/web/useIcon'
 import { Icon } from '@iconify/vue'
 import {
-  ElTag,
-  ElCard,
+  ElDatePicker,
+  ElPopover,
   ElButton,
-  ElDropdown,
-  ElDropdownMenu,
-  ElDropdownItem,
-  ElIcon
+  ElTooltip,
+  ElRadioGroup,
+  ElRadioButton,
+  ElTabs,
+  ElTabPane
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
-const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 interface Params {
   pageIndex?: number
   pageSize?: number
@@ -28,171 +28,27 @@ interface Params {
 
 const { t } = useI18n()
 
-const columns: TableColumn[] = [
-  {
-    field: 'title',
-    label: '防护网站',
-    sortable: true
-  },
-  {
-    field: 'importance',
-    label: '接入状态',
-    formatter: (_: Recordable, __: TableColumn, cellValue: number) => {
-      return h(
-        ElTag,
-        {
-          type: cellValue === 1 ? 'success' : cellValue === 2 ? 'warning' : 'danger'
-        },
-        () =>
-          cellValue === 1
-            ? t('tableDemo.important')
-            : cellValue === 2
-              ? t('tableDemo.good')
-              : t('tableDemo.commonly')
-      )
-    }
-  },
-  {
-    field: 'display_time',
-    label: '防护模式'
-  },
-  {
-    field: 'pageviews',
-    label: '响应式检测'
-  },
-  {
-    field: 'pageviews',
-    label: '更新时间',
-    sortable: true
-  },
-  {
-    field: 'action',
-    label: t('tableDemo.action'),
-    width: 240,
-    slots: {
-      default: (data: any) => {
-        // const row = data.row
-        return (
-          <div class="flex">
-            <ElButton type="primary" link>
-              {t('exampleDemo.edit')}
-            </ElButton>
-            <ElDropdown
-              trigger="click"
-              onCommand={(cmd) => handleCommand(cmd)}
-              v-slots={{
-                dropdown: () => (
-                  <ElDropdownMenu>
-                    <ElDropdownItem command="protect">防护设置</ElDropdownItem>
-                    <ElDropdownItem command="enableLog">开启日志采集</ElDropdownItem>
-                    <ElDropdownItem command="disableLog">关闭日志采集</ElDropdownItem>
-                    <ElDropdownItem command="delete">删除</ElDropdownItem>
-                  </ElDropdownMenu>
-                )
-              }}
-            >
-              <ElButton type="primary" link>
-                更多
-                <Icon icon="ep:arrow-down" />
-              </ElButton>
-              {/* <template v-slot:dropdown>
-                <ElDropdownMenu>
-                  <ElDropdownItem>操作1</ElDropdownItem>
-                  <ElDropdownItem>操作2</ElDropdownItem>
-                </ElDropdownMenu>
-              </template> */}
-            </ElDropdown>
-          </div>
-        )
-      }
-    }
-    // slots: {
-    //   default: (data) => {
-    //     return <span>8888</span>
-    //   }
-    // }
-  }
-]
-
 const loading = ref(true)
-const resetLoading = ref(false)
 const isShowFilter = ref(false)
-
-const tableDataList = ref<TableData[]>([
-  {
-    id: '1',
-    author: 'string',
-    title: 'string',
-    content: 'string',
-    importance: 1,
-    display_time: '222',
-    pageviews: 11
-  }
-])
-const handleCommand = (cmd) => {}
+const isTable = ref(false)
+const value1 = ref('')
+const activeName = ref('first')
+const order = ref<string>('asc')
 const getTableList = async (params?: Params) => {
-  // const res = await getTableListApi(
-  //   params || {
-  //     pageIndex: 1,
-  //     pageSize: 10
-  //   }
-  // )
-  //   .catch(() => {})
-  //   .finally(() => {
-  //     loading.value = false
-  //   })
-  // if (res) {
-  //   tableDataList.value = res.data.list
-  // }
   loading.value = false
 }
 
 getTableList()
-// el-card
-// “正常”、“未接入”、“配置失败”、“回源失败”
-const cardsType = ref([
-  {
-    name: '域名总数',
-    total: 1,
-    activeNum: 1,
-    notActiveNum: 1,
-    failedNum: 1,
-    unreachableNum: 2
-  },
-  {
-    name: '未防护域名',
-    total: 1,
-    activeNum: 1,
-    notActiveNum: 1,
-    failedNum: 1,
-    unreachableNum: 2
-  }
-])
-const statusList = ref([
-  { name: '正常', count: 1, color: '#67C23A' },
-  { name: '未接入', count: 2, color: '#E6A23C' },
-  { name: '配置失败', count: 3, color: '#F56C6C' },
-  { name: '回源失败', count: 1, color: '#909399' }
-])
 const searchSchema = reactive<FormSchema[]>([
-  {
-    field: 'webName',
-    component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>域名</>
-      }
-    }
-  },
   {
     field: 'runStatus',
     // label: '接入状态',
     component: 'SelectLabel',
     componentProps: {
       placeholder: '请选择',
-      label: '接入状态',
+      label: '域名',
       options: [
-        { label: '正常', value: '1' },
+        { label: '全部', value: '1' },
         { label: '未接入', value: '2' },
         { label: '配置失败', value: '3' },
         { label: '回源失败', value: '4' }
@@ -305,34 +161,88 @@ const resetSearchParams = (data: any) => {
 const onExpand = () => {
   isShowFilter.value = !isShowFilter.value
 }
-const getList = () => {
-  console.log(6666)
-}
+const handleClick = () => {}
 </script>
 
 <template>
   <ContentWrap :title="t('tableDemo.table')" :message="t('tableDemo.tableDes')">
-    <div class="flex justify-between">
-      <div class="flex">
-        <Search :schema="searchSchema" :showSearch="false" :showReset="false" />
-        <BaseButton :icon="filterIcon" plain @click="onExpand">
-          {{ t('common.advancedFilter') }}
-        </BaseButton>
-        <BaseButton :loading="resetLoading" plain :icon="refreshIcon" @click="resetSearchParams">
-          {{ t('common.reset') }}
-        </BaseButton>
-      </div>
-      <div>
-        <ElButton>批量导入</ElButton>
-        <ElButton type="primary">新建站点</ElButton>
+    <div class="flex">
+      <Search :schema="searchSchema" :showSearch="false" :showReset="false" />
+      <BaseButton :icon="filterIcon" plain @click="onExpand">
+        {{ isShowFilter ? '隐藏快捷筛选' : '展开快捷筛选' }}
+      </BaseButton>
+    </div>
+    <Search
+      :schema="filterSchema"
+      labelWidth="160"
+      layout="inline"
+      @search="resetSearchParams"
+      @reset="resetSearchParams"
+      v-if="isShowFilter"
+    />
+    <div class="flex items-center gap-6">
+      <ElRadioGroup v-model="isTable">
+        <ElRadioButton :value="false">原始</ElRadioButton>
+        <ElRadioButton :value="true">表格</ElRadioButton>
+      </ElRadioGroup>
+      <ElTooltip content="时间排序" placement="top" effect="light">
+        <ElButton plain>
+          <template #default>
+            <span>时间</span>
+            <div class="flex flex-col ml-2">
+              <Icon
+                icon="ep:caret-top"
+                class="cursor-pointer"
+                :class="order === 'asc' ? '' : 'text-gray-400'"
+                @click="order = 'asc'"
+              ></Icon>
+              <Icon
+                icon="ep:caret-bottom"
+                class="cursor-pointer"
+                :class="order === 'desc' ? '' : 'text-gray-400'"
+                @click="order = 'desc'"
+              ></Icon>
+            </div>
+          </template>
+        </ElButton>
+      </ElTooltip>
+      <div class="ml-10">
+        <span class="mr-2">调整时间范围</span>
+        <ElPopover
+          placement="bottom"
+          title="Title"
+          :width="513"
+          trigger="click"
+          popper-class="overflow-visible"
+        >
+          <template #reference>
+            <ElButton plain>
+              <template #default>
+                <span>这是插入的地方</span>
+                <Icon icon="ep:calendar" class="ml-2" />
+              </template>
+            </ElButton>
+          </template>
+          <template #default>
+            <ElTabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
+              <ElTabPane label="User" name="first">User</ElTabPane>
+              <ElTabPane label="Config" name="second">
+                <ElDatePicker
+                  v-model="value1"
+                  type="daterange"
+                  popper-class="absolute z-50"
+                  style="width: 100%"
+                  range-separator="To"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                />
+              </ElTabPane>
+              <ElTabPane label="Role" name="third">Role</ElTabPane>
+              <ElTabPane label="Task" name="fourth">Task</ElTabPane>
+            </ElTabs>
+          </template>
+        </ElPopover>
       </div>
     </div>
-    <Search :schema="filterSchema" :showSearch="false" :showReset="false" v-if="isShowFilter" />
-    <Table
-      :columns="columns"
-      :data="tableDataList"
-      :loading="loading"
-      :defaultSort="{ prop: 'display_time', order: 'descending' }"
-    />
   </ContentWrap>
 </template>

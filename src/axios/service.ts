@@ -44,6 +44,7 @@ axiosInstance.interceptors.response.use(defaultResponseInterceptors)
 
 const service = {
   request: (config: RequestConfig) => {
+
     return new Promise((resolve, reject) => {
       if (config.interceptors?.requestInterceptors) {
         config = config.interceptors.requestInterceptors(config as any)
