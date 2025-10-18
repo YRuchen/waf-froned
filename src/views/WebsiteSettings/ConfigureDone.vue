@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
 import { onBeforeMount, ref, PropType, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   ElMessageBox,
   FormInstance,
@@ -23,15 +23,24 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
 import lineContent from './components/LineContent.vue'
 import { describe } from 'node:test'
+
+import {
+  getCnamesApi,
+  cnamesTestApi,
+  getEgressApi,
+  streamsTestListApi
+} from '@/api/websiteSettingPanel'
 const { t } = useI18n()
 const { push } = useRouter()
+const route = useRoute()
+const domainId = route.query.domainId as string
 interface RuleForm {
-  name: string
+  domain: string
 }
 interface TableRow {
-  date: string
-  name: string
-  address: string
+  originServer: string
+  reachable: string
+  reason: string
 }
 const textList = [
   {
@@ -48,18 +57,17 @@ const textList = [
 const dialogVisible = ref<boolean>(false)
 const showLoadingText = ref<number>(1)
 const dialogTitle = ref<string>('')
+const cnames = ref<string>('')
+const egress = ref<string>('')
 const ruleFormRef = ref<FormInstance>()
-const tableData = ref<TableRow[]>([
-  { date: '2025-10-08', name: 'John Doe', address: '123 Main St' },
-  { date: '2025-10-07', name: 'Jane Smith', address: '456 Elm St' },
-  { date: '2025-10-06', name: 'Alice Johnson', address: '789 Oak St' }
-])
+const tableData = ref<TableRow[]>([])
 const ruleForm = reactive<RuleForm>({
-  name: ''
+  domain: ''
 })
 const action = (name: string) => {
   switch (name) {
     case '复制CNAME值':
+      navigator.clipboard.writeText(cnames.value)
       ElMessage({
         message: '复制成功',
         type: 'success'
@@ -71,6 +79,7 @@ const action = (name: string) => {
       dialogTitle.value = name
       break
     case '复制全部IP地址':
+      navigator.clipboard.writeText(egress.value)
       ElMessage({
         message: '复制成功',
         type: 'success'
@@ -100,18 +109,19 @@ const validName = (rule: any, value: any, callback: any) => {
 }
 
 const rules = reactive<FormRules<RuleForm>>({
-  name: [{ required: true, validator: validName, trigger: 'blur' }]
+  domain: [{ required: true, validator: validName, trigger: 'blur' }]
 })
 const handleClose = () => {
   dialogVisible.value = false
-  ruleForm.name = ''
+  ruleForm.domain = ''
 }
 const startTest = () => {
   if (dialogTitle.value == 'CNAME接入测试') {
     if (!ruleFormRef.value) return
-    ruleFormRef.value.validate((valid) => {
+    ruleFormRef.value.validate(async (valid) => {
       if (valid) {
         showLoadingText.value = 2
+        await cnamesTestApi(ruleForm)
       } else {
         console.log('error submit!')
       }
@@ -120,6 +130,17 @@ const startTest = () => {
     showLoadingText.value = 2
   }
 }
+const getCnamesAndEgress = async () => {
+  const resCname = await getCnamesApi()
+  const resEgress = await getEgressApi()
+  const res = await streamsTestListApi({ domainId: domainId })
+  cnames.value = resCname.data.domain
+  egress.value = resEgress.data.egress
+  tableData.value = res.data.testInfos
+}
+onMounted(() => {
+  getCnamesAndEgress()
+})
 </script>
 <style lang="less">
 .circle-number {
@@ -179,13 +200,8 @@ const startTest = () => {
       </div>
     </div>
     <div class="m-t-10 flex items-center justify-center">
-      <ElButton size="large">生效并返回网站列表</ElButton>
-      <ElButton
-        type="primary"
-        size="large"
-        class="flex items-center justify-center"
-        @click="push('/websiteSettings/index')"
-      >
+      <ElButton size="large" @click="push('/websiteSettings/index')">生效并返回网站列表</ElButton>
+      <ElButton type="primary" size="large" class="flex items-center justify-center">
         生效并继续配置防护策略
       </ElButton>
     </div>
@@ -201,7 +217,7 @@ const startTest = () => {
         :rules="rules"
       >
         <ElFormItem label="域名名称" prop="name">
-          <ElInput v-model="ruleForm.name" placeholder="请输入域名名称" />
+          <ElInput v-model="ruleForm.domain" placeholder="请输入域名名称" />
           <span class="leading-5 break-words max-w-full" v-if="showLoadingText == 4">
             失败原因：xxxxxxxxxxxxxXXXXXXxxxxxxxxxxxxxxxxxxxxxxddddddddddddddddddddddddxxxxxxxxxxxxxxxxxxxxx
           </span>
@@ -210,9 +226,9 @@ const startTest = () => {
     </div>
     <div v-else>
       <ElTable :data="tableData" style="width: 100%" border>
-        <ElTableColumn prop="date" label="Date" width="180" />
-        <ElTableColumn prop="name" label="Name" width="180" />
-        <ElTableColumn prop="address" label="Address" />
+        <ElTableColumn prop="originServer" label="回源地址" width="180" />
+        <ElTableColumn prop="reachable" label="测试结果" width="180" />
+        <ElTableColumn prop="reason" label="失败原因" />
       </ElTable>
     </div>
     <div class="flex justify-end m-t-4">

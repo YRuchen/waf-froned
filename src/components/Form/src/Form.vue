@@ -88,7 +88,7 @@ export default defineComponent({
     //   default: () => {}
     // }
   },
-  emits: ['register'],
+  emits: ['register', 'change'],
   setup(props, { slots, expose, emit }) {
     // element form 实例
     const elFormRef = ref<ComponentRef<typeof ElForm>>()
@@ -318,41 +318,34 @@ export default defineComponent({
             }
 
             const Comp = () => {
-              // 如果field是多层路径，需要转换成对象
               const itemVal = computed({
-                get: () => {
-                  return get(formModel.value, item.field)
-                },
+                get: () => get(formModel.value, item.field),
                 set: (val) => {
+                  // ✅ 更新表单内部数据
                   set(formModel.value, item.field, val)
+
+                  // ✅ 通知外部 onChange
+                  const props = item.componentProps || {}
+                  props.onChange?.(val)
+                  props.onUpdateModelValue?.(val)
+
+                  // ✅ 向 Form 父组件 emit 统一 change 事件
+                  emit('change', {
+                    field: item.field,
+                    value: val,
+                    model: formModel.value
+                  })
                 }
               })
 
-              return item.component === ComponentNameEnum.UPLOAD ? (
+              return (
                 <Com
-                  vModel:file-list={itemVal.value}
+                  modelValue={itemVal.value}
+                  onUpdate:modelValue={(val: any) => (itemVal.value = val)}
                   ref={(el: any) => setComponentRefMap(el, item.field)}
                   {...(autoSetPlaceholder && setTextPlaceholder(item))}
                   {...setComponentProps(item)}
-                  style={
-                    item.componentProps?.style || {
-                      width: '100%'
-                    }
-                  }
-                >
-                  {{ ...slotsMap }}
-                </Com>
-              ) : (
-                <Com
-                  vModel={itemVal.value}
-                  ref={(el: any) => setComponentRefMap(el, item.field)}
-                  {...(autoSetPlaceholder && setTextPlaceholder(item))}
-                  {...setComponentProps(item)}
-                  style={
-                    item.componentProps?.style || {
-                      width: '100%'
-                    }
-                  }
+                  style={item.componentProps?.style || { width: '100%' }}
                 >
                   {{ ...slotsMap }}
                 </Com>

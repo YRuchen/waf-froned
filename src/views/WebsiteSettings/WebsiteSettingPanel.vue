@@ -3,10 +3,14 @@ import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useRouter } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
-import { getTableListApi } from '@/api/websiteSettingPanel'
+import { getTableListApi, updateFieldsApi, getCountApi } from '@/api/websiteSettingPanel'
+import {
+  LoadBalancingList,
+  ProtectStatusRuleForm,
+  LogsConfigureForm
+} from '@/api/websiteSettingPanel/types'
 import { useTable } from '@/hooks/web/useTable'
-import { TableData } from '@/api/table/types'
-import { ref, h, reactive, unref } from 'vue'
+import { ref, h, reactive, unref, computed } from 'vue'
 import { FormSchema } from '@/components/Form'
 import { useIcon } from '@/hooks/web/useIcon'
 import { Icon } from '@iconify/vue'
@@ -28,64 +32,91 @@ import {
   ElCol,
   ElMessage,
   ElSwitch,
-  ElInputTag,
+  ElTooltip,
   ElMessageBox
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import InputTags from './components/InputTags.vue'
+const filterIcon = useIcon({ icon: 'vi-ep:filter' })
+const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
+/**列表数据请求获取 */
 const { tableRegister, tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
     const { currentPage, pageSize } = tableState
     const res = await getTableListApi({
       page: unref(currentPage),
-      pageSize: unref(pageSize)
+      pageSize: unref(pageSize),
+      ...unref(searchParams)
     })
+    handleGetCount()
     return {
       list: res.data.domains,
       total: res.data.pagination.total
     }
   }
 })
-const { loading, dataList, total, currentPage, pageSize } = tableState
-// const { getList, getElTableExpose, delList } = tableMethods
-const filterIcon = useIcon({ icon: 'vi-ep:filter' })
-const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
-interface Params {
-  pageIndex?: number
-  pageSize?: number
-}
-interface RuleForm {
-  openProtect: string
-}
-interface LogsConfigureForm {
-  recordHeader: boolean
-  othersHeader: Array<string>
-  statistics: Array<string>
-}
+const { loading, dataList } = tableState
+const { getList } = tableMethods
 
 const { t } = useI18n()
-const accessConfiguration = reactive<any>({
-  username: '接入方式',
-  telephone: '接入协议'
-})
+/**对扩展页面字段进行格式化 */
+const accessConfiguration = (prop, item) => {
+  switch (prop) {
+    case 'protol':
+      if (item.httpsEnabled == true && item.httpEnabled == true) return ['HTTP', 'HTTPS']
+      else if (item.httpEnabled == true) return ['HTTP']
+      else if (item.httpsEnabled == true) return ['HTTPS']
+      else return []
+    case 'publicServer':
+      if (item.publicServer) return ['公网回源']
+      break
+    case 'loadBalancing':
+      return [LoadBalancingList.find((i) => i.key === item.loadBalancing)?.label]
+    default:
+      return [item[prop]]
+  }
+}
+/**列表扩展页面字段 */
 const configureText = [
   {
     title: '接入配置',
     descriptionsItem: [
       {
         label: '接入方式',
-        prop: 'username',
+        prop: 'hostname',
         isTag: false
       },
       {
         label: '接入协议',
-        prop: 'telephone',
-        isTag: true
+        prop: 'protol',
+        isTag: true,
+        isFormat: true
+      }
+    ]
+  },
+  {
+    title: '回源配置',
+    descriptionsItem: [
+      {
+        label: '回源方式',
+        prop: 'defaultGroupName',
+        isTag: false
+      },
+      {
+        label: '源站地址',
+        prop: 'hostname',
+        isTag: true,
+        isFormat: true
+      },
+      {
+        label: '负载均衡',
+        prop: 'loadBalancing'
       }
     ]
   }
 ]
+/**列表字段 */
 const columns = reactive<TableColumn[]>([
   {
     field: 'selection',
@@ -99,28 +130,25 @@ const columns = reactive<TableColumn[]>([
         // const row = data.row
         return (
           <div class="grid grid-cols-3 mx-16 mt-4 mb-8">
-            <div>
-              {configureText.map((items) => (
-                <ElDescriptions title={items.title} column={1}>
-                  {items.descriptionsItem.map((item) => (
-                    <ElDescriptionsItem label={item.label}>
-                      {item.isTag ? (
-                        <ElTag type="info">{accessConfiguration[item.prop]}</ElTag>
-                      ) : (
-                        accessConfiguration[item.prop]
-                      )}
-                    </ElDescriptionsItem>
-                  ))}
-                </ElDescriptions>
-              ))}
-            </div>
+            {configureText.map((items) => (
+              <ElDescriptions title={items.title} column={1}>
+                {items.descriptionsItem.map((item) => (
+                  <ElDescriptionsItem label={item.label}>
+                    {accessConfiguration(item.prop, data.row)?.map((label) =>
+                      item.isTag ? <ElTag type="info">{label}</ElTag> : label
+                    )}
+                    {/* <ElTag type="info">{accessConfiguration(item.prop, data.row)}</ElTag> */}
+                  </ElDescriptionsItem>
+                ))}
+              </ElDescriptions>
+            ))}
           </div>
         )
       }
     }
   },
   {
-    field: 'name',
+    field: 'hostname',
     label: '防护网站',
     sortable: true,
     formatter: (_: Recordable, __: TableColumn, cellValue: string) => {
@@ -128,21 +156,26 @@ const columns = reactive<TableColumn[]>([
     }
   },
   {
-    field: 'statusList',
+    field: 'status',
     label: '接入状态',
-    formatter: (_: Recordable, __: TableColumn, cellValue: number) => {
-      const status = statusListArr.value.find((item) => item.count === cellValue)
+    formatter: (_: Recordable, __: TableColumn, cellValue: string) => {
+      const status = statusListArr.value.find((item) => item.key === cellValue)
       return h(
         ElTag,
         {
-          type: cellValue === 1 ? 'success' : cellValue === 2 ? 'danger' : 'info'
+          type:
+            cellValue === 'DOMAIN_STATUS_ACTIVE'
+              ? 'success'
+              : cellValue === 'DOMAIN_STATUS_UPSTREAM_FAILED'
+                ? 'danger'
+                : 'info'
         },
         () => status?.name || '未知状态'
       )
     }
   },
   {
-    field: 'protectStatusList',
+    field: 'protectStatus',
     label: '防护模式',
     slots: {
       default: (data: any) => {
@@ -150,20 +183,15 @@ const columns = reactive<TableColumn[]>([
         return (
           <div class="flex items-center">
             <Icon
-              icon={
-                data.row.protectStatusList == true ? 'ep:circle-check-filled' : 'ep:remove-filled'
-              }
-              class={data.row.protectStatusList == true ? 'text-[#1ee319]' : ''}
+              icon={data.row.protectStatus == true ? 'ep:circle-check-filled' : 'ep:remove-filled'}
+              class={data.row.protectStatus == true ? 'text-[#1ee319]' : ''}
             />
             <div
               class="ml-2 group flex items-center cursor-pointer"
-              onClick={(event) => handleEdit(event, data.row.protectStatusList)}
+              onClick={(event) => handleEdit(event, data.row)}
             >
-              <span>{data.row.protectStatusList == true ? '启用防护' : '暂停防护'}</span>
-              <Icon
-                icon="ep:edit-pen"
-                class={dialogVisible.value ? 'ml-2' : 'hidden group-hover:block ml-2'}
-              />
+              <span>{data.row.protectStatus == true ? '启用防护' : '暂停防护'}</span>
+              <Icon icon="ep:edit-pen" class="hidden group-hover:block ml-2" />
             </div>
           </div>
         )
@@ -171,7 +199,7 @@ const columns = reactive<TableColumn[]>([
     }
   },
   {
-    field: 'responseCheckStatusList',
+    field: 'responseCheckStatus',
     label: '响应式检测',
     slots: {
       default: (data: any) => {
@@ -179,15 +207,15 @@ const columns = reactive<TableColumn[]>([
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <ElSwitch
-              modelValue={data.row.responseCheckStatusList}
+              modelValue={data.row.responseCheckStatus}
               size="large"
               onChange={() => {
-                const oldValue = data.row.responseCheckStatusList
+                const oldValue = data.row.responseCheckStatus
                 ElMessageBox({
                   title: '更改相应数据检测',
                   message: (
                     <div>
-                      {data.row.responseCheckStatusList
+                      {data.row.responseCheckStatus
                         ? '关闭后将导致部分功能和规则失效'
                         : '打开后可能因缓存导致客户端收到信息延迟'}
                       {/* <span
@@ -207,8 +235,12 @@ const columns = reactive<TableColumn[]>([
                   showCancelButton: true,
                   confirmButtonClass: oldValue ? 'button-red' : ''
                 })
-                  .then(() => {
-                    data.row.responseCheckStatusList = !oldValue
+                  .then(async () => {
+                    updateFields('DOMAIN_PATCH_FIELD_RESPONSE_CHECK_STATUS', {
+                      domainId: data.row.id,
+                      responseCheckStatus: !data.row.responseCheckStatus
+                    })
+                    getList()
                   })
                   .catch(() => {
                     ElMessage({
@@ -242,20 +274,14 @@ const columns = reactive<TableColumn[]>([
             </ElButton>
             <ElDropdown
               trigger="click"
-              onCommand={(cmd) => handleCommand(cmd)}
               v-slots={{
                 dropdown: () => (
                   <ElDropdownMenu>
-                    <ElDropdownItem command="protect" onClick={() => action(data.row, 'edit')}>
+                    <ElDropdownItem command="protect" onClick={() => action(data.row, 'protect')}>
                       防护设置
                     </ElDropdownItem>
-                    <ElDropdownItem
-                      command="enableLog"
-                      onClick={() =>
-                        action(data.row, data.row.logsCollection ? 'closeLog' : 'openLog')
-                      }
-                    >
-                      {data.row.logsCollection ? '关闭日志采集' : '开启日志采集'}
+                    <ElDropdownItem command="enableLog" onClick={() => action(data.row, 'logs')}>
+                      {data.row.logEnabled ? '关闭日志采集' : '开启日志采集'}
                     </ElDropdownItem>
                     <ElDropdownItem
                       command="delete"
@@ -306,47 +332,59 @@ const resetLoading = ref(false)
 const isShowFilter = ref(false)
 const dialogVisible = ref(false)
 const showLogsConfigure = ref(false)
-const showStatistics = ref(false)
+const showStatHeaders = ref(false)
 const logsConfigureForm = ref<LogsConfigureForm>({
   recordHeader: false,
-  othersHeader: [],
-  statistics: []
+  logExcludeHeaders: [],
+  statHeaders: []
 })
 const showInputTags = ref(false)
-const ruleForm = ref<RuleForm>({
-  openProtect: '1'
+/**更改防护状态表单 */
+const ruleForm = ref<ProtectStatusRuleForm>({
+  protectStatus: false,
+  domainId: ''
 })
 const dialogTitle = ref<string>('')
 const tableRef = ref<InstanceType<typeof Table>>()
 const totalSelection = ref<number>(0)
-const tagsList = ref<string[]>([])
 const { push } = useRouter()
-// el-card
-const cardsType = ref([
+/**统计定义 */
+const cardList = ref({
+  totalCount: 0,
+  unprotected: 0,
+  statusCountMapTotal: {},
+  statusCountMapUnprotected: {}
+})
+/**统计 */
+const handleGetCount = async () => {
+  const res = await getCountApi()
+  cardList.value = res.data
+}
+/**统计数据拼接 */
+const cardsType = computed(() => [
   {
-    name: '域名总数',
-    total: 1,
-    activeNum: 1,
-    notActiveNum: 1,
-    failedNum: 1,
-    unreachableNum: 2
+    title: '域名总数',
+    count: cardList.value.totalCount,
+    statusMap: cardList.value.statusCountMapTotal
   },
   {
-    name: '未防护域名',
-    total: 1,
-    activeNum: 1,
-    notActiveNum: 1,
-    failedNum: 1,
-    unreachableNum: 2
+    title: '未防护域名',
+    count: cardList.value.unprotected,
+    statusMap: cardList.value.statusCountMapUnprotected
   }
 ])
+/**统计的标签和颜色转义 */
+const filterMap = (key: any) => {
+  return statusListArr.value.find((status) => status.value == key)
+}
 // “正常”、“未接入”、“配置失败”、“回源失败”
 const statusListArr = ref([
-  { name: '正常', count: 1, color: '#67C23A' },
-  { name: '未接入', count: 2, color: '#E6A23C' },
-  { name: '配置失败', count: 3, color: '#F56C6C' },
-  { name: '回源失败', count: 1, color: '#909399' }
+  { name: '正常', count: 1, key: 'DOMAIN_STATUS_ACTIVE', value: 1, color: '#67C23A' },
+  { name: '未接入', count: 1, key: 'DOMAIN_STATUS_UNSPECIFIED', value: 2, color: '#E6A23C' },
+  { name: '配置失败', count: 1, key: 'DOMAIN_STATUS_FAILED', value: 3, color: '#F56C6C' },
+  { name: '回源失败', count: 1, key: 'DOMAIN_STATUS_UPSTREAM_FAILED', value: 4, color: '#909399' }
 ])
+/**搜索字段 */
 const searchSchema = reactive<FormSchema[]>([
   {
     field: 'name',
@@ -373,6 +411,7 @@ const searchSchema = reactive<FormSchema[]>([
     }
   }
 ])
+/**高级搜索字段 */
 const filterSchema = reactive<FormSchema[]>([
   {
     field: 'targetIp',
@@ -409,14 +448,17 @@ const filterSchema = reactive<FormSchema[]>([
     }
   },
   {
-    field: 'pretendModule',
+    field: 'protectStatusList',
     // label: '防护模式',
     component: 'SelectLabel',
     componentProps: {
       placeholder: '请选择',
       label: '防护模式',
       multiple: true,
-      options: [{ label: '启用防护', value: '1' }]
+      options: [
+        { label: '启用防护', value: true },
+        { label: '关闭防护', value: false }
+      ]
     }
   },
   {
@@ -468,32 +510,22 @@ const filterSchema = reactive<FormSchema[]>([
   }
 ])
 
-const handleCommand = (cmd) => {}
-const getTableList = async (params?: Params) => {
-  loading.value = false
-}
-
-getTableList()
-const resetSearchParams = (data: any) => {
-  // searchParams.value = data
-  // getList()
-}
-/**高级筛选事件 */
-const onExpand = () => {
-  isShowFilter.value = !isShowFilter.value
-}
-/**tbale的点击下拉事件 */
-const toggleRowExpansion = (row: Recordable) => {
-  if (!tableRef.value) return
-  ;(tableRef.value as any).elTableRef?.toggleRowExpansion(row)
-}
 /**编辑防护模式 */
-const handleEdit = (event: any, protectStatusList: boolean) => {
+const handleEdit = (event: any, row: any) => {
   event.stopPropagation()
   dialogVisible.value = true
-  dialogTitle.value = protectStatusList === true ? '启用防护' : '编辑防护'
+  dialogTitle.value = row.protectStatus === true ? '启用防护' : '编辑防护'
+  ruleForm.value.protectStatus = row.protectStatus
+  ruleForm.value.domainId = row.id
 }
 /**提交编辑防护模式 */
+const updateFields = async (patchField: string, data: any) => {
+  patchField == 'DOMAIN_PATCH_FIELD_PROTECT_STATUS' ? (dialogVisible.value = false) : null
+  await updateFieldsApi({ ...data, patchField: patchField })
+  getList()
+  ElMessage.success('编辑成功')
+}
+/**日志配置提交 */
 const handleSubmitEdit = () => {
   ElMessage.success('编辑成功')
 }
@@ -503,10 +535,15 @@ const action = (row, name) => {
     case 'edit':
       push({
         path: '/websiteSettings/addSitePanel',
-        query: { type: name }
+        query: { id: row.id }
       })
       break
-    case 'openLog':
+    case 'logs':
+      updateFields('DOMAIN_PATCH_FIELD_LOG_ENABLED', {
+        domainId: row.id,
+        logEnabled: !row.logEnabled
+      })
+      getList()
       break
     case 'edit':
       push({
@@ -526,11 +563,28 @@ const handleSelectionChange = (val) => {
 /**日志管理 */
 const handleLogsConfigure = () => {
   showLogsConfigure.value = true
-  tagsList.value = []
-  logsConfigureForm.value.statistics = []
+  logsConfigureForm.value.logExcludeHeaders = []
+  logsConfigureForm.value.statHeaders = []
   logsConfigureForm.value.recordHeader = false
   showInputTags.value = false
-  showStatistics.value = false
+  showStatHeaders.value = false
+}
+/**查询 */
+const searchExpose = ref<any>(null)
+
+const searchParams = ref({})
+const register = (expose: any) => {
+  searchExpose.value = expose
+}
+const handleSearch = (params: Record<string, any>) => {
+  searchParams.value = params
+  getList()
+}
+
+const resetSearchParams = (params: any) => {
+  searchParams.value = params
+  searchExpose.value?.reset?.()
+  getList()
 }
 </script>
 <style>
@@ -553,8 +607,8 @@ const handleLogsConfigure = () => {
       >
         <!-- 左边块 -->
         <div class="flex-shrink-0">
-          <p>{{ item.name }}</p>
-          <p>{{ item.total }}</p>
+          <p>{{ item.title }}</p>
+          <p>{{ item.count }}</p>
         </div>
 
         <!-- 分割线 -->
@@ -563,16 +617,16 @@ const handleLogsConfigure = () => {
         <!-- 右边状态列表 -->
         <div class="flex items-center space-x-4 flex-1">
           <div
-            v-for="status in statusListArr"
-            :key="status.name"
+            v-for="(value, key) in item.statusMap"
+            :key="key"
             class="flex items-center space-x-2"
           >
             <span
               class="inline-block w-2.5 h-2.5 rounded-full"
-              :style="{ backgroundColor: status.color }"
+              :style="{ backgroundColor: filterMap(key)?.color }"
             ></span>
             <span class="text-sm">
-              {{ status.name }} <b>{{ status.count }}</b>
+              {{ filterMap(key)?.name }} <strong>{{ value }}</strong>
             </span>
           </div>
           <Icon icon="ep:arrow-right" />
@@ -581,8 +635,17 @@ const handleLogsConfigure = () => {
     </div>
     <div class="flex justify-between">
       <div class="flex">
-        <Search :schema="searchSchema" :showSearch="false" :showReset="false" labelWidth="160px" />
-        <BaseButton :icon="filterIcon" plain @click="onExpand">
+        <Search
+          :schema="searchSchema"
+          :showSearch="false"
+          :showReset="false"
+          labelWidth="160px"
+          :autoSearch="true"
+          :autoSearchDebounce="1000"
+          @search="handleSearch"
+          @register="register"
+        />
+        <BaseButton :icon="filterIcon" plain @click="() => (isShowFilter = !isShowFilter)">
           {{ t('common.advancedFilter') }}
         </BaseButton>
         <BaseButton :loading="resetLoading" plain :icon="refreshIcon" @click="resetSearchParams">
@@ -590,22 +653,27 @@ const handleLogsConfigure = () => {
         </BaseButton>
       </div>
       <div>
-        <ElButton>批量导入</ElButton>
         <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')">新建站点</ElButton>
       </div>
     </div>
     <div v-if="isShowFilter">
-      <Search :schema="filterSchema" :showSearch="false" :showReset="false" labelWidth="160px" />
+      <Search
+        :schema="filterSchema"
+        :showSearch="false"
+        :showReset="false"
+        labelWidth="160px"
+        :autoSearch="true"
+        :autoSearchDebounce="1000"
+        @search="handleSearch"
+      />
     </div>
     <Table
       ref="tableRef"
       :columns="columns"
       :data="dataList"
       :loading="loading"
-      @row-click="toggleRowExpansion"
       @selection-change="handleSelectionChange"
-      row-key="title"
-      :defaultSort="{ prop: 'protectStatusList', order: 'descending' }"
+      row-key="id"
     />
     <div class="mt-4">
       <span class="mr-4">已选择{{ totalSelection }}条</span>
@@ -618,14 +686,14 @@ const handleLogsConfigure = () => {
   <ElDialog v-model="dialogVisible" :title="dialogTitle" width="600">
     <ElForm ref="ruleFormRef" :model="ruleForm" label-width="auto" label-position="left">
       <ElFormItem label="域名名称" prop="name">
-        <ElRadioGroup v-model="ruleForm.openProtect">
+        <ElRadioGroup v-model="ruleForm.protectStatus">
           <ElRow>
             <ElCol :span="24">
-              <ElRadio value="1">启用防护</ElRadio>
+              <ElRadio :value="true">启用防护</ElRadio>
               <span class="text-xs text-gray-500 ml-6">按WAF当前策略配置开启防护</span>
             </ElCol>
             <ElCol :span="24">
-              <ElRadio value="2">暂停防护</ElRadio>
+              <ElRadio :value="false">暂停防护</ElRadio>
               <span class="text-xs text-gray-500 ml-6">
                 仅执行转发不进行检测，该模式下已配置的防护策略不生效
               </span>
@@ -636,8 +704,13 @@ const handleLogsConfigure = () => {
     </ElForm>
     <template #footer>
       <div class="dialog-footer">
-        <ElButton size="large">取消</ElButton>
-        <ElButton size="large" type="primary" @click="handleSubmitEdit">确定</ElButton>
+        <ElButton size="large" @click="dialogVisible = false">取消</ElButton>
+        <ElButton
+          size="large"
+          type="primary"
+          @click="updateFields('DOMAIN_PATCH_FIELD_PROTECT_STATUS', ruleForm)"
+          >确定</ElButton
+        >
       </div>
     </template>
   </ElDialog>
@@ -650,33 +723,49 @@ const handleLogsConfigure = () => {
     <ElForm ref="ruleFormRef" :model="logsConfigureForm" label-width="auto" label-position="left">
       <ElFormItem label="记录全量Header" prop="recordHeader">
         <ElSwitch v-model="logsConfigureForm.recordHeader" />
-        <span>仅将记录通用的常见Header字段，</span>
-        <ElButton link type="primary">查看常见Header</ElButton>
+        <span class="ml-2" v-if="logsConfigureForm.recordHeader">
+          将记录流量中全部Header字段，部分字段在Headers中，开启可能导致日志存储空间增加
+        </span>
+        <p class="ml-2" v-else>
+          <span>仅将记录通用的常见Header字段，</span>
+          <ElButton link type="primary">查看常见Header</ElButton>
+        </p>
       </ElFormItem>
       <template v-if="logsConfigureForm.recordHeader">
-        <ElFormItem label=" " prop="othersHeader">
+        <ElFormItem label=" " prop="logExcludeHeaders">
           <ElButton link type="primary" @click="showInputTags = !showInputTags">
-            配置例外Header({{ tagsList.length }})
+            配置例外Header({{ logsConfigureForm.logExcludeHeaders.length }})
             <Icon :icon="showInputTags ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
           </ElButton>
+          <ElTooltip
+            effect="dark"
+            content="防止日志存储量过大，可配置无需记录的Header头字段名"
+            placement="top"
+          >
+            <Icon icon="ep:question-filled" class="ml-1" />
+          </ElTooltip>
           <InputTags
-            :tagsList="tagsList"
+            v-model:tagsList="logsConfigureForm.logExcludeHeaders"
             :limit="100"
-            @update:tagsList="(val) => (tagsList = val)"
             v-if="showInputTags"
           />
         </ElFormItem>
-        <ElFormItem label=" " prop="statistics">
-          <ElButton link type="primary" @click="showStatistics = !showStatistics">
-            配置统计Header({{ logsConfigureForm.statistics.length }})
-            <Icon :icon="showStatistics ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
+        <ElFormItem label=" " prop="statHeaders">
+          <ElButton link type="primary" @click="showStatHeaders = !showStatHeaders">
+            配置统计Header({{ logsConfigureForm.statHeaders.length }})
+            <Icon :icon="showStatHeaders ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
           </ElButton>
-          <ElInputTag
-            class="!min-h-[100px] !items-start"
-            v-model="logsConfigureForm.statistics"
+          <ElTooltip
+            effect="dark"
+            content="在记录的Header范围内，配置需要统计、分析、告警的Header头字段名"
+            placement="top"
+          >
+            <Icon icon="ep:question-filled" class="ml-1" />
+          </ElTooltip>
+          <InputTags
+            v-model:tagsList="logsConfigureForm.statHeaders"
             :max="100"
-            placeholder="请输入，回车分隔"
-            v-if="showStatistics"
+            v-if="showStatHeaders"
           />
         </ElFormItem>
       </template>

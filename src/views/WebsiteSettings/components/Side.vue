@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { onBeforeMount, ref, PropType, reactive, onMounted } from 'vue'
+import { onBeforeMount, ref, PropType, reactive, onMounted, toRef, watch } from 'vue'
 import { debounce } from 'lodash-es'
 import {
   ElMessageBox,
@@ -54,21 +54,22 @@ const rules = reactive<FormRules<RuleForm>>({
   ]
 })
 
-const menuData = ref<serverGroupItem[]>(props.originList)
+const menuData = toRef(props, 'originList')
 const addDialogRef = ref()
 const activeGroupId = ref(menuData.value[0]?.groupName)
 const searchName = ref<any>('')
 const searchNameList = ref<Array<serverGroupItem>>([])
 const popoverRef = ref<PopoverInstance>()
-onBeforeMount(() => {
-  getLDict()
-})
-
-const addDashBoard = (item) => {
-  // open('新增仪表盘')
-  addDialogRef.value.show()
-}
-
+watch(
+  menuData,
+  (val) => {
+    if (val.length > 0) {
+      handleSelect(val[0]) // 自动触发选择第一个
+      activeGroupId.value = val[0].groupName
+    }
+  }
+  // { immediate: true } // 立即执行一次，如果已经有值也会触发
+)
 // 搜索
 const filterNode = debounce((val: string) => {
   if (!val) {
@@ -89,12 +90,11 @@ const addDict = (index) => {
         protol: ''
       }
     ],
-    accessPorts: index == 1 ? ['80', '443', '4433'] : ['99'],
+    accessPorts: [],
     protocol: 'HTTP'
   })
 }
 const submitForm = async (formEl: FormInstance | undefined) => {}
-const getLDict = async () => {}
 
 const editDictsort = (data) => {
   dialogFormVisible.value = true
@@ -119,12 +119,16 @@ const remove = (row) => {
     .catch(() => {})
 }
 const handleSelect = (data: serverGroupItem) => {
+  console.log(data, 444)
+
   emit('change', data)
 }
 onMounted(() => {
-  if (menuData.value.length > 0) {
-    handleSelect(menuData.value[0]) // 首次调用
-  }
+  console.log(1111111111)
+
+  handleSelect(menuData.value[0]) // 首次调用
+  // if (menuData.value.length > 0) {
+  // }
 })
 </script>
 <style lang="less">

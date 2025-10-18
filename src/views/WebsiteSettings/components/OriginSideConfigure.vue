@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { ref, watch, nextTick, PropType, onMounted, computed } from 'vue'
+import { ref, watch, nextTick, PropType, onMounted, computed, toRefs } from 'vue'
 
 import {
   ElForm,
@@ -31,6 +31,9 @@ const { t } = useI18n()
 const copyIcon = useIcon({ icon: 'vi-ep:copy-document' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
 const plusIcon = useIcon({ icon: 'vi-ep:plus' })
+
+const emit = defineEmits(['change'])
+
 const columns: TableColumn[] = [
   {
     field: 'protol',
@@ -78,7 +81,13 @@ const columns: TableColumn[] = [
             prop={`${$index}.port`}
             rules={[{ required: true, validator: validateCount, trigger: 'blur' }]}
           >
-            <ElInput v-model={row.port} placeholder="请填写源站端口" />
+            <ElInput
+              v-model={row.port}
+              placeholder="请填写源站端口"
+              onInput={(value: string) => {
+                row.port = value === '' ? undefined : Number(value)
+              }}
+            />
           </ElFormItem>
         )
       }
@@ -117,7 +126,7 @@ const columns: TableColumn[] = [
             <BaseButton
               link
               icon={deleteIcon}
-              disabled={tableDataList.value.length === 1}
+              disabled={originListItem.value.servers.length === 1}
               onClick={() => action('delete', row, $index)}
             ></BaseButton>
           </ElFormItem>
@@ -146,12 +155,23 @@ const ruleFormRef = ref<FormInstance>()
 const allcount = ref<number>(19)
 const poppoverWidth = ref<number>(0)
 const referenceRef = ref<HTMLElement>()
+const checkList = ref<string[]>([])
+const selectedHttp = ref<string[]>([])
+const originListItem = ref<serverGroupItem>({
+  groupName: '',
+  protocol: '',
+  accessPorts: [],
+  servers: []
+})
+const { httpPorts, httpsPorts, originList } = toRefs(props)
+// const originList = ref<serverGroupItem[]>(props.originList)
+const allUsedPorts = ref<string[]>([])
 const validateName = (rule: any, value: any, callback: any) => {
   if (value === '') {
     callback(new Error('请输入源站协议'))
   } else {
-    if (new Set(tableDataList.value.map((item) => item.protol)).size !== 1)
-      tableDataList.value.map((item) => (item.protol = value))
+    if (new Set(originListItem.value.servers.map((item) => item.protol)).size !== 1)
+      originListItem.value.servers.map((item) => (item.protol = value))
     callback()
   }
 }
@@ -171,7 +191,7 @@ const validateRegion = (rule: any, value: any, callback: any) => {
     return callback(new Error('源站地址格式不对，请输入正确的域名地址或IP地址'))
   }
 
-  const nonEmptyRegions = tableDataList.value.filter((item) => item.address)
+  const nonEmptyRegions = originListItem.value.servers.filter((item) => item.address)
 
   const allDomains = nonEmptyRegions.every((item) => domainRegex.test(item.address))
   const allIps = nonEmptyRegions.every((item) => ipRegex.test(item.address))
@@ -212,26 +232,17 @@ const submitForm = (): Promise<boolean> => {
 const resetForm = () => {
   return false
 }
-// **********************************************
-
-const checkList = ref<string[]>([])
-const inputTagList = ref<string[]>([])
-const selectedHttp = ref<string[]>([])
-const tableDataList = ref<TableItem[]>([])
-const originListItem = ref<Partial<serverGroupItem>>({})
-const originList = ref<serverGroupItem[]>(props.originList)
-const allUsedPorts = ref<string[]>([])
 
 const action = (name: string, row?: TableItem, index?: number) => {
   if (name === 'edit' && row) {
     allcount.value--
-    tableDataList.value.push({ ...row, port: '' })
+    originListItem.value.servers.push({ ...row, port: '' })
   } else if (name === 'delete' && index !== undefined) {
     allcount.value++
-    tableDataList.value.splice(index, 1)
+    originListItem.value.servers.splice(index, 1)
   } else if (name === 'add') {
     allcount.value--
-    tableDataList.value.push({
+    originListItem.value.servers.push({
       address: '',
       port: '',
       weight: '',
@@ -240,9 +251,12 @@ const action = (name: string, row?: TableItem, index?: number) => {
   }
 }
 const activeProtocol = ref('HTTP')
-
-const ports = computed(() => ({ HTTP: [...props.httpPorts], HTTPS: [...props.httpsPorts] }))
-
+const ports = computed(() => {
+  return {
+    HTTP: [...httpPorts.value],
+    HTTPS: [...httpsPorts.value]
+  }
+})
 const filteredPorts = ref<string[]>([])
 /**过滤数据 */
 const filterPort = () => {
@@ -252,14 +266,17 @@ const filterPort = () => {
     protocolPorts.includes(port)
   )
 
-  inputTagList.value = port
+  originListItem.value.accessPorts = port
   checkList.value = port
   const result = protocolPorts.filter((port) => !allUsedPorts.value.includes(port)).concat(port)
   filteredPorts.value = protocolPorts.filter((port) => result.includes(port))
 }
+// 操作分组的时候，右侧table也跟着改变
 const getTableList = (data: serverGroupItem) => {
+  console.log(data, 776666666)
+
   originListItem.value = data
-  tableDataList.value = data.servers.map((item) => ({
+  originListItem.value.servers = data.servers.map((item) => ({
     ...item,
     protol: data.protocol == 'PROTOCOL_UNSPECIFIED' ? '' : data.protocol
   }))
@@ -273,36 +290,31 @@ const handleSelect = (index: string) => {
 }
 const selectPort = (isCheck, port) => {
   if (isCheck) {
-    inputTagList.value.push(port)
+    originListItem.value?.accessPorts.push(port)
     selectedHttp.value.push(port)
   } else {
-    inputTagList.value.splice(inputTagList.value.indexOf(port), 1)
+    originListItem.value.accessPorts.splice(originListItem.value.accessPorts.indexOf(port), 1)
     selectedHttp.value = selectedHttp.value.filter((p) => p !== port)
   }
 }
 const handleChange = (val: string[]) => {
-  // 拦截输入，只保留原来的标签（删除时还是会生效）
-  if (val.length) {
-    // 删除标签时允许
-    inputTagList.value = JSON.parse(JSON.stringify(checkList.value))
-    console.log(checkList.value)
-  } else {
-    // 输入新增时，回退
-    checkList.value = checkList.value
-  }
+  originListItem.value.accessPorts = JSON.parse(JSON.stringify(checkList.value))
 }
 watch(
-  () => tableDataList.value.map((item) => item.address),
+  () => originListItem.value.servers.map((item) => item.address),
   () => {
     nextTick(() => {
       // 对每一行触发验证
-      tableDataList.value.forEach((item, index) => {
+      originListItem.value.servers.forEach((item, index) => {
         if (item.address) ruleFormRef.value?.validateField(`${index}.address`)
       })
     })
   },
   { deep: true }
 )
+watch([httpPorts, httpsPorts], () => {
+  filterPort()
+})
 onMounted(() => {
   allcount.value = 19
   poppoverWidth.value = referenceRef.value?.offsetWidth ?? 0
@@ -316,7 +328,7 @@ defineExpose({
 <style></style>
 <template>
   <div class="flex">
-    <Side @change="getTableList" :originList="originList" />
+    <Side @change="getTableList" v-model:originList="originList" />
     <div class="flex-1 p-20px border-1 border-solid border-#ebeef5">
       <div class="m-b-2">
         <ElTag type="info" effect="dark" class="m-r-2">如果</ElTag>
@@ -335,7 +347,7 @@ defineExpose({
             <!-- 输入框 -->
             <div ref="referenceRef">
               <ElInputTag
-                v-model="inputTagList"
+                v-model="originListItem.accessPorts"
                 :max="10"
                 prefix-icon="Search"
                 @change="handleChange"
@@ -391,10 +403,10 @@ defineExpose({
         <ElTag type="info" effect="dark" class="m-r-2">那么</ElTag>
         <span>回源到源站地址：</span>
       </div>
-      <ElForm ref="ruleFormRef" :model="tableDataList" label-position="left">
+      <ElForm ref="ruleFormRef" :model="originListItem.servers" label-position="left">
         <Table
           :columns="columns"
-          :data="tableDataList"
+          :data="originListItem.servers"
           :defaultSort="{ prop: 'display_time', order: 'descending' }"
         />
       </ElForm>

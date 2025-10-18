@@ -3,7 +3,15 @@ import { reactive, ref, h, onMounted, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
 import { RuleForm } from '@/api/websiteSettingPanel/types'
-import { getTlsVersionsApi, getTlstCiphersApi, saveDomainsApi } from '@/api/websiteSettingPanel'
+import {
+  getTlsVersionsApi,
+  getTlstCiphersApi,
+  saveDomainsApi,
+  getCertsApi,
+  getDetailApi,
+  updateDomainsApi
+} from '@/api/websiteSettingPanel'
+import { LoadBalancingList } from '@/api/websiteSettingPanel/types'
 import InputTags from './InputTags.vue'
 import {
   ElForm,
@@ -36,8 +44,6 @@ import {
 } from 'element-plus'
 
 import originSideConfigure from './OriginSideConfigure.vue'
-import { isCancel } from 'axios'
-import { string } from 'vue-types'
 const route = useRoute()
 const { push } = useRouter()
 const props = defineProps({
@@ -82,7 +88,7 @@ const createConfig = (
   describe: `${title}，支持 ${min}–${max} ${unit}，默认：${defaultValue} ${unit}`
 })
 
-const type = route.query.type as string
+const domainId = route.query.id as string
 const InternetParamsConfiguration = [
   createConfig('请求body最大值', 'bodyMaxSize', 'MB', 1, 10240, 60),
   createConfig('建连超时时间', 'connectTimeout', '秒', 4, 120, 30),
@@ -128,6 +134,7 @@ const ruleForm = reactive<RuleForm>({
   sslCiphers: [],
   certId: '',
   sniEnabled: false,
+  snis: [],
   loadBalancing: 'ROUND_ROBIN',
   proxy: false,
   clientIpSource: '',
@@ -147,10 +154,10 @@ const ruleForm = reactive<RuleForm>({
         }
       ],
       accessPorts: [],
-      protocol: 'PROTOCOL_UNSPECIFIED'
+      protocol: 'HTTP'
     }
   ],
-  customIpSourceHeaders: '',
+  customIpSourceHeaders: [],
   connSetting: {
     connectTimeout: 30,
     writeTimeout: 60,
@@ -179,7 +186,7 @@ const total = computed(() => {
   return tlsCiphersArr.value.length ?? 0
 })
 
-const options = [{ value: 1, label: 1 }]
+const options = ref<Array<any>>([])
 
 const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
   if (ruleForm.httpEnabled || ruleForm.httpsEnabled) {
@@ -191,7 +198,7 @@ const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
 const rules = reactive<FormRules<RuleForm>>({
   hostname: [
     { required: true, message: '请输入正确的域名', trigger: 'blur' },
-    { min: 3, max: 5, message: '请输入正确的域名', trigger: 'blur' }
+    { min: 3, max: 500, message: '请输入正确的域名', trigger: 'blur' }
   ],
   publicServer: [
     {
@@ -209,7 +216,7 @@ const rules = reactive<FormRules<RuleForm>>({
     }
   ]
 })
-/**保存校验 */
+/**保存提交 */
 const handleSave = async () => {
   let parentValid = false
   if (!parentFormRef.value) return
@@ -223,13 +230,27 @@ const handleSave = async () => {
   childValid = await childRef.value[0]?.submitForm()
   if (parentValid && childValid) {
     // console.log('父组件和子组件表单都校验通过，可以提交')
-    await saveDomainsApi(ruleForm)
-    resetForm()
+    const apiPost = domainId ? updateDomainsApi : saveDomainsApi
+    const res = await apiPost({
+      id: domainId,
+      domain: {
+        ...ruleForm,
+        httpPorts: ruleForm.httpPorts.map(Number),
+        httpsPorts: ruleForm.httpsPorts.map(Number)
+      }
+    })
+    push({
+      path: '/websiteSettings/configureDone',
+      query: {
+        domainId: res.data.id
+      }
+    })
   } else {
     console.log('父组件和子组件表单都校验不通过', ruleForm)
   }
 }
 
+/**取消表单 */
 const resetForm = () => {
   if (!parentFormRef.value) return
   parentFormRef.value.resetFields()
@@ -286,8 +307,27 @@ const handleGetTls = async () => {
   ruleForm.sslCiphers = resCiphers.data?.items.map((item) => item.label) ?? []
   cancelList.value = resCiphers.data?.items ?? []
 }
+/**获取证书 */
+const getCerts = async () => {
+  const res = await getCertsApi({
+    page: 1,
+    pageSize: 1000
+  })
+  options.value = res.data.list
+}
+/**获取详情 */
+const getDatail = async () => {
+  const res = await getDetailApi(domainId)
+  Object.keys(res.data.domain).forEach((key) => {
+    if (key in ruleForm) {
+      ruleForm[key] = res.data.domain[key]
+    }
+  })
+}
 onMounted(() => {
   handleGetTls()
+  getCerts()
+  domainId ? getDatail() : null
 })
 </script>
 <template>
@@ -329,7 +369,7 @@ onMounted(() => {
             <ElInput
               v-model="ruleForm.hostname"
               placeholder="请填写需要防护的域名，支持泛域名或精确域名"
-              :disabled="type == 'edit'"
+              :disabled="domainId == 'edit'"
             />
           </ElFormItem>
         </template>
@@ -349,7 +389,9 @@ onMounted(() => {
                     label="HTTP"
                     @change="
                       (val) => {
-                        val ? (ruleForm.httpPorts = ruleForm.httpPorts.concat('80')) : ''
+                        val
+                          ? (ruleForm.httpPorts = ruleForm.httpPorts.concat('80'))
+                          : (ruleForm.httpPorts = [])
                       }
                     "
                   />
@@ -385,10 +427,18 @@ onMounted(() => {
                     label="HTTPS"
                     @change="
                       (val) => {
-                        val ? (ruleForm.httpsPorts = ruleForm.httpsPorts.concat('443')) : ''
+                        val
+                          ? (ruleForm.httpsPorts = ruleForm.httpsPorts.concat('443'))
+                          : (ruleForm.httpsPorts = [])
                       }
                     "
                   />
+                  <ElTag
+                    type="info"
+                    class="ml-2"
+                    v-if="ruleForm.httpsEnabled && !ruleForm.httpEnabled"
+                    >HTTP请求默认重定向到HTTPS</ElTag
+                  >
                 </ElFormItem>
               </ElCol>
               <ElCol v-if="ruleForm.httpsEnabled">
@@ -417,21 +467,29 @@ onMounted(() => {
           </ElFormItem>
           <template v-if="ruleForm.httpsEnabled">
             <ElFormItem label="证书选择" prop="certId">
-              <ElSelect v-model="ruleForm.certId" placeholder="Select" style="width: 240px">
+              <ElSelect v-model="ruleForm.certId" placeholder="请选择" style="width: 240px">
                 <ElOption
                   v-for="item in options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
+                  :key="item.id"
+                  :value="item.id"
+                  :label="item.name"
+                >
+                  <template #default>
+                    <span>{{ item.name }}</span>
+                    <span> | </span>
+                    <span>包含绑定域名：</span>
+                    <span>{{ item.subjectNames.join(',') }}</span>
+                  </template>
+                </ElOption>
               </ElSelect>
               <ElButton link type="primary">刷新</ElButton>
               <ElButton link type="primary">新增证书</ElButton>
             </ElFormItem>
             <ElFormItem label="SNI配置" prop="sniEnabled">
               <ElSwitch v-model="ruleForm.sniEnabled" />
-              <ElInput
+              <ElInputTag
                 v-if="ruleForm.sniEnabled"
+                v-model="ruleForm.snis"
                 placeholder="可自定义SNI的host，若不填写则跟随流量中的host"
               />
             </ElFormItem>
@@ -474,16 +532,16 @@ onMounted(() => {
           </template>
           <ElFormItem label="负载均衡" prop="loadBalancing">
             <ElRadioGroup v-model="ruleForm.loadBalancing">
-              <ElRadio value="ROUND_ROBIN">加权轮询(WRR)</ElRadio>
-              <ElRadio value="LEAST_CONNECTIONS">加权最小连接数(WLC)</ElRadio>
-              <ElRadio value="CONSISTENT_HASHING">源地址哈希(SH)</ElRadio>
+              <ElRadio v-for="item in LoadBalancingList" :key="item.key" :value="item.key">
+                {{ item.label }}
+              </ElRadio>
             </ElRadioGroup>
           </ElFormItem>
         </template>
         <template v-if="section.title == '源站配置'">
           <originSideConfigure
             ref="childRef"
-            :originList="ruleForm.serverGroups"
+            v-model:originList="ruleForm.serverGroups"
             :httpPorts="ruleForm.httpPorts"
             :httpsPorts="ruleForm.httpsPorts"
           />
@@ -510,7 +568,12 @@ onMounted(() => {
             v-if="ruleForm.clientIpSource === 'CUSTOM_HEADER'"
           >
             <div class="flex flex-col">
-              <ElInput v-model="ruleForm.customIpSourceHeaders" placeholder="请填写" />
+              <!-- <ElInput v-model="ruleForm.customIpSourceHeaders" placeholder="最多配置5个自定义Header，回车换行分隔" /> -->
+              <ElInputTag
+                v-model="ruleForm.customIpSourceHeaders"
+                :max="5"
+                placeholder="最多配置5个自定义Header，回车换行分隔"
+              />
               <p> 1.按匹配字段添加顺序获取客户端 IP并将其作为客户端真实 IP </p>
               <p>2.如匹配字段无法获取客户端 IP，则将通过XFF字段获取 </p>
             </div>
@@ -522,8 +585,13 @@ onMounted(() => {
           </ElFormItem>
           <ElFormItem label="记录全量Header" prop="logAllHeaders">
             <ElSwitch v-model="ruleForm.logAllHeaders" />
-            <span>仅将记录通用的常见Header字段，</span>
-            <ElButton link type="primary">查看常见Header</ElButton>
+            <span class="ml-2" v-if="ruleForm.logAllHeaders">
+              将记录流量中全部Header字段，部分字段在Headers中，开启可能导致日志存储空间增加
+            </span>
+            <p class="ml-2" v-else>
+              <span>仅将记录通用的常见Header字段，</span>
+              <ElButton link type="primary">查看常见Header</ElButton>
+            </p>
           </ElFormItem>
           <template v-if="ruleForm.logAllHeaders">
             <ElFormItem label=" ">
@@ -531,10 +599,16 @@ onMounted(() => {
                 配置例外Header({{ ruleForm.logExcludeHeaders.length }})
                 <Icon :icon="showInputTags ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
               </ElButton>
+              <ElTooltip
+                effect="dark"
+                content="防止日志存储量过大，可配置无需记录的Header头字段名"
+                placement="top"
+              >
+                <Icon icon="ep:question-filled" class="ml-1" />
+              </ElTooltip>
               <InputTags
                 v-model:tagsList="ruleForm.logExcludeHeaders"
                 :limit="100"
-                @update:ruleForm.logExcludeHeaders="(val) => (ruleForm.logExcludeHeaders = val)"
                 v-if="showInputTags"
               />
             </ElFormItem>
@@ -543,10 +617,16 @@ onMounted(() => {
                 配置统计Header({{ ruleForm.statHeaders.length }})
                 <Icon :icon="showStatHeaders ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
               </ElButton>
+              <ElTooltip
+                effect="dark"
+                content="在记录的Header范围内，配置需要统计、分析、告警的Header头字段名"
+                placement="top"
+              >
+                <Icon icon="ep:question-filled" class="ml-1" />
+              </ElTooltip>
               <InputTags
                 v-model:tagsList="ruleForm.statHeaders"
                 :max="100"
-                @update:ruleForm.statHeaders="(val) => (ruleForm.statHeaders = val)"
                 v-if="showStatHeaders"
               />
             </ElFormItem>

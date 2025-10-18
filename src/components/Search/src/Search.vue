@@ -10,6 +10,7 @@ import ActionButton from './components/ActionButton.vue'
 import { SearchProps } from './types'
 import { FormItemProp } from 'element-plus'
 import { isObject, isEmptyVal } from '@/utils/is'
+import { debounce } from 'lodash-es'
 
 const props = defineProps({
   // 生成Form的布局结构数组
@@ -41,7 +42,9 @@ const props = defineProps({
     default: () => ({})
   },
   searchLoading: propTypes.bool.def(false),
-  resetLoading: propTypes.bool.def(false)
+  resetLoading: propTypes.bool.def(false),
+  autoSearch: propTypes.bool.def(false),
+  autoSearchDebounce: propTypes.number.def(400)
 })
 
 const emit = defineEmits(['search', 'reset', 'register', 'validate'])
@@ -219,6 +222,28 @@ const addSchema = (formSchema: FormSchema, index?: number) => {
   schema.push(formSchema)
 }
 
+let triggerAutoSearch: (() => void) | null = null
+
+// 初始化防抖触发函数
+watch(
+  () => unref(getProps).autoSearch,
+  (val) => {
+    if (val) {
+      triggerAutoSearch = debounce(async () => {
+        const model = await filterModel()
+        emit('search', model)
+      }, unref(getProps).autoSearchDebounce)
+    }
+  },
+  { immediate: true }
+)
+
+const onFormChange = async () => {
+  if (unref(getProps).autoSearch && triggerAutoSearch) {
+    const model = await filterModel()
+    triggerAutoSearch()
+  }
+}
 const defaultExpose = {
   getElFormExpose,
   setProps,
@@ -226,7 +251,8 @@ const defaultExpose = {
   setValues,
   delSchema,
   addSchema,
-  getFormData
+  getFormData,
+  reset
 }
 
 onMounted(() => {
@@ -251,6 +277,7 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     :schema="schemaRef"
     @register="formRegister"
     @validate="onFormValidate"
+    @change="onFormChange"
   />
 
   <template v-if="layout === 'bottom'">
