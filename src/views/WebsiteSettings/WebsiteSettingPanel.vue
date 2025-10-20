@@ -685,7 +685,14 @@ const resetSearchParams = (params: any) => {
       :loading="loading"
       @selection-change="handleSelectionChange"
       row-key="id"
-    />
+    >
+      <template #empty>
+        <span>暂无数据</span>
+        <ElButton text type="primary" @click="push('/websiteSettings/addSitePanel')">
+          新建站点
+        </ElButton>
+      </template>
+    </Table>
     <div class="mt-4">
       <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
       <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton>
