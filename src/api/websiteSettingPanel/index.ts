@@ -40,8 +40,8 @@ export const streamsTestListApi = (params: any) => {
   return request.get({ url: '/apis/v1/upstreams/testlist', params })
 }
 // 回源测试
-export const upstreamsTestApi = () => {
-  return request.post({ url: '/apis/v1/upstreams/test' })
+export const upstreamsTestApi = (params: any) => {
+  return request.post({ url: '/apis/v1/upstreams/test', params })
 }
 // 新建站点提交
 export const saveDomainsApi = (data: any): Promise<IResponse> => {

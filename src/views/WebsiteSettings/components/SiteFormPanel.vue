@@ -207,6 +207,13 @@ const rules = reactive<FormRules<RuleForm>>({
       trigger: 'change'
     }
   ],
+  certId: [
+    {
+      required: true,
+      message: '请选择证书',
+      trigger: 'change'
+    }
+  ],
   selectProtocol: [{ required: true, validator: validSelectProtocol, trigger: ['blur', 'change'] }],
   loadBalancing: [
     {
@@ -242,7 +249,7 @@ const handleSave = async () => {
     push({
       path: '/websiteSettings/configureDone',
       query: {
-        domainId: res.data.id
+        domainId: res.data.domain?.id || domainId
       }
     })
   } else {

@@ -28,7 +28,8 @@ import {
   getCnamesApi,
   cnamesTestApi,
   getEgressApi,
-  streamsTestListApi
+  streamsTestListApi,
+  upstreamsTestApi
 } from '@/api/websiteSettingPanel'
 const { t } = useI18n()
 const { push } = useRouter()
@@ -39,7 +40,7 @@ interface RuleForm {
 }
 interface TableRow {
   originServer: string
-  reachable: string
+  reachable: boolean
   reason: string
 }
 const textList = [
@@ -115,27 +116,34 @@ const handleClose = () => {
   dialogVisible.value = false
   ruleForm.domain = ''
 }
-const startTest = () => {
+const startTest = async () => {
   if (dialogTitle.value == 'CNAME接入测试') {
     if (!ruleFormRef.value) return
     ruleFormRef.value.validate(async (valid) => {
       if (valid) {
         showLoadingText.value = 2
-        await cnamesTestApi(ruleForm)
+        const res = await cnamesTestApi(ruleForm)
       } else {
         console.log('error submit!')
       }
     })
   } else {
     showLoadingText.value = 2
+    const res = await upstreamsTestApi({ domainId: domainId })
+    tableData.value = res.data.testInfos
+    if (tableData.value.find((item) => item.reachable === false)) {
+      showLoadingText.value = 4
+      return
+    }
+    showLoadingText.value = 3
   }
 }
 const getCnamesAndEgress = async () => {
   const resCname = await getCnamesApi()
-  const resEgress = await getEgressApi()
-  const res = await streamsTestListApi({ domainId: domainId })
   cnames.value = resCname.data.domain
+  const resEgress = await getEgressApi()
   egress.value = resEgress.data.egress
+  const res = await streamsTestListApi({ domainId: domainId })
   tableData.value = res.data.testInfos
 }
 onMounted(() => {
