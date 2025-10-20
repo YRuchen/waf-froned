@@ -3,7 +3,12 @@ import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useRouter } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
-import { getTableListApi, updateFieldsApi, getCountApi } from '@/api/websiteSettingPanel'
+import {
+  getTableListApi,
+  updateFieldsApi,
+  getCountApi,
+  deleteFieldsApi
+} from '@/api/websiteSettingPanel'
 import {
   LoadBalancingList,
   ProtectStatusRuleForm,
@@ -296,18 +301,15 @@ const columns = reactive<TableColumn[]>([
                             type: 'warning'
                           }
                         )
-                          .then(() => {
+                          .then(async () => {
+                            await deleteFieldsApi(data.row.id)
                             ElMessage({
                               type: 'success',
-                              message: 'Delete completed'
+                              message: '删除成功'
                             })
+                            getList()
                           })
-                          .catch(() => {
-                            ElMessage({
-                              type: 'info',
-                              message: 'Delete canceled'
-                            })
-                          })
+                          .catch(() => {})
                       }}
                     >
                       删除
@@ -334,7 +336,7 @@ const dialogVisible = ref(false)
 const showLogsConfigure = ref(false)
 const showStatHeaders = ref(false)
 const logsConfigureForm = ref<LogsConfigureForm>({
-  recordHeader: false,
+  logAllHeaders: false,
   logExcludeHeaders: [],
   statHeaders: []
 })
@@ -346,7 +348,7 @@ const ruleForm = ref<ProtectStatusRuleForm>({
 })
 const dialogTitle = ref<string>('')
 const tableRef = ref<InstanceType<typeof Table>>()
-const totalSelection = ref<number>(0)
+const totalSelection = ref<any>([])
 const { push } = useRouter()
 /**统计定义 */
 const cardList = ref({
@@ -525,10 +527,6 @@ const updateFields = async (patchField: string, data: any) => {
   getList()
   ElMessage.success('编辑成功')
 }
-/**日志配置提交 */
-const handleSubmitEdit = () => {
-  ElMessage.success('编辑成功')
-}
 /**列表操作 */
 const action = (row, name) => {
   switch (name) {
@@ -558,29 +556,42 @@ const action = (row, name) => {
 }
 /**列表多选监听 */
 const handleSelectionChange = (val) => {
-  totalSelection.value = val?.length
+  totalSelection.value = val
 }
 /**日志管理 */
 const handleLogsConfigure = () => {
   showLogsConfigure.value = true
   logsConfigureForm.value.logExcludeHeaders = []
   logsConfigureForm.value.statHeaders = []
-  logsConfigureForm.value.recordHeader = false
+  logsConfigureForm.value.logAllHeaders = false
   showInputTags.value = false
   showStatHeaders.value = false
 }
-/**查询 */
-const searchExpose = ref<any>(null)
+/**日志配置提交 */
+const handleSubmitEdit = async () => {
+  await updateFields('DOMAIN_PATCH_FIELD_LOG_ALL_HEADERS', {
+    ...logsConfigureForm.value,
+    batchDomainIds: totalSelection.value.map((item) => item.id)
+  })
 
+  showLogsConfigure.value = false
+  ElMessage.success('编辑成功')
+}
+/**查询 */
+// search组件
+const searchExpose = ref<any>(null)
+// 查询的输入项
 const searchParams = ref({})
+// search组件的入口方法
 const register = (expose: any) => {
   searchExpose.value = expose
 }
+// 搜索
 const handleSearch = (params: Record<string, any>) => {
   searchParams.value = params
   getList()
 }
-
+// 重置
 const resetSearchParams = (params: any) => {
   searchParams.value = params
   searchExpose.value?.reset?.()
@@ -676,9 +687,9 @@ const resetSearchParams = (params: any) => {
       row-key="id"
     />
     <div class="mt-4">
-      <span class="mr-4">已选择{{ totalSelection }}条</span>
-      <ElButton size="large" :disabled="totalSelection === 0">添加到域名组</ElButton>
-      <ElButton size="large" :disabled="totalSelection === 0" @click="handleLogsConfigure"
+      <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
+      <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton>
+      <ElButton size="large" :disabled="totalSelection.length === 0" @click="handleLogsConfigure"
         >日志配置</ElButton
       >
     </div>
@@ -718,12 +729,12 @@ const resetSearchParams = (params: any) => {
   <ElDialog v-model="showLogsConfigure" title="日志配置" width="40%">
     <span class="bg-[#fef8eb] px-2 py-2 flex items-center mb-3">
       <Icon icon="ep:warning-filled" class="text-[#eaa92d] mr-2 text-xl" />
-      当前已选择 {{ totalSelection }} 项域名，以下配置提交后，将替换当前日志配置
+      当前已选择 {{ totalSelection.length }} 项域名，以下配置提交后，将替换当前日志配置
     </span>
     <ElForm ref="ruleFormRef" :model="logsConfigureForm" label-width="auto" label-position="left">
-      <ElFormItem label="记录全量Header" prop="recordHeader">
-        <ElSwitch v-model="logsConfigureForm.recordHeader" />
-        <span class="ml-2" v-if="logsConfigureForm.recordHeader">
+      <ElFormItem label="记录全量Header" prop="logAllHeaders">
+        <ElSwitch v-model="logsConfigureForm.logAllHeaders" />
+        <span class="ml-2" v-if="logsConfigureForm.logAllHeaders">
           将记录流量中全部Header字段，部分字段在Headers中，开启可能导致日志存储空间增加
         </span>
         <p class="ml-2" v-else>
@@ -731,7 +742,7 @@ const resetSearchParams = (params: any) => {
           <ElButton link type="primary">查看常见Header</ElButton>
         </p>
       </ElFormItem>
-      <template v-if="logsConfigureForm.recordHeader">
+      <template v-if="logsConfigureForm.logAllHeaders">
         <ElFormItem label=" " prop="logExcludeHeaders">
           <ElButton link type="primary" @click="showInputTags = !showInputTags">
             配置例外Header({{ logsConfigureForm.logExcludeHeaders.length }})

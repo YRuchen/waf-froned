@@ -331,7 +331,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <div class="ml-48 flex-1 p-6 flex flex-col">
+  <div class="ml-32 flex-1 p-6 flex flex-col">
     <ElForm
       ref="parentFormRef"
       class="w-90% h-full"
@@ -687,12 +687,8 @@ onMounted(() => {
         }"
         @register="onRegister"
       >
-        <template #append>
-          <span class="color-[red]" v-if="showErrorTips">
-            TLSv1、TLSv1.1至少有一个对应的加密事件
-          </span>
-        </template>
       </Table>
+      <span class="color-[red]" v-if="showErrorTips"> TLSv1、TLSv1.1至少有一个对应的加密事件 </span>
     </ElForm>
     <template #footer>
       <div class="dialog-footer">

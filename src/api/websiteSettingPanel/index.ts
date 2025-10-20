@@ -1,5 +1,4 @@
 import request from '@/axios'
-import type { RuleForm } from './types'
 // 获取列表
 export const getTableListApi = (params: any) => {
   return request.get({ url: '/apis/v1/domains', params })
@@ -55,4 +54,8 @@ export const updateDomainsApi = (data: any): Promise<IResponse> => {
 // 更新列表的操作的接口
 export const updateFieldsApi = (data: any): Promise<IResponse> => {
   return request.patch({ url: '/apis/v1/domains/fields', data })
+}
+// 删除列表的操作的接口
+export const deleteFieldsApi = (id: any): Promise<IResponse> => {
+  return request.delete({ url: '/apis/v1/domains/' + id })
 }

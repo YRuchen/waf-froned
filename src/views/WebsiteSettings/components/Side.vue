@@ -8,7 +8,7 @@ import {
   ElMessage,
   ElPopover,
   ElButton,
-  ElIcon,
+  ElTooltip,
   ElEmpty,
   ElScrollbar,
   ElDialog,
@@ -39,7 +39,6 @@ const editIcon = useIcon({ icon: 'vi-ep:edit' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
 const emit = defineEmits(['change'])
 const dialogFormVisible = ref(false)
-const dialogFormTitle = ref('新增目录')
 const curTreeData = ref({})
 const form = reactive({
   name: '',
@@ -94,12 +93,29 @@ const addDict = (index) => {
     protocol: 'HTTP'
   })
 }
-const submitForm = async (formEl: FormInstance | undefined) => {}
+const currentItem = ref<any>({})
+const submitForm = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      const newName = form.name.trim()
+      if (menuData.value.some((i) => i.groupName === newName)) {
+        ElMessage.warning('该分组名称已存在')
+        return
+      }
+      currentItem.value.groupName = form.name
+      dialogFormVisible.value = false
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
 
-const editDictsort = (data) => {
+const editDictsort = (e, data) => {
+  e.stopPropagation()
   dialogFormVisible.value = true
-  dialogFormTitle.value = '编辑目录'
-  Object.assign(form, data)
+  form.name = data.groupName
+  currentItem.value = data
 }
 
 const handleClosePover = (item) => {
@@ -115,7 +131,10 @@ const remove = (row) => {
     type: 'warning',
     draggable: true
   })
-    .then(async () => {})
+    .then(async () => {
+      menuData.value = menuData.value.filter((i) => i.groupName !== row.groupName)
+      ElMessage.success('删除成功')
+    })
     .catch(() => {})
 }
 const handleSelect = (data: serverGroupItem) => {
@@ -124,47 +143,50 @@ const handleSelect = (data: serverGroupItem) => {
   emit('change', data)
 }
 onMounted(() => {
-  console.log(1111111111)
-
-  handleSelect(menuData.value[0]) // 首次调用
-  // if (menuData.value.length > 0) {
-  // }
+  handleSelect(menuData.value[0])
 })
 </script>
 <style lang="less">
 .menu-wrap {
   // m-y-2 m-x-3 w-15%
   padding: 20px 10px;
-  width: 17%;
+  height: 100%;
   border: 1px solid #ededed;
   border-right: none;
+  overflow-x: hidden;
 }
-.el-menu {
-  border-right: 0;
-  padding: 0 !important;
-  .el-menu-item.is-active {
-    background-color: #ededed;
-    color: #7e7777;
-  }
-  .el-menu-item {
-    .el-icon {
-      margin-right: 1px !important;
+.scrollbar {
+  width: 100%;
+  height: 90%;
+  .el-menu {
+    width: 100%;
+    border-right: 0;
+    padding: 0 !important;
+    .el-menu-item.is-active {
+      background-color: #ededed;
+      color: #7e7777;
     }
-    .button-wrap {
-      display: none;
-    }
-    .label {
-      margin-right: 2px;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
-    &:hover {
+    .el-menu-item {
+      width: 100%;
+      .el-icon {
+        margin-right: 1px !important;
+      }
       .button-wrap {
-        display: block;
+        display: none;
       }
       .label {
-        width: 60%;
+        margin-right: 2px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      &:hover {
+        .button-wrap {
+          display: block;
+        }
+        .label {
+          width: 60%;
+        }
       }
     }
   }
@@ -200,7 +222,9 @@ onMounted(() => {
           </template>
         </template>
       </ElPopover>
-      <BaseButton link :icon="plusIcon" @click="addDict(menuData.length)">添加</BaseButton>
+      <ElButton text type="primary" :icon="plusIcon" @click="addDict(menuData.length)">
+        添加
+      </ElButton>
     </div>
 
     <ElScrollbar class="scrollbar">
@@ -212,15 +236,19 @@ onMounted(() => {
           @click="handleSelect(item)"
         >
           <span class="label">{{ item.groupName }}</span>
-          <p class="button-wrap">
-            <Icon icon="vi-ep:edit"></Icon>
-            <Icon icon="vi-ep:delete"></Icon>
+          <p class="button-wrap" v-if="item.groupName !== '默认分组'">
+            <ElTooltip effect="dark" content="重命名" placement="top">
+              <Icon icon="vi-ep:edit" @click="(e) => editDictsort(e, item)"></Icon>
+            </ElTooltip>
+            <ElTooltip effect="dark" content="删除" placement="top">
+              <Icon icon="vi-ep:delete" @click="remove"></Icon>
+            </ElTooltip>
           </p>
         </ElMenuItem>
       </ElMenu>
     </ElScrollbar>
 
-    <ElDialog v-model="dialogFormVisible" :title="dialogFormTitle" width="300">
+    <ElDialog v-model="dialogFormVisible" title="编辑目录" width="400">
       <ElForm ref="formRef" :model="form" :rules="rules">
         <ElFormItem label="目录名称" prop="name">
           <ElInput v-model="form.name" autocomplete="off" />
@@ -229,6 +257,7 @@ onMounted(() => {
 
       <template #footer>
         <div class="dialog-footer">
+          <ElButton @click="dialogFormVisible = false">取消</ElButton>
           <ElButton type="primary" @click="submitForm(formRef)">确定</ElButton>
         </div>
       </template>

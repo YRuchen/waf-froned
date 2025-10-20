@@ -67,7 +67,7 @@ export interface ProtectStatusRuleForm {
 
 /**日志配置 */
 export interface LogsConfigureForm {
-  recordHeader: boolean
+  logAllHeaders: boolean
   logExcludeHeaders: Array<string>
   statHeaders: Array<string>
 }

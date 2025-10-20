@@ -18,6 +18,12 @@ router.beforeEach(async (to, from, next) => {
   const permissionStore = usePermissionStoreWithOut()
   const appStore = useAppStoreWithOut()
   const userStore = useUserStoreWithOut()
+  userStore.setUserInfo({
+    username: 'admin',
+    password: 'admin',
+    role: 'admin',
+    roleId: '1'
+  })
   if (userStore.getUserInfo) {
     if (to.path === '/login') {
       next({ path: '/' })

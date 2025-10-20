@@ -14,7 +14,7 @@ const sections = [
   { id: 'part3', title: '源站配置' },
   { id: 'part4', title: '代理配置' },
   { id: 'part5', title: '日志配置' },
-  { id: 'part6', title: '网络参数配置', height: '100%' }
+  { id: 'part6', title: '网络参数配置', height: '10%' }
 ]
 const handleClick = (e: MouseEvent) => {
   e.preventDefault()
@@ -49,8 +49,8 @@ onUnmounted(() => {
         <ElAnchor
           ref="anchorRef"
           :container="containerRef"
-          :offset="0"
-          class="w-48 mt-6"
+          :offset="300"
+          class="w-30 mt-6"
           type="underline"
           style="position: fixed; z-index: 10"
           :style="{ top: `${navTop}px` }"
