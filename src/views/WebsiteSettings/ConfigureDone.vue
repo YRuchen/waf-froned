@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { onBeforeMount, ref, PropType, reactive, onMounted } from 'vue'
+import { onBeforeUnmount, ref, PropType, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   ElMessageBox,
@@ -116,13 +116,30 @@ const handleClose = () => {
   dialogVisible.value = false
   ruleForm.domain = ''
 }
+const testResult = ref({
+  reachable: null,
+  reason: ''
+})
+let testTimer: ReturnType<typeof setTimeout> | null = null
 const startTest = async () => {
+  if (testTimer) {
+    clearTimeout(testTimer)
+    testTimer = null
+  }
   if (dialogTitle.value == 'CNAME接入测试') {
     if (!ruleFormRef.value) return
     ruleFormRef.value.validate(async (valid) => {
       if (valid) {
         showLoadingText.value = 2
         const res = await cnamesTestApi(ruleForm)
+        testTimer = setTimeout(() => {
+          if (res.data.reachable === false) {
+            showLoadingText.value = 4
+            return
+          }
+          showLoadingText.value = 3
+        }, 200)
+        testResult.value = res.data
       } else {
         console.log('error submit!')
       }
@@ -131,11 +148,13 @@ const startTest = async () => {
     showLoadingText.value = 2
     const res = await upstreamsTestApi({ domainId: domainId })
     tableData.value = res.data.testInfos
-    if (tableData.value.find((item) => item.reachable === false)) {
-      showLoadingText.value = 4
-      return
-    }
-    showLoadingText.value = 3
+    testTimer = setTimeout(() => {
+      if (tableData.value.find((item) => item.reachable === false)) {
+        showLoadingText.value = 4
+        return
+      }
+      showLoadingText.value = 3
+    }, 200)
   }
 }
 const getCnamesAndEgress = async () => {
@@ -148,6 +167,9 @@ const getCnamesAndEgress = async () => {
 }
 onMounted(() => {
   getCnamesAndEgress()
+})
+onBeforeUnmount(() => {
+  if (testTimer) clearTimeout(testTimer)
 })
 </script>
 <style lang="less">
@@ -215,7 +237,7 @@ onMounted(() => {
     </div>
   </div>
   <!-- <lineContent></lineContent> -->
-  <ElDialog v-model="dialogVisible" :title="dialogTitle" width="600" :before-close="handleClose">
+  <ElDialog v-model="dialogVisible" :title="dialogTitle" width="700" :before-close="handleClose">
     <div v-if="dialogTitle == 'CNAME接入测试'">
       <ElForm
         ref="ruleFormRef"
@@ -227,7 +249,7 @@ onMounted(() => {
         <ElFormItem label="域名名称" prop="name">
           <ElInput v-model="ruleForm.domain" placeholder="请输入域名名称" />
           <span class="leading-5 break-words max-w-full" v-if="showLoadingText == 4">
-            失败原因：xxxxxxxxxxxxxXXXXXXxxxxxxxxxxxxxxxxxxxxxxddddddddddddddddddddddddxxxxxxxxxxxxxxxxxxxxx
+            失败原因：{{ testResult.reason }}
           </span>
         </ElFormItem>
       </ElForm>
@@ -235,7 +257,21 @@ onMounted(() => {
     <div v-else>
       <ElTable :data="tableData" style="width: 100%" border>
         <ElTableColumn prop="originServer" label="回源地址" width="180" />
-        <ElTableColumn prop="reachable" label="测试结果" width="180" />
+        <ElTableColumn prop="reachable" label="测试结果" width="180">
+          <template #default="scope">
+            <span :class="showLoadingText > 2 && !scope.row.reachable ? 'color-[red]' : ''">
+              {{
+                showLoadingText == 1
+                  ? '待测试'
+                  : showLoadingText == 2
+                    ? '测试中'
+                    : scope.row.reachable == true
+                      ? '成功'
+                      : '失败'
+              }}
+            </span>
+          </template>
+        </ElTableColumn>
         <ElTableColumn prop="reason" label="失败原因" />
       </ElTable>
     </div>

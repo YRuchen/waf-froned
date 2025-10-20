@@ -33,9 +33,18 @@ axiosInstance.interceptors.response.use(
     return res
   },
   (error: AxiosError) => {
-    console.log('err： ' + error) // for debug
-    ElMessage.error(error.message)
+    if (error.response) {
+      const { data, status } = error.response as any
+      const message =
+        data?.message || data?.msg || `请求错误 (${status})`
+      ElMessage.error(message)
+    } else {
+      // 说明根本没到服务器
+      ElMessage.error('网络异常或服务器未响应')
+    }
+
     return Promise.reject(error)
+
   }
 )
 
