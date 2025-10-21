@@ -9,7 +9,8 @@ import {
   saveDomainsApi,
   getCertsApi,
   getDetailApi,
-  updateDomainsApi
+  updateDomainsApi,
+  existsApi
 } from '@/api/websiteSettingPanel'
 import { LoadBalancingList } from '@/api/websiteSettingPanel/types'
 import InputTags from './InputTags.vue'
@@ -195,9 +196,23 @@ const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
     callback(new Error('请选择协议'))
   }
 }
+const validSelectHostName = (_rule: any, value: any, callback: any) => {
+  if (value) {
+    existsApi({ name: value.trim() }).then((res) => {
+      if (!res.data.exists) {
+        callback()
+      } else {
+        callback(new Error('域名重复'))
+      }
+    })
+  } else {
+    callback(new Error('请输入正确的域名'))
+  }
+}
 const rules = reactive<FormRules<RuleForm>>({
   hostname: [
-    { required: true, message: '请输入正确的域名', trigger: 'blur' },
+    { required: true, validator: validSelectHostName, trigger: 'blur' },
+    // { required: true, message: '请输入正确的域名', trigger: 'blur' },
     { min: 3, max: 500, message: '请输入正确的域名', trigger: 'blur' }
   ],
   publicServer: [

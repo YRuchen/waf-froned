@@ -39,6 +39,10 @@ export const cnamesTestApi = (data: any) => {
 export const streamsTestListApi = (params: any) => {
   return request.get({ url: '/apis/v1/upstreams/testlist', params })
 }
+// 判断重名
+export const existsApi = (params: any) => {
+  return request.get({ url: '/apis/v1/domains/exists', params })
+}
 // 回源测试
 export const upstreamsTestApi = (data: any) => {
   return request.post({ url: '/apis/v1/upstreams/test', data })
