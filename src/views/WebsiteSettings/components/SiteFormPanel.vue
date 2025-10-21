@@ -198,7 +198,7 @@ const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
 }
 const validSelectHostName = (_rule: any, value: any, callback: any) => {
   if (value) {
-    existsApi({ name: value.trim() }).then((res) => {
+    existsApi({ currDomainId: domainId ?? null, name: value.trim() }).then((res) => {
       if (!res.data.exists) {
         callback()
       } else {

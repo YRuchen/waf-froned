@@ -1,7 +1,10 @@
 import request from '@/axios'
+import qs from 'qs';
 // 获取列表
 export const getTableListApi = (params: any) => {
-  return request.get({ url: '/apis/v1/domains', params })
+  return request.get({
+    url: `/apis/v1/domains?${qs.stringify(params, { arrayFormat: 'repeat' })}`
+  })
 }
 // 获取详情
 export const getDetailApi = (id: any) => {

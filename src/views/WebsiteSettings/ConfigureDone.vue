@@ -131,7 +131,7 @@ const startTest = async () => {
     ruleFormRef.value.validate(async (valid) => {
       if (valid) {
         showLoadingText.value = 2
-        const res = await cnamesTestApi(ruleForm)
+        const res = await cnamesTestApi({ ...ruleForm, domainId: domainId })
         testTimer = setTimeout(() => {
           if (res.data.reachable === false) {
             showLoadingText.value = 4
