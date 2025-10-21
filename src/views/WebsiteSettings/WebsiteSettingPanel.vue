@@ -664,6 +664,11 @@ const resetSearchParams = (params: any) => {
         </BaseButton>
       </div>
       <div>
+        <ElButton @click="getList()">
+          <Icon icon="ep:refresh-right" />
+        </ElButton>
+      </div>
+      <div>
         <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')">新建站点</ElButton>
       </div>
     </div>

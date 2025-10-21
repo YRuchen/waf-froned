@@ -391,7 +391,7 @@ onMounted(() => {
             <ElInput
               v-model="ruleForm.hostname"
               placeholder="请填写需要防护的域名，支持泛域名或精确域名"
-              :disabled="domainId == 'edit'"
+              :disabled="domainId ? true : false"
             />
           </ElFormItem>
         </template>
