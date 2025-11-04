@@ -174,15 +174,19 @@ const showErrorList = ref([
   { key: 6, label: '源站权重不能为空' },
   { key: 7, label: '后端服务器组重复' }
 ])
-// const originList = ref<serverGroupItem[]>(props.originList)
 const allUsedPorts = ref<string[]>([])
+
 const validateName = (rule: any, value: any, callback: any) => {
   if (value === '') {
-    callback(new Error('请输入源站协议'))
+    showError.value = 2
+    setTimeout(() => {
+      callback(new Error('请输入源站协议'))
+    })
   } else {
     if (new Set(originListItem.value.servers.map((item) => item.protol)).size !== 1)
       originListItem.value.servers.map((item) => (item.protol = value))
     callback()
+    showError.value = 0
   }
 }
 const validateRegion = (rule: any, value: any, callback: any) => {
@@ -191,14 +195,20 @@ const validateRegion = (rule: any, value: any, callback: any) => {
     /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 
   if (!value) {
-    return callback(new Error('源站地址不能为空'))
+    setTimeout(() => {
+      showError.value = 1
+    })
+    return callback(new Error(''))
   }
 
   const isDomain = domainRegex.test(value)
   const isIp = ipRegex.test(value)
 
   if (!isDomain && !isIp) {
-    return callback(new Error('源站地址格式不对，请输入正确的域名地址或IP地址'))
+    setTimeout(() => {
+      showError.value = 3
+    })
+    return callback(new Error(''))
   }
 
   const nonEmptyRegions = originListItem.value.servers.filter((item) => item.address)
@@ -206,23 +216,44 @@ const validateRegion = (rule: any, value: any, callback: any) => {
   const allDomains = nonEmptyRegions.every((item) => domainRegex.test(item.address))
   const allIps = nonEmptyRegions.every((item) => ipRegex.test(item.address))
 
+  const isSameAddress = new Set(originListItem.value.servers.map((item) => item.address)).size == 1
+
   if ((isDomain && !allDomains) || (isIp && !allIps)) {
-    return callback(new Error('源地址不支持混合回源'))
+    setTimeout(() => {
+      showError.value = 4
+    })
+    return callback(new Error(''))
+  }
+  if (originListItem.value.servers.length != 1 && isSameAddress) {
+    setTimeout(() => {
+      showError.value = 7
+    })
+    return callback(new Error(''))
   }
 
+  showError.value = 0
   return callback()
 }
 const validateCount = (rule: any, value: any, callback: any) => {
-  if (value === '') {
-    callback(new Error('源站端口不能为空'))
+  if (!value || value == '') {
+    // 源站端口不能为空
+    setTimeout(() => {
+      showError.value = 5
+    })
+    callback(new Error(''))
   } else {
+    showError.value = 0
     callback()
   }
 }
 const validatDesc = (rule: any, value: any, callback: any) => {
   if (value === '') {
-    callback(new Error('源站权重不能为空'))
+    setTimeout(() => {
+      showError.value = 6
+    })
+    callback(new Error(''))
   } else {
+    showError.value = 0
     callback()
   }
 }
@@ -234,6 +265,9 @@ const submitForm = (): Promise<boolean> => {
       return
     }
     ruleFormRef.value.validate((valid) => {
+      if (valid) {
+        showError.value = 0
+      }
       resolve(valid)
     })
   })
@@ -318,18 +352,18 @@ const selectPort = (isCheck, port) => {
 const handleChange = (val: string[]) => {
   originListItem.value.accessPorts = JSON.parse(JSON.stringify(checkList.value))
 }
-watch(
-  () => originListItem.value.servers.map((item) => item.address),
-  () => {
-    nextTick(() => {
-      // 对每一行触发验证
-      originListItem.value.servers.forEach((item, index) => {
-        if (item.address) ruleFormRef.value?.validateField(`${index}.address`)
-      })
-    })
-  },
-  { deep: true }
-)
+// watch(
+//   () => originListItem.value.servers.map((item) => item.address),
+//   () => {
+//     nextTick(() => {
+//       // 对每一行触发验证
+//       originListItem.value.servers.forEach((item, index) => {
+//         if (item.address) ruleFormRef.value?.validateField(`${index}.address`)
+//       })
+//     })
+//   },
+//   { deep: true }
+// )
 watch([httpPorts, httpsPorts], () => {
   filterPort()
 })
@@ -423,9 +457,10 @@ defineExpose({
       </div>
       <ElForm ref="ruleFormRef" :model="originListItem.servers" label-position="left">
         <Table :columns="columns" :data="originListItem.servers" />
-        <span v-if="">源站地址不能为空</span>
+        <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
+          {{ showErrorList.find((item) => item.key == showError)?.label }}
+        </span>
       </ElForm>
-
       <BaseButton :icon="plusIcon" link class="m-y-3" @click="action('add')" v-if="allcount > 0">
         添加
       </BaseButton>

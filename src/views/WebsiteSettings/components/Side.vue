@@ -110,6 +110,7 @@ const handleClosePover = (item) => {
   popoverRef.value?.hide()
   handleSelect(item)
   activeGroupId.value = item.groupName
+  searchName.value = ''
 }
 const warningIcon = useIcon({ icon: 'ep:warning-filled' })
 const remove = (row) => {
