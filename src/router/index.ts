@@ -104,7 +104,19 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
         meta: {
           title: '新建站点',
           icon: 'vi-ep:management',
-          hidden: true
+          hidden: true,
+          hiddenMenu: true
+        }
+      },
+      {
+        path: 'editSitePanel',
+        component: () => import('@/views/WebsiteSettings/AddSitePanel.vue'),
+        name: 'EditSitePanel',
+        meta: {
+          title: '编辑站点',
+          icon: 'vi-ep:management',
+          hidden: true,
+          hiddenMenu: true
         }
       },
 

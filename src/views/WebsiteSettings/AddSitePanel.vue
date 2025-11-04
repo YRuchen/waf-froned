@@ -14,7 +14,7 @@ const sections = [
   { id: 'part3', title: '源站配置' },
   { id: 'part4', title: '代理配置' },
   { id: 'part5', title: '日志配置' },
-  { id: 'part6', title: '网络参数配置', height: '10%' }
+  { id: 'part6', title: '网络参数配置', height: '50%' }
 ]
 const handleClick = (e: MouseEvent) => {
   e.preventDefault()
@@ -24,10 +24,15 @@ const updateNavTop = () => {
   const bannerHeight = bannerRef.value.offsetHeight
   const scrollY = containerRef.value.scrollTop
   // 横幅消失后，导航贴顶
-  navTop.value = Math.max(bannerHeight - scrollY, 0)
+  navTop.value =
+    bannerHeight - scrollY >= 0
+      ? Math.max(bannerHeight - scrollY + bannerTop.value, 0)
+      : bannerTop.value
 }
-
+const bannerTop = ref(0)
 onMounted(() => {
+  if (!bannerRef.value || !containerRef.value) return
+  bannerTop.value = bannerRef.value?.getBoundingClientRect()?.top
   containerRef.value?.addEventListener('scroll', updateNavTop)
   updateNavTop()
 })
@@ -38,7 +43,7 @@ onUnmounted(() => {
 </script>
 <template>
   <div class="flex">
-    <div ref="containerRef" class="h-screen overflow-y-auto relative flex-1">
+    <div ref="containerRef" class="h-screen overflow-y-auto relative w-85%">
       <!-- 顶部横幅 -->
       <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
         顶部横幅
@@ -50,9 +55,8 @@ onUnmounted(() => {
           ref="anchorRef"
           :container="containerRef"
           :offset="300"
-          class="w-30 mt-6"
           type="underline"
-          style="position: fixed; z-index: 10"
+          class="!fixed !ml-20 !w-32"
           :style="{ top: `${navTop}px` }"
           @click="handleClick"
         >
@@ -68,6 +72,6 @@ onUnmounted(() => {
         <siteForm :sections="sections"></siteForm>
       </div>
     </div>
-    <div class="w-20%"> </div>
+    <div class="flex-1"> </div>
   </div>
 </template>

@@ -8,6 +8,7 @@ import AppView from './AppView.vue'
 import ToolHeader from './ToolHeader.vue'
 import { ElScrollbar } from 'element-plus'
 import { useDesign } from '@/hooks/web/useDesign'
+import { useRouter } from 'vue-router'
 
 const { getPrefixCls } = useDesign()
 
@@ -35,7 +36,10 @@ const mobile = computed(() => appStore.getMobile)
 // 固定菜单
 const fixedMenu = computed(() => appStore.getFixedMenu)
 
+// 当前路由
+
 export const useRenderLayout = () => {
+  const { currentRoute } = useRouter()
   const renderClassic = () => {
     return (
       <>
@@ -60,16 +64,20 @@ export const useRenderLayout = () => {
           ) : undefined}
           <Menu></Menu>
         </div>
+        {/* TODO:这里我去掉了一个固定样式：h-[100%]，不知道会不会影响，主要是现在影响了页面的滚动条 */}
         <div
           class={[
             `${prefixCls}-content`,
-            'absolute top-0 h-[100%]',
+            'absolute top-0 ',
             {
               'w-[calc(100%-var(--left-menu-min-width))] left-[var(--left-menu-min-width)]':
                 collapse.value && !mobile.value && !mobile.value,
               'w-[calc(100%-var(--left-menu-max-width))] left-[var(--left-menu-max-width)]':
-                !collapse.value && !mobile.value && !mobile.value,
-              'fixed !w-full !left-0': mobile.value
+                !currentRoute.value.meta.hiddenMenu &&
+                !collapse.value &&
+                !mobile.value &&
+                !mobile.value,
+              'fixed !w-full !left-0': currentRoute.value.meta.hiddenMenu || mobile.value
             }
           ]}
           style="transition: all var(--transition-time-02);"
@@ -77,15 +85,14 @@ export const useRenderLayout = () => {
           <ElScrollbar
             v-loading={pageLoading.value}
             class={[
-              `${prefixCls}-content-scrollbar`
-              // {
-              //   '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
-              //     fixedHeader.value
-              // }
+              `${prefixCls}-content-scrollbar`,
+              {
+                '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
+                  fixedHeader.value
+              }
             ]}
-            style="height:100vh !important;"
           >
-            {/* <div
+            <div
               class={[
                 {
                   'fixed top-0 left-0 z-10': fixedHeader.value,
@@ -110,7 +117,7 @@ export const useRenderLayout = () => {
               {tagsView.value ? (
                 <TagsView class="layout-border__bottom layout-border__top"></TagsView>
               ) : undefined}
-            </div> */}
+            </div>
 
             <AppView></AppView>
           </ElScrollbar>

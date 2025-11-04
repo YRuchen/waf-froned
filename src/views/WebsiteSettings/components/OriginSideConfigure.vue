@@ -32,8 +32,6 @@ const copyIcon = useIcon({ icon: 'vi-ep:copy-document' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
 const plusIcon = useIcon({ icon: 'vi-ep:plus' })
 
-const emit = defineEmits(['change'])
-
 const columns: TableColumn[] = [
   {
     field: 'protol',
@@ -58,7 +56,7 @@ const columns: TableColumn[] = [
   {
     field: 'address',
     label: '源站地址',
-    minWidth: '200',
+    minWidth: '230',
     slots: {
       default: ({ row, $index }) => {
         return (
@@ -75,7 +73,7 @@ const columns: TableColumn[] = [
   {
     field: 'port',
     label: '源站端口',
-    minWidth: '150',
+    minWidth: '120',
     slots: {
       default: ({ row, $index }) => {
         return (
@@ -166,6 +164,16 @@ const originListItem = ref<serverGroupItem>({
   servers: []
 })
 const { httpPorts, httpsPorts, originList } = toRefs(props)
+const showError = ref(0)
+const showErrorList = ref([
+  { key: 1, label: '源站地址不能为空' },
+  { key: 2, label: '请输入源站协议' },
+  { key: 3, label: '源站地址格式不对，请输入正确的域名地址或IP地址' },
+  { key: 4, label: '源地址不支持混合回源' },
+  { key: 5, label: '源站端口不能为空' },
+  { key: 6, label: '源站权重不能为空' },
+  { key: 7, label: '后端服务器组重复' }
+])
 // const originList = ref<serverGroupItem[]>(props.originList)
 const allUsedPorts = ref<string[]>([])
 const validateName = (rule: any, value: any, callback: any) => {
@@ -206,14 +214,14 @@ const validateRegion = (rule: any, value: any, callback: any) => {
 }
 const validateCount = (rule: any, value: any, callback: any) => {
   if (value === '') {
-    callback(new Error('请填写源站端口'))
+    callback(new Error('源站端口不能为空'))
   } else {
     callback()
   }
 }
 const validatDesc = (rule: any, value: any, callback: any) => {
   if (value === '') {
-    callback(new Error('请填写权重'))
+    callback(new Error('源站权重不能为空'))
   } else {
     callback()
   }
@@ -273,15 +281,25 @@ const filterPort = () => {
   const result = protocolPorts.filter((port) => !allUsedPorts.value.includes(port)).concat(port)
   filteredPorts.value = protocolPorts.filter((port) => result.includes(port))
 }
+const sideRef = ref<InstanceType<typeof Side>>()
 // 操作分组的时候，右侧table也跟着改变
-const getTableList = (data: serverGroupItem) => {
-  originListItem.value = data
-  originListItem.value.servers = data.servers.map((item) => ({
-    ...item,
-    protol: data.protocol == 'PROTOCOL_UNSPECIFIED' ? '' : data.protocol
-  }))
-  allUsedPorts.value = originList.value.map((items) => items.accessPorts).flat()
-  filterPort()
+const getTableList = async (data: serverGroupItem) => {
+  const res = await submitForm()
+  if (!sideRef.value) return
+  if (res) {
+    originListItem.value = data
+    originListItem.value.servers = data.servers.map((item) => ({
+      ...item,
+      protol: data.protocol == 'PROTOCOL_UNSPECIFIED' ? '' : data.protocol
+    }))
+    allUsedPorts.value = originList.value.map((items) => items.accessPorts).flat()
+    filterPort()
+    if (!sideRef.value) return
+    sideRef.value.activeGroupId = data.groupName
+  } else {
+    if (!sideRef.value) return
+    sideRef.value.activeGroupId = originListItem.value.groupName
+  }
 }
 /***自定义接入端的端口选择 */
 const handleSelect = (index: string) => {
@@ -328,7 +346,7 @@ defineExpose({
 <style></style>
 <template>
   <div class="grid grid-cols-[20%_80%] h-[500px]">
-    <Side @change="getTableList" v-model:originList="originList" />
+    <Side @change="getTableList" v-model:originList="originList" ref="sideRef" />
     <div class="p-20px border-1 border-solid border-#ebeef5">
       <div class="m-b-2">
         <ElTag type="info" effect="dark" class="m-r-2">如果</ElTag>
@@ -405,9 +423,10 @@ defineExpose({
       </div>
       <ElForm ref="ruleFormRef" :model="originListItem.servers" label-position="left">
         <Table :columns="columns" :data="originListItem.servers" />
+        <span v-if="">源站地址不能为空</span>
       </ElForm>
 
-      <BaseButton :icon="plusIcon" class="m-y-3" @click="action('add')" v-if="allcount > 0">
+      <BaseButton :icon="plusIcon" link class="m-y-3" @click="action('add')" v-if="allcount > 0">
         添加
       </BaseButton>
       <span class="m-x-3 color-[#7e7777]" v-if="allcount > 0">还可添加{{ allcount }}个</span>

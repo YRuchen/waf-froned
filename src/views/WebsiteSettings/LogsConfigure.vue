@@ -53,12 +53,12 @@ const columns: TableColumn[] = [
     }
   },
   {
-    field: 'display_time',
+    field: 'protectionMode',
     label: '防护模式'
   },
   {
     field: 'pageviews',
-    label: '响应式检测'
+    label: '响应数据检测'
   },
   {
     field: 'pageviews',
@@ -125,7 +125,7 @@ const tableDataList = ref<TableData[]>([
     title: 'string',
     content: 'string',
     importance: 1,
-    display_time: '222',
+    protectionMode: '222',
     pageviews: 11
   }
 ])
@@ -348,11 +348,6 @@ const getList = () => {
       </div>
     </div>
     <Search :schema="filterSchema" :showSearch="false" :showReset="false" v-if="isShowFilter" />
-    <Table
-      :columns="columns"
-      :data="tableDataList"
-      :loading="loading"
-      :defaultSort="{ prop: 'display_time', order: 'descending' }"
-    />
+    <Table :columns="columns" :data="tableDataList" :loading="loading" />
   </ContentWrap>
 </template>

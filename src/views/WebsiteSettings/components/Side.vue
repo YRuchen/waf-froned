@@ -1,5 +1,6 @@
 <script lang="tsx" setup>
-import { onBeforeMount, ref, PropType, reactive, onMounted, toRef, watch } from 'vue'
+// import { Icon } from '@iconify/vue'
+import { nextTick, ref, PropType, reactive, onMounted, watch, toRef } from 'vue'
 import { debounce } from 'lodash-es'
 import {
   ElMessageBox,
@@ -19,7 +20,6 @@ import {
   ElMenuItem,
   type PopoverInstance
 } from 'element-plus'
-import { BaseButton } from '@/components/Button'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
 import { serverGroupItem } from '@/api/websiteSettingPanel/types'
@@ -35,11 +35,8 @@ interface RuleForm {
 
 const { t } = useI18n()
 const plusIcon = useIcon({ icon: 'vi-ep:plus' })
-const editIcon = useIcon({ icon: 'vi-ep:edit' })
-const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'onupdata:originList'])
 const dialogFormVisible = ref(false)
-const curTreeData = ref({})
 const form = reactive({
   name: '',
   folderId: 0
@@ -54,21 +51,11 @@ const rules = reactive<FormRules<RuleForm>>({
 })
 
 const menuData = toRef(props, 'originList')
-const addDialogRef = ref()
-const activeGroupId = ref(menuData.value[0]?.groupName)
+const activeGroupId = ref()
 const searchName = ref<any>('')
 const searchNameList = ref<Array<serverGroupItem>>([])
 const popoverRef = ref<PopoverInstance>()
-watch(
-  menuData,
-  (val) => {
-    if (val.length > 0) {
-      handleSelect(val[0]) // 自动触发选择第一个
-      activeGroupId.value = val[0].groupName
-    }
-  }
-  // { immediate: true } // 立即执行一次，如果已经有值也会触发
-)
+
 // 搜索
 const filterNode = debounce((val: string) => {
   if (!val) {
@@ -92,6 +79,7 @@ const addDict = (index) => {
     accessPorts: [],
     protocol: 'HTTP'
   })
+  // emit('onupdata:originList', menuData.value)
 }
 const currentItem = ref<any>({})
 const submitForm = async (formEl: FormInstance | undefined) => {
@@ -123,28 +111,54 @@ const handleClosePover = (item) => {
   handleSelect(item)
   activeGroupId.value = item.groupName
 }
-
+const warningIcon = useIcon({ icon: 'ep:warning-filled' })
 const remove = (row) => {
-  ElMessageBox.confirm('你确定要删除当前项吗?', '温馨提示', {
-    confirmButtonText: '确定',
+  ElMessageBox({
+    // title: '确认删除',
+    message: (
+      <div class="flex">
+        <span class="text-[var(--el-color-warning)] mr-1.5 p-1">{warningIcon}</span>
+        <span>
+          确认删除?删除分组后将清空组内回源配置，并对组内接入端口按照默认分组配置执行回源操作。
+        </span>
+      </div>
+    ),
+    showCancelButton: true,
+    confirmButtonText: '删除',
     cancelButtonText: '取消',
-    type: 'warning',
-    draggable: true
+    confirmButtonClass: 'el-button--danger'
   })
-    .then(async () => {
-      menuData.value = menuData.value.filter((i) => i.groupName !== row.groupName)
+    .then(() => {
+      nextTick(() => {
+        menuData.value = menuData.value.filter((i) => i.groupName !== row.groupName)
+        handleSelect(menuData.value[menuData.value.length - 1])
+      })
       ElMessage.success('删除成功')
     })
     .catch(() => {})
 }
+const menuRef = ref()
+const menuKey = ref(0)
 const handleSelect = (data: serverGroupItem) => {
-  console.log(data, 444)
-
+  // activeGroupId.value = '默认分组'
+  menuKey.value++
   emit('change', data)
 }
+// watch(
+//   menuData,
+//   (val) => {
+//     if (val.length > 0) {
+//       handleSelect(val[0]) // 自动触发选择第一个
+//       activeGroupId.value = val[0].groupName
+//     }
+//   },
+//   { immediate: true } // 立即执行一次，如果已经有值也会触发
+// )
 onMounted(() => {
   handleSelect(menuData.value[0])
 })
+
+defineExpose({ activeGroupId })
 </script>
 <style lang="less">
 .menu-wrap {
@@ -200,7 +214,11 @@ onMounted(() => {
           <ElButton link class="m-y-2"> 分组 <Icon icon="vi-ep:search"></Icon> </ElButton>
         </template>
         <template #default>
-          <ElInput v-model="searchName" placeholder="请填写" @input="filterNode" />
+          <ElInput
+            v-model="searchName"
+            placeholder="请输入分组名称或接入端口"
+            @input="filterNode"
+          />
           <template v-if="searchNameList.length !== 0">
             <p
               class="m-2 cursor-pointer"
@@ -222,13 +240,19 @@ onMounted(() => {
           </template>
         </template>
       </ElPopover>
-      <ElButton text type="primary" :icon="plusIcon" @click="addDict(menuData.length)">
+      <ElButton link type="primary" :icon="plusIcon" @click="addDict(menuData.length)">
         添加
       </ElButton>
     </div>
 
     <ElScrollbar class="scrollbar">
-      <ElMenu :default-active="activeGroupId" text-color="#333" active-text-color="#ededed">
+      <ElMenu
+        :default-active="activeGroupId"
+        :key="menuKey"
+        text-color="#333"
+        active-text-color="#ededed"
+        ref="menuRef"
+      >
         <ElMenuItem
           v-for="item in menuData"
           :key="item.groupName"
@@ -241,7 +265,7 @@ onMounted(() => {
               <Icon icon="vi-ep:edit" @click="(e) => editDictsort(e, item)"></Icon>
             </ElTooltip>
             <ElTooltip effect="dark" content="删除" placement="top">
-              <Icon icon="vi-ep:delete" @click="remove"></Icon>
+              <Icon icon="vi-ep:delete" @click="remove(item)"></Icon>
             </ElTooltip>
           </p>
         </ElMenuItem>

@@ -279,7 +279,7 @@ const resetForm = () => {
   push('/websiteSettings/index')
 }
 /**编辑tls */
-const handlrEditTLS = () => {
+const handleEditTLS = () => {
   showTLSDialog.value = true
 }
 
@@ -310,6 +310,7 @@ const onRegister = (_parent: any, elTableRef: any) => {
     })
   })
 }
+/**TLS配置提交 */
 const handleSubmit = () => {
   selected.value = tableRef.value?.getSelectionRows?.() || []
   showErrorTips.value = !(ruleForm.sslProtocols.length !== 0 && selected.value.length !== 0)
@@ -337,14 +338,27 @@ const getCerts = async () => {
   })
   options.value = res.data.list
 }
+const flag = ref(false)
 /**获取详情 */
 const getDatail = async () => {
   const res = await getDetailApi(domainId)
-  Object.keys(res.data.domain).forEach((key) => {
-    if (key in ruleForm) {
-      ruleForm[key] = res.data.domain[key]
-    }
-  })
+  if (res.code === 200) {
+    Object.keys(res.data.domain).forEach((key) => {
+      if (key in ruleForm) {
+        ruleForm[key] = res.data.domain[key]
+      }
+    })
+    flag.value = true
+  }
+}
+const rendElOption = (item) => {
+  return (
+    <>
+      <span>{item.name}</span>
+      <span> | </span>
+      <span>包含绑定域名：{item.subjectNames.join(',')}</span>
+    </>
+  )
 }
 onMounted(() => {
   handleGetTls()
@@ -353,7 +367,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <div class="ml-32 flex-1 p-6 flex flex-col">
+  <div class="ml-52 flex-1 p-6 flex flex-col">
     <ElForm
       ref="parentFormRef"
       class="w-90% h-full"
@@ -383,6 +397,7 @@ onMounted(() => {
                   effect="dark"
                   content="如需同时配置泛域名和域名主体本身，请分别配置。如：需要同时配置*.b.a.com和b.a.com，需要分别接入域名并配置策略。"
                   placement="top-start"
+                  popper-style="max-width: 300px; white-space: normal;"
                 >
                   <Icon icon="ep:question-filled" class="ml-1" />
                 </ElTooltip>
@@ -489,7 +504,7 @@ onMounted(() => {
           </ElFormItem>
           <template v-if="ruleForm.httpsEnabled">
             <ElFormItem label="证书选择" prop="certId">
-              <ElSelect v-model="ruleForm.certId" placeholder="请选择" style="width: 240px">
+              <ElSelect v-model="ruleForm.certId" placeholder="请选择" class="!w-[80%]">
                 <ElOption
                   v-for="item in options"
                   :key="item.id"
@@ -497,14 +512,22 @@ onMounted(() => {
                   :label="item.name"
                 >
                   <template #default>
-                    <span>{{ item.name }}</span>
-                    <span> | </span>
-                    <span>包含绑定域名：</span>
-                    <span>{{ item.subjectNames.join(',') }}</span>
+                    <ElTooltip
+                      effect="dark"
+                      placement="right-start"
+                      popper-style="max-width: 400px; white-space: normal;"
+                    >
+                      <template #content>
+                        <component :is="rendElOption(item)"></component>
+                      </template>
+                      <div style="max-width: 800px; text-overflow: ellipsis; overflow: hidden">
+                        <component :is="rendElOption(item)"></component>
+                      </div>
+                    </ElTooltip>
                   </template>
                 </ElOption>
               </ElSelect>
-              <ElButton link type="primary">刷新</ElButton>
+              <ElButton link type="primary" @click="getCerts">刷新</ElButton>
               <ElButton link type="primary">新增证书</ElButton>
             </ElFormItem>
             <ElFormItem label="SNI配置" prop="sniEnabled">
@@ -524,7 +547,7 @@ onMounted(() => {
                 <div class="flex flex-col" v-if="!openTLSConfigure">
                   <div>
                     <span>允许使用的TLS加密版本和加密套件，不匹配请求将默认丢弃</span>
-                    <ElButton link type="primary" @click="handlrEditTLS">编辑配置</ElButton>
+                    <ElButton link type="primary" @click="handleEditTLS">编辑配置</ElButton>
                   </div>
                   <ElDescriptions class="margin-top w-full" :column="1">
                     <ElDescriptionsItem label="TLS协议">
@@ -562,6 +585,7 @@ onMounted(() => {
         </template>
         <template v-if="section.title == '源站配置'">
           <originSideConfigure
+            v-if="(domainId && flag) || !domainId"
             ref="childRef"
             v-model:originList="ruleForm.serverGroups"
             :httpPorts="ruleForm.httpPorts"

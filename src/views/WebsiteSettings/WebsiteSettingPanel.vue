@@ -43,6 +43,7 @@ import {
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import InputTags from './components/InputTags.vue'
+import { object } from 'vue-types'
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 /**列表数据请求获取 */
@@ -205,7 +206,7 @@ const columns = reactive<TableColumn[]>([
   },
   {
     field: 'responseCheckStatus',
-    label: '响应式检测',
+    label: '响应数据检测',
     slots: {
       default: (data: any) => {
         // const row = data.row
@@ -241,10 +242,13 @@ const columns = reactive<TableColumn[]>([
                   confirmButtonClass: oldValue ? 'button-red' : ''
                 })
                   .then(async () => {
-                    updateFields('DOMAIN_PATCH_FIELD_RESPONSE_CHECK_STATUS', {
+                    const res = await updateFieldsApi({
+                      patchField: 'DOMAIN_PATCH_FIELD_RESPONSE_CHECK_STATUS',
                       domainId: data.row.id,
                       responseCheckStatus: !data.row.responseCheckStatus
                     })
+                    if (res.code == 200)
+                      ElMessage.success(data.row.responseCheckStatus ? '关闭成功' : '开启成功')
                     getList()
                   })
                   .catch(() => {
@@ -381,10 +385,10 @@ const filterMap = (key: any) => {
 }
 // “正常”、“未接入”、“配置失败”、“回源失败”
 const statusListArr = ref([
-  { name: '正常', count: 1, key: 'DOMAIN_STATUS_ACTIVE', value: 1, color: '#67C23A' },
-  { name: '未接入', count: 1, key: 'DOMAIN_STATUS_UNSPECIFIED', value: 2, color: '#E6A23C' },
-  { name: '配置失败', count: 1, key: 'DOMAIN_STATUS_FAILED', value: 3, color: '#F56C6C' },
-  { name: '回源失败', count: 1, key: 'DOMAIN_STATUS_UPSTREAM_FAILED', value: 4, color: '#909399' }
+  { name: '正常', count: 1, key: 'DOMAIN_STATUS_ACTIVE', value: 0, color: '#67C23A' },
+  { name: '未接入', count: 1, key: 'DOMAIN_STATUS_UNSPECIFIED', value: 1, color: '#E6A23C' },
+  { name: '配置失败', count: 1, key: 'DOMAIN_STATUS_FAILED', value: 2, color: '#F56C6C' },
+  { name: '回源失败', count: 1, key: 'DOMAIN_STATUS_UPSTREAM_FAILED', value: 3, color: '#909399' }
 ])
 /**搜索字段 */
 const searchSchema = reactive<FormSchema[]>([
@@ -522,17 +526,16 @@ const handleEdit = (event: any, row: any) => {
 }
 /**提交编辑防护模式 */
 const updateFields = async (patchField: string, data: any) => {
-  patchField == 'DOMAIN_PATCH_FIELD_PROTECT_STATUS' ? (dialogVisible.value = false) : null
-  await updateFieldsApi({ ...data, patchField: patchField })
+  const res = await updateFieldsApi({ ...data, patchField: patchField })
+  if (res.code == 200) ElMessage.success(data.logEnabled ? '开启成功' : '关闭成功')
   getList()
-  ElMessage.success('编辑成功')
 }
 /**列表操作 */
 const action = (row, name) => {
   switch (name) {
     case 'edit':
       push({
-        path: '/websiteSettings/addSitePanel',
+        path: '/websiteSettings/editSitePanel',
         query: { id: row.id }
       })
       break
@@ -541,11 +544,10 @@ const action = (row, name) => {
         domainId: row.id,
         logEnabled: !row.logEnabled
       })
-      getList()
       break
     case 'edit':
       push({
-        path: '/websiteSettings/addSitePanel',
+        path: '/websiteSettings/editSitePanel',
         query: { type: name }
       })
       break
@@ -569,13 +571,23 @@ const handleLogsConfigure = () => {
 }
 /**日志配置提交 */
 const handleSubmitEdit = async () => {
-  await updateFields('DOMAIN_PATCH_FIELD_LOG_ALL_HEADERS', {
+  const res = await updateFieldsApi({
     ...logsConfigureForm.value,
+    patchField: 'DOMAIN_PATCH_FIELD_LOG_ALL_HEADERS',
     batchDomainIds: totalSelection.value.map((item) => item.id)
   })
-
   showLogsConfigure.value = false
-  ElMessage.success('编辑成功')
+  if (res.code == 200) ElMessage.success('编辑成功')
+  getList()
+}
+const handleProtect = async () => {
+  const res = await updateFieldsApi({
+    ...ruleForm.value,
+    patchField: 'DOMAIN_PATCH_FIELD_PROTECT_STATUS'
+  })
+  dialogVisible.value = false
+  if (res.code == 200) ElMessage(ruleForm.value.protectStatus ? '启用防护成功' : '暂停防护成功')
+  getList()
 }
 /**查询 */
 // search组件
@@ -605,7 +617,7 @@ const resetSearchParams = (params: any) => {
 }
 </style>
 <template>
-  <ContentWrap :title="t('tableDemo.table')" :message="t('tableDemo.tableDes')">
+  <ContentWrap>
     <div class="flex w-full mb-4">
       <ElCard
         :class="[
@@ -692,8 +704,8 @@ const resetSearchParams = (params: any) => {
       row-key="id"
     >
       <template #empty>
-        <span>暂无数据</span>
-        <ElButton text type="primary" @click="push('/websiteSettings/addSitePanel')">
+        <span class="align-middle">暂无数据</span>
+        <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
           新建站点
         </ElButton>
       </template>
@@ -728,12 +740,7 @@ const resetSearchParams = (params: any) => {
     <template #footer>
       <div class="dialog-footer">
         <ElButton size="large" @click="dialogVisible = false">取消</ElButton>
-        <ElButton
-          size="large"
-          type="primary"
-          @click="updateFields('DOMAIN_PATCH_FIELD_PROTECT_STATUS', ruleForm)"
-          >确定</ElButton
-        >
+        <ElButton size="large" type="primary" @click="handleProtect">确定</ElButton>
       </div>
     </template>
   </ElDialog>
