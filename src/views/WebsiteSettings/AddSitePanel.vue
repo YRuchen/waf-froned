@@ -1,8 +1,11 @@
 <script setup lang="tsx">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ContentWrap } from '@/components/ContentWrap'
 import { ElAnchor, ElAnchorLink } from 'element-plus'
 import siteForm from './components/SiteFormPanel.vue'
+import { useRouter } from 'vue-router'
 
+const { currentRoute, push } = useRouter()
 const containerRef = ref<HTMLElement | null>(null)
 const bannerRef = ref<HTMLElement | null>(null)
 const anchorRef = ref<InstanceType<typeof ElAnchor> | null>(null)
@@ -42,36 +45,42 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div class="flex">
-    <div ref="containerRef" class="h-screen overflow-y-auto relative w-85%">
-      <!-- 顶部横幅 -->
-      <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
-        顶部横幅
-      </div>
-
-      <div class="flex relative">
-        <!-- 左侧导航 -->
-        <ElAnchor
-          ref="anchorRef"
-          :container="containerRef"
-          :offset="300"
-          type="underline"
-          class="!fixed !ml-20 !w-32"
-          :style="{ top: `${navTop}px` }"
-          @click="handleClick"
-        >
-          <ElAnchorLink
-            v-for="section in sections"
-            :key="section.id"
-            :href="`#${section.id}`"
-            :title="section.title"
-          />
-        </ElAnchor>
-
-        <!-- 右侧内容 -->
-        <siteForm :sections="sections"></siteForm>
-      </div>
+  <ContentWrap>
+    <div class="font-size-4 cursor-pointer h-[45px]" @click="() => push('/websiteSettings/index')">
+      <Icon icon="ep:arrow-left" class="align-middle mr-1 font-size-5" />
+      <span>{{ currentRoute.meta?.title }}</span>
     </div>
-    <div class="flex-1"> </div>
-  </div>
+    <div class="flex h-80%">
+      <div ref="containerRef" class="h-screen overflow-y-auto relative w-85%">
+        <!-- 顶部横幅 -->
+        <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
+          顶部横幅
+        </div>
+
+        <div class="flex relative">
+          <!-- 左侧导航 -->
+          <ElAnchor
+            ref="anchorRef"
+            :container="containerRef"
+            :offset="300"
+            type="underline"
+            class="!fixed !ml-20 !w-32"
+            :style="{ top: `${navTop}px` }"
+            @click="handleClick"
+          >
+            <ElAnchorLink
+              v-for="section in sections"
+              :key="section.id"
+              :href="`#${section.id}`"
+              :title="section.title"
+            />
+          </ElAnchor>
+
+          <!-- 右侧内容 -->
+          <siteForm :sections="sections"></siteForm>
+        </div>
+      </div>
+      <div class="flex-1"> </div>
+    </div>
+  </ContentWrap>
 </template>

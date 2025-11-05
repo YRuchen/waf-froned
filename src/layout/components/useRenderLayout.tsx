@@ -64,11 +64,10 @@ export const useRenderLayout = () => {
           ) : undefined}
           <Menu></Menu>
         </div>
-        {/* TODO:这里我去掉了一个固定样式：h-[100%]，不知道会不会影响，主要是现在影响了页面的滚动条 */}
         <div
           class={[
             `${prefixCls}-content`,
-            'absolute top-0 ',
+            'absolute top-0 h-[100%]',
             {
               'w-[calc(100%-var(--left-menu-min-width))] left-[var(--left-menu-min-width)]':
                 collapse.value && !mobile.value && !mobile.value,

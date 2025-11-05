@@ -43,7 +43,6 @@ import {
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import InputTags from './components/InputTags.vue'
-import { object } from 'vue-types'
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 /**列表数据请求获取 */
@@ -353,7 +352,7 @@ const ruleForm = ref<ProtectStatusRuleForm>({
 const dialogTitle = ref<string>('')
 const tableRef = ref<InstanceType<typeof Table>>()
 const totalSelection = ref<any>([])
-const { push } = useRouter()
+const { currentRoute, push } = useRouter()
 /**统计定义 */
 const cardList = ref({
   totalCount: 0,
@@ -617,7 +616,7 @@ const resetSearchParams = (params: any) => {
 }
 </style>
 <template>
-  <ContentWrap>
+  <ContentWrap :title="currentRoute.meta.title">
     <div class="flex w-full mb-4">
       <ElCard
         :class="[
