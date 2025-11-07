@@ -84,4 +84,15 @@ declare global {
     readonly VITE_ICON_PREFIX: string
     readonly VITE_HIDE_GLOBAL_SETTING: string
   }
+  declare interface QiankunProps {
+    container?: HTMLElement
+    token?: string
+    userInfo?: any
+    onGlobalStateChange?: Function
+    setGlobalState?: Function
+    [key: string]: any
+  }
+  interface Window {
+    __POWERED_BY_QIANKUN__?: boolean
+  }
 }

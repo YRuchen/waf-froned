@@ -69,12 +69,16 @@ export const useUserStore = defineStore('user', {
         type: 'warning'
       })
         .then(async () => {
-          const res = await loginOutApi().catch(() => {})
+          const res = await loginOutApi().catch(() => { })
           if (res) {
             this.reset()
           }
         })
-        .catch(() => {})
+        .catch(() => { })
+    },
+    /** 重置应用 */
+    resetApp() {
+      console.log('重置应用')
     },
     reset() {
       const tagsViewStore = useTagsViewStore()
@@ -82,7 +86,6 @@ export const useUserStore = defineStore('user', {
       this.setToken('')
       this.setUserInfo(undefined)
       this.setRoleRouters([])
-      router.replace('/login')
     },
     logout() {
       this.reset()
