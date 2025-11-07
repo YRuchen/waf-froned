@@ -28,13 +28,15 @@ const modelValueRef = computed({
 <template>
   <div class="custom-select">
     <div class="label">{{ props.label }}</div>
-    <ElSelect v-model="modelValueRef" :placeholder="props.placeholder" :multiple="props.multiple">
-      <ElOption
-        v-for="option in props.options"
-        :key="option.value"
-        :label="option.label"
-        :value="option.value"
-      />
+    <ElSelect
+      v-model="modelValueRef"
+      :placeholder="props.placeholder"
+      :multiple="props.multiple"
+      collapse-tags
+      collapse-tags-tooltip
+      style="width: 240px"
+    >
+      <ElOption v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
     </ElSelect>
   </div>
 </template>

@@ -296,3 +296,13 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     </div>
   </template>
 </template>
+<style lang="less" scoped>
+:deep(.el-form-item) {
+  border: var(--el-border);
+  .el-select__wrapper {
+    border-radius: unset;
+    box-shadow: none !important;
+    border-left: 1px solid var(--el-border-color);
+  }
+}
+</style>
