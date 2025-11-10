@@ -88,7 +88,8 @@ export const useRenderLayout = () => {
               {
                 '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
                   fixedHeader.value
-              }
+              },
+              '!h-screen'
             ]}
           >
             <div
