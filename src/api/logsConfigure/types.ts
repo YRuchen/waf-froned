@@ -26,5 +26,7 @@ export interface Shortcut {
 }
 export interface TimeList {
   text: string
-  msOffset: number
+  msOffset?: number
+  startOf?: 'day' | 'week' | 'month'
+  offset?: number
 }

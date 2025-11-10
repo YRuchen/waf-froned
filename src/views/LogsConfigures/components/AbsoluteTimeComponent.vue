@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { ElDatePicker } from 'element-plus'
 
+const emit = defineEmits(['update:range'])
 const range = ref<[string, string] | ''>('')
+
+watch(range, (val) => {
+  emit('update:range', val)
+})
 </script>
 
 <template>

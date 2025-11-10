@@ -2,8 +2,10 @@
 import { useTimeShortcuts } from './useTimeShortcuts'
 import { Shortcut, TimeList } from '@/api/logsConfigure/types'
 import { ref, watch, reactive, nextTick } from 'vue'
-import { formatToDateTime, dateUtil } from '@/utils/dateUtil'
+import { formatToDateTime } from '@/utils/dateUtil'
 import { ElSwitch } from 'element-plus'
+
+const emit = defineEmits(['update:range'])
 const exactHour = ref(false)
 const minuteList: TimeList[] = [
   { text: '近1分钟', msOffset: 1 * 60 * 1000 },
@@ -24,14 +26,14 @@ const dayList: TimeList[] = [
   { text: '近7天', msOffset: 7 * 24 * 60 * 60 * 1000 }
 ]
 const nowCutList: TimeList[] = [
-  { text: '今天', msOffset: 1 * 24 * 60 * 60 * 1000 },
-  { text: '本周', msOffset: 3 * 24 * 60 * 60 * 1000 },
-  { text: '本月', msOffset: 7 * 24 * 60 * 60 * 1000 }
+  { text: '今天', startOf: 'day' },
+  { text: '本周', startOf: 'week' },
+  { text: '本月', startOf: 'month' }
 ]
 const lastCutList: TimeList[] = [
-  { text: '昨天', msOffset: 1 * 24 * 60 * 60 * 1000 },
-  { text: '前天', msOffset: 3 * 24 * 60 * 60 * 1000 },
-  { text: '上周', msOffset: 7 * 24 * 60 * 60 * 1000 }
+  { text: '昨天', startOf: 'day', offset: -1 },
+  { text: '前天', startOf: 'week', offset: -1 },
+  { text: '上周', startOf: 'month', offset: -1 }
 ]
 
 const { fixedShortcuts: minuteShortcuts } = useTimeShortcuts(minuteList, exactHour)
@@ -46,6 +48,7 @@ const range = ref<[Date, Date]>(selectedShortcut.value?.value() ?? [new Date(), 
 const handleClick = (short) => {
   selectedShortcut.value = short
   range.value = short.value()
+  emit('update:range', short.text)
 }
 
 watch(exactHour, () => {
@@ -74,7 +77,7 @@ watch(exactHour, () => {
             v-for="short in item"
             :key="short.text"
             @click="handleClick(short)"
-            class="cursor-pointer"
+            class="cursor-pointer my-1"
           >
             {{ short.text }}
           </span>
@@ -90,7 +93,7 @@ watch(exactHour, () => {
             v-for="short in item"
             :key="short.text"
             @click="handleClick(short)"
-            class="cursor-pointer"
+            class="cursor-pointer my-1"
           >
             {{ short.text }}
           </span>

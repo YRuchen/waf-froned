@@ -1,29 +1,58 @@
 // src/hooks/useTimeShortcuts.ts
 import { ref } from 'vue'
-
-import { Shortcut, TimeList } from '@/api/logsConfigure/types'
+import dayjs from 'dayjs'
+import type { Shortcut, TimeList } from '@/api/logsConfigure/types'
 
 export const useTimeShortcuts = (fixedList: TimeList[], exactHour = ref(false)) => {
-  // 工具函数：从毫秒偏移量生成时间区间
-  const makeRange = (msOffset: number): [Date, Date] => {
+  /**
+   * 模式1：相对时间（近X分钟/小时/天）
+   */
+  const makeRangeByMs = (msOffset: number): [Date, Date] => {
     const now = new Date()
     let end = new Date(now.getTime())
 
-    // 对于分钟级别，不整点
+    // 整点时间模式，仅在大于1小时的时间段生效
     if (exactHour.value && msOffset >= 60 * 60 * 1000) {
-      end.setMinutes(0, 0, 0) // 整点对齐
+      end.setMinutes(0, 0, 0)
     }
 
     const start = new Date(end.getTime() - msOffset)
     return [start, end]
   }
-  // 固定选项
-  const fixedShortcuts: Shortcut[] = fixedList.map((item) => ({
-    text: item.text,
-    value: () => makeRange(item.msOffset)
-  }))
 
-  // 自定义输入（天 / 小时 / 分钟）
+  /**
+   * 模式2：固定时间段（今天、本周、本月、昨天、上周等）
+   */
+  const makeRangeByPeriod = (startOf: 'day' | 'week' | 'month', offset = 0): [Date, Date] => {
+    const now = dayjs()
+    const start = now.add(offset, startOf).startOf(startOf)
+    const end = now.add(offset, startOf).endOf(startOf)
+    return [start.toDate(), end.toDate()]
+  }
+
+  /**
+   * 统一封装
+   */
+  const fixedShortcuts: Shortcut[] = fixedList.map((item) => {
+    return {
+      text: item.text,
+      value: () => {
+        // 优先级：msOffset > startOf
+        if (item.msOffset) {
+          return makeRangeByMs(item.msOffset)
+        } else if (item.startOf) {
+          return makeRangeByPeriod(item.startOf as any, item.offset ?? 0)
+        } else {
+          const now = new Date()
+          return [now, now]
+        }
+      }
+    }
+  })
+
+  /**
+   * 自定义输入（天/小时/分钟）
+   */
   const customDays = ref<number>(0)
   const customHours = ref<number>(0)
   const customMinutes = ref<number>(0)
@@ -31,7 +60,7 @@ export const useTimeShortcuts = (fixedList: TimeList[], exactHour = ref(false)) 
   const getCustomRange = () => {
     const totalMs =
       (customDays.value * 24 * 60 + customHours.value * 60 + customMinutes.value) * 60 * 1000
-    return makeRange(totalMs)
+    return makeRangeByMs(totalMs)
   }
 
   return {

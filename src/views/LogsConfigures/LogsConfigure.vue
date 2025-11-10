@@ -3,7 +3,7 @@ import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table, TableColumn } from '@/components/Table'
 import { TableData } from '@/api/table/types'
-import { ref, onMounted, reactive, nextTick } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { FormSchema } from '@/components/Form'
 import { useIcon } from '@/hooks/web/useIcon'
 import { Icon } from '@iconify/vue'
@@ -23,7 +23,10 @@ import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import AbsoluteTimeComponent from './components/AbsoluteTimeComponent.vue'
 import RelativeTimeComponent from './components/RelativeTimeComponent.vue'
+import HistoryComponent from './components/HistoryComponent.vue'
+import { formatToDateTime, dateUtil } from '@/utils/dateUtil'
 import { getTableListApi } from '@/api/vulnerabilityProtection'
+
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 interface Params {
   pageIndex?: number
@@ -268,6 +271,21 @@ const getTableList = async () => {
   loading.value = false
   options.value = res.data.domains
 }
+const selectedRange = ref()
+/**渲染时间 */
+const handleRangeUpdate = (displayText) => {
+  console.log(11111)
+
+  selectedRange.value = displayText
+}
+const displayText = computed(() => {
+  if (!selectedRange.value) return '请选择时间范围'
+  if (Array.isArray(selectedRange.value)) {
+    const [start, end] = selectedRange.value
+    return `${formatToDateTime(start)} ~ ${formatToDateTime(end)}`
+  }
+  return selectedRange.value
+})
 onMounted(() => {})
 </script>
 
@@ -335,7 +353,7 @@ onMounted(() => {})
           <template #reference>
             <ElButton plain>
               <template #default>
-                <span>这是插入的地方</span>
+                <span>{{ displayText }}</span>
                 <Icon icon="ep:calendar" class="ml-2" />
               </template>
             </ElButton>
@@ -343,13 +361,14 @@ onMounted(() => {})
           <template #default>
             <ElTabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
               <ElTabPane label="相对时间" name="first">
-                <RelativeTimeComponent />
+                <RelativeTimeComponent @update:range="handleRangeUpdate" />
               </ElTabPane>
               <ElTabPane label="绝对时间" name="second">
-                <AbsoluteTimeComponent />
+                <AbsoluteTimeComponent @update:range="handleRangeUpdate" />
               </ElTabPane>
-              <ElTabPane label="Role" name="third">Role</ElTabPane>
-              <ElTabPane label="Task" name="fourth">Task</ElTabPane>
+              <ElTabPane label="历史记录" name="third">
+                <HistoryComponent @update:range="handleRangeUpdate" />
+              </ElTabPane>
             </ElTabs>
           </template>
         </ElPopover>
