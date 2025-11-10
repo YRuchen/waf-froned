@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
 import type { App } from 'vue'
@@ -34,39 +34,6 @@ export const constantRouterMap: AppRouteRecordRaw[] = [
       hidden: true,
       noTagsView: true
     }
-  },
-  {
-    path: '/login',
-    component: () => import('@/views/Login/Login.vue'),
-    name: 'Login',
-    meta: {
-      hidden: true,
-      title: t('router.login'),
-      noTagsView: true
-    }
-  },
-  {
-    path: '/personal',
-    component: Layout,
-    redirect: '/personal/personal-center',
-    name: 'Personal',
-    meta: {
-      title: t('router.personal'),
-      hidden: true,
-      canTo: true
-    },
-    children: [
-      {
-        path: 'personal-center',
-        component: () => import('@/views/Personal/PersonalCenter/PersonalCenter.vue'),
-        name: 'PersonalCenter',
-        meta: {
-          title: t('router.personalCenter'),
-          hidden: true,
-          canTo: true
-        }
-      }
-    ]
   }
   // {
   //   path: '/404',
@@ -166,7 +133,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
         }
       }
     ]
-  },
+  }
   // {
   //   path: '/authorization',
   //   component: Layout,
@@ -215,7 +182,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.VITE_BASE_PATH || '/'),
+  history: createWebHashHistory(),
   strict: true,
   routes: constantRouterMap as RouteRecordRaw[],
   scrollBehavior: () => ({ left: 0, top: 0 })
