@@ -54,18 +54,6 @@ export default defineComponent({
               <Collapse class="custom-hover" color="var(--top-header-text-color)"></Collapse>
             ) : undefined}
             {breadcrumb.value ? <Breadcrumb class="<md:hidden"></Breadcrumb> : undefined}
-            {/* TODO：写的符合业务的面包屑，但是感觉不需要，所以注释掉了，但是先保留一下 */}
-            {/* {breadcrumb.value ? (
-              <p
-                class={['font-size-4', { 'cursor-pointer': currentRoute.value?.meta?.hiddenMenu }]}
-                onClick={() => currentRoute.value?.meta?.hiddenMenu && router.back()}
-              >
-                {currentRoute.value?.meta?.hiddenMenu && (
-                  <Icon icon="ep:arrow-left" class="align-middle mr-1 ml-2 font-size-5" />
-                )}
-                <span>{currentRoute.value?.meta?.title}</span>
-              </p>
-            ) : undefined} */}
           </div>
         ) : undefined}
         <div class="h-full flex items-center">

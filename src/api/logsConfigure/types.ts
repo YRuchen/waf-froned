@@ -1,32 +1,33 @@
-export interface CorazaParams {
-  domainName: string  // 源站地址
-  status?: STATUS  // 插件状态
-  paranoiaLevel?: PARANOIA_LEVEL  // 检出等级
-  action?: ACTION  // 防护动作
+export interface LogsParams {
+  domain?: string  // 源站地址
+  limit?: number  // 查询数量
+  afterCursor?: string  // 从该游标之后取（向后翻页），下一页使用，不能与 before_cursor 同时设置
+  beforeCursor?: string  // 从该游标之前取（向前翻页），上一页使用，不能与 after_cursor 同时设置
+  path?: string  // 路径
+  srcIp?: string  // 源IP
+  statusCode?: Array<any>  // 状态码
+  severity?: Array<any>  // 风险等级
+  attack?: Array<any>  // 攻击类型
+  startTsMs?: string  // 日志开始时间(13位毫秒时间戳)
+  endTsMs?: string  // 日志结束时间(13位毫秒时间戳)
+  requestId?: string  // 请求id
+  sortBy?: string  // 排序字段
 }
 
-export enum STATUS {
-  OFF = 'PLUGIN_STATUS_OFF',
-  OPEN = 'PLUGIN_STATUS_ON'
-}
-export enum ACTION {
-  OBSERVE = 'CORAZA_ACTION_OBSERVE',
-  BLOCK = 'CORAZA_ACTION_BLOCK'
-}
-export enum PARANOIA_LEVEL {
-  LOOSE = 'PARANOIA_LEVEL_LOOSE',
-  NORMAL = 'PARANOIA_LEVEL_NORMAL',
-  STRICT = 'PARANOIA_LEVEL_STRICT',
-  VERY_STRICT = 'PARANOIA_LEVEL_VERY_STRICT'
-}
-
+// 时间筛选
 export interface Shortcut {
   text: string
   value: () => [Date, Date]
 }
+// 处理时间筛选需要的参数
 export interface TimeList {
-  text: string
-  msOffset?: number
+  text: string      // 文字：近7天……
+  msOffset?: number  // 时间
   startOf?: 'day' | 'week' | 'month'
   offset?: number
+}
+
+export enum SORTBY {
+  ASC = 'LOG_SORT_BY_TIME_ASC',
+  DESC = 'LOG_SORT_BY_TIME_DESC'
 }

@@ -106,9 +106,17 @@ body {
 }
 .el-select .el-tag {
   position: relative;
-  z-index: 1; /* 确保标签在 input 上方 */
+  z-index: 100; /* 确保标签在 input 上方 */
 }
 .el-select__input {
   position: relative;
   z-index: 0; /* input 在标签下方 */
+}
+.el-tag--plain.el-tag--info {
+  --el-tag-bg-color: #fff !important;
+  --el-tag-text-color: #909399 !important;
+  --el-tag-border-color: #dcdfe6 !important;
+  background-color: var(--el-tag-bg-color) !important;
+  border-color: var(--el-tag-border-color) !important;
+  color: var(--el-tag-text-color) !important;
 }

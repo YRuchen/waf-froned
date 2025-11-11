@@ -4,11 +4,7 @@ import { Shortcut, TimeList } from '@/api/logsConfigure/types'
 import { ref, watch, reactive, nextTick, onMounted } from 'vue'
 
 const emit = defineEmits(['update:range'])
-const minuteList: TimeList[] = [
-  { text: '近7天', msOffset: 7 * 24 * 60 * 60 * 1000 },
-  { text: '近30天', msOffset: 30 * 24 * 60 * 60 * 1000 },
-  { text: '近90天', msOffset: 90 * 24 * 60 * 60 * 1000 }
-]
+let minuteList: TimeList[] = []
 
 const { fixedShortcuts: minuteShortcuts } = useTimeShortcuts(minuteList)
 const secondShortcuts = [minuteShortcuts]
@@ -17,10 +13,19 @@ const range = ref<[Date, Date]>(selectedShortcut.value?.value() ?? [new Date(), 
 const handleClick = (short) => {
   selectedShortcut.value = short
   range.value = short.value()
-  emit('update:range', short.text)
+  emit('update:range', short.value(), short.text)
 }
 onMounted(() => {
   if (localStorage.getItem('historyTimeShortcurs')) {
+    const stored = localStorage.getItem('historyTimeShortcurs')
+    minuteList = stored ? JSON.parse(stored) : []
+  } else {
+    minuteList = [
+      { text: '近7天', msOffset: 7 * 24 * 60 * 60 * 1000 },
+      { text: '近30天', msOffset: 30 * 24 * 60 * 60 * 1000 },
+      { text: '近90天', msOffset: 90 * 24 * 60 * 60 * 1000 }
+    ]
+    localStorage.setItem('historyTimeShortcurs', JSON.stringify(minuteList))
   }
 })
 </script>

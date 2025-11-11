@@ -78,6 +78,7 @@ export const useUserStore = defineStore('user', {
     },
     /** 重置应用 */
     resetApp() {
+      localStorage.removeItem('historyTimeShortcurs')
       console.log('重置应用')
     },
     reset() {

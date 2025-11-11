@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import { defaultRequestInterceptors, defaultResponseInterceptors } from './config'
+import { defaultRequestInterceptors, defaultResponseInterceptors, defaultErrorInterceptors } from './config'
 
 import { AxiosInstance, InternalAxiosRequestConfig, RequestConfig, AxiosResponse } from './types'
 import { ElMessage } from 'element-plus'
@@ -42,14 +42,13 @@ axiosInstance.interceptors.response.use(
       // 说明根本没到服务器
       ElMessage.error('网络异常或服务器未响应')
     }
-
     return Promise.reject(error)
 
   }
 )
 
 axiosInstance.interceptors.request.use(defaultRequestInterceptors)
-axiosInstance.interceptors.response.use(defaultResponseInterceptors)
+axiosInstance.interceptors.response.use(defaultResponseInterceptors, defaultErrorInterceptors)
 
 const service = {
   request: (config: RequestConfig) => {

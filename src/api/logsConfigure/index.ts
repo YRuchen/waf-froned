@@ -1,5 +1,5 @@
 import request from '@/axios'
-import { CorazaParams } from './types'
+import { LogsParams } from './types'
 import qs from 'qs';
 // 获取域名
 export const getTableListApi = (params?: any) => {
@@ -8,16 +8,8 @@ export const getTableListApi = (params?: any) => {
   })
 }
 // 获取详情
-export const getCorazaApi = (params: CorazaParams) => {
-  return request.get({ url: '/apis/v1/plugins/coraza', params })
-}
-// 更新漏洞
-export const putCorazaApi = (data: CorazaParams) => {
-  return request.put({ url: '/apis/v1/plugins/coraza', data })
-}
-// 获取漏洞设置详情
-export const getCategoriesApi = (params: any) => {
-  return request.get({ url: '/apis/v1/plugins/coraza/rules/categories', params })
+export const getLogsApi = (params?: LogsParams) => {
+  return request.get({ url: '/apis/v1/logs', params })
 }
 
 

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { useTimeShortcuts } from './useTimeShortcuts'
 import { Shortcut, TimeList } from '@/api/logsConfigure/types'
-import { ref, watch, reactive, nextTick } from 'vue'
+import { ref, watch, reactive, nextTick, onMounted } from 'vue'
 import { formatToDateTime } from '@/utils/dateUtil'
 import { ElSwitch } from 'element-plus'
 
@@ -43,18 +43,22 @@ const { fixedShortcuts: nowShortcuts } = useTimeShortcuts(nowCutList, exactHour)
 const { fixedShortcuts: lastShortcuts } = useTimeShortcuts(lastCutList, exactHour)
 const firstShortcuts = [minuteShortcuts, hourShortcuts, dayShortcuts]
 const secondShortcuts = [nowShortcuts, lastShortcuts]
-const selectedShortcut = ref<Shortcut | null>(minuteShortcuts[0])
-const range = ref<[Date, Date]>(selectedShortcut.value?.value() ?? [new Date(), new Date()])
+const selectedShortcut = ref<Shortcut | null>(dayShortcuts[2])
+const range = ref<[Date, Date]>([new Date(), new Date()])
 const handleClick = (short) => {
   selectedShortcut.value = short
   range.value = short.value()
-  emit('update:range', short.text)
+  emit('update:range', short.value(), short.text)
 }
 
-watch(exactHour, () => {
-  if (selectedShortcut.value) {
-    range.value = selectedShortcut.value.value()
-  }
+// watch(exactHour, () => {
+//   if (selectedShortcut.value) {
+//     range.value = selectedShortcut.value.value()
+//   }
+// })
+
+onMounted(() => {
+  handleClick(dayShortcuts[2])
 })
 </script>
 

@@ -6,7 +6,7 @@ const emit = defineEmits(['update:range'])
 const range = ref<[string, string] | ''>('')
 
 watch(range, (val) => {
-  emit('update:range', val)
+  emit('update:range', val, '绝对时间')
 })
 </script>
 

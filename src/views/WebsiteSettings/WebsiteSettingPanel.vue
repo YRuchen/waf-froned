@@ -384,8 +384,8 @@ const filterMap = (key: any) => {
 }
 // “正常”、“未接入”、“配置失败”、“回源失败”
 const statusListArr = ref([
-  { name: '正常', count: 1, key: 'DOMAIN_STATUS_ACTIVE', value: 0, color: '#67C23A' },
-  { name: '未接入', count: 1, key: 'DOMAIN_STATUS_UNSPECIFIED', value: 1, color: '#E6A23C' },
+  { name: '正常', count: 1, key: 'DOMAIN_STATUS_ACTIVE', value: 1, color: '#67C23A' },
+  { name: '未接入', count: 1, key: 'DOMAIN_STATUS_UNSPECIFIED', value: 0, color: '#E6A23C' },
   { name: '配置失败', count: 1, key: 'DOMAIN_STATUS_FAILED', value: 2, color: '#F56C6C' },
   { name: '回源失败', count: 1, key: 'DOMAIN_STATUS_UPSTREAM_FAILED', value: 3, color: '#909399' }
 ])

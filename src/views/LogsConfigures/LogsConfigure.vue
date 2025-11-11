@@ -1,14 +1,10 @@
 <script setup lang="tsx">
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
-import { Table, TableColumn } from '@/components/Table'
-import { TableData } from '@/api/table/types'
 import { ref, onMounted, reactive, computed } from 'vue'
 import { FormSchema } from '@/components/Form'
 import { useIcon } from '@/hooks/web/useIcon'
-import { Icon } from '@iconify/vue'
 import {
-  ElDatePicker,
   ElPopover,
   ElButton,
   ElTooltip,
@@ -17,15 +13,18 @@ import {
   ElTabs,
   ElTabPane,
   ElOption,
-  ElCheckbox
+  ElCheckbox,
+  ElPagination,
+  ElTag
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import AbsoluteTimeComponent from './components/AbsoluteTimeComponent.vue'
 import RelativeTimeComponent from './components/RelativeTimeComponent.vue'
 import HistoryComponent from './components/HistoryComponent.vue'
-import { formatToDateTime, dateUtil } from '@/utils/dateUtil'
-import { getTableListApi } from '@/api/vulnerabilityProtection'
+import { formatToDateTime } from '@/utils/dateUtil'
+import { getTableListApi, getLogsApi } from '@/api/logsConfigure'
+import { SORTBY } from '@/api/logsConfigure/types'
 
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 interface Params {
@@ -39,7 +38,7 @@ const loading = ref(true)
 const isShowFilter = ref(false)
 const isTable = ref(false)
 const activeName = ref('first')
-const order = ref<string>('asc')
+const sortBy = ref<string>(SORTBY.ASC)
 const options = ref()
 interface Params {
   domain: Array<string>
@@ -255,11 +254,11 @@ const filterSchema = reactive<FormSchema[]>([
 // 搜索
 const handleSearch = (params: Params) => {
   searchParams.value = params
-  // getList()
+  getLogs()
 }
 const resetSearchParams = (data: Params) => {
   searchParams.value = data
-  // getList()
+  getLogs()
 }
 const onExpand = () => {
   isShowFilter.value = !isShowFilter.value
@@ -271,26 +270,96 @@ const getTableList = async () => {
   loading.value = false
   options.value = res.data.domains
 }
-const selectedRange = ref()
+const selectedRange = ref<[Date, Date]>([new Date(), new Date()])
+const selectRangeText = ref('')
 /**渲染时间 */
-const handleRangeUpdate = (displayText) => {
-  console.log(11111)
-
-  selectedRange.value = displayText
+const handleRangeUpdate = (displayRange, rangeText) => {
+  selectedRange.value = displayRange
+  selectRangeText.value = rangeText
 }
 const displayText = computed(() => {
   if (!selectedRange.value) return '请选择时间范围'
-  if (Array.isArray(selectedRange.value)) {
+  if (selectRangeText.value == '绝对时间') {
     const [start, end] = selectedRange.value
     return `${formatToDateTime(start)} ~ ${formatToDateTime(end)}`
   }
-  return selectedRange.value
+  return selectRangeText.value
 })
-onMounted(() => {})
+
+const currentPage2 = ref(5)
+const limit = ref(10)
+const total = ref(10)
+const pageInfo = ref<any>({})
+const background = ref(false)
+const disabled = ref(false)
+const tableList = ref<any[]>([])
+
+/**切换分页 */
+const handleCurrentChange = (val: any, action: string) => {
+  const data = action == 'before' ? { beforeCursor: val } : { afterCursor: val }
+  getLogs(data)
+}
+/**首字符转大小写 */
+const capitalize = (str) => {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+/**获取列表 */
+const getLogs = async (params?: any) => {
+  const res = await getLogsApi({
+    startTsMs: String(new Date(selectedRange.value[0]).getTime()),
+    endTsMs: String(new Date(selectedRange.value[1]).getTime()),
+    limit: limit.value,
+    sortBy: sortBy.value,
+    ...params,
+    ...searchParams.value
+  })
+
+  tableList.value = res.data.list.map((item) =>
+    Object.fromEntries(Object.entries(item).map(([key, value]) => [capitalize(key), value]))
+  )
+  limit.value = res.data.limit
+  total.value = Number(res.data.total) || 0
+  pageInfo.value = res.data.pageInfo
+}
+const excludes = ['timeFriendly']
+/**处理展示数据  */
+const displayList = (item) => {
+  return Object.fromEntries(Object.entries(item).filter(([key]) => !excludes.includes(key)))
+}
+/**排序 */
+const handleSortBy = (val) => {
+  sortBy.value = val
+  getLogs()
+}
+const currentIndex = ref(0) // 当前高亮list
+const scrollContainer = ref<HTMLElement | null>(null)
+
+/**页面点击切换高亮列表条 */
+const scrollToItem = (index: number) => {
+  if (index >= 0 && index < tableList.value.length) {
+    currentIndex.value = index
+    const container = scrollContainer.value
+    const el = document.getElementById(`log-item-${index}`)
+    if (container && el) {
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      const offset = elRect.top - containerRect.top
+      container.scrollTo({
+        top: container.scrollTop + offset,
+        behavior: 'smooth'
+      })
+    }
+  }
+}
+const nextItem = () => scrollToItem(currentIndex.value + 1)
+const prevItem = () => scrollToItem(currentIndex.value - 1)
+onMounted(() => {
+  getLogs()
+})
 </script>
 
 <template>
-  <ContentWrap :title="t('tableDemo.table')" :message="t('tableDemo.tableDes')">
+  <ContentWrap title="日志管理 详情" class="h-screen">
     <div class="flex">
       <Search
         :schema="searchSchema"
@@ -315,30 +384,32 @@ onMounted(() => {})
       v-if="isShowFilter"
     />
     <div class="flex items-center gap-6">
-      <ElRadioGroup v-model="isTable">
-        <ElRadioButton :value="false">原始</ElRadioButton>
-        <ElRadioButton :value="true">表格</ElRadioButton>
-      </ElRadioGroup>
+      <div class="flex items-center">
+        <ElRadioGroup v-model="isTable">
+          <ElRadioButton :value="false">原始</ElRadioButton>
+          <ElRadioButton :value="true">表格</ElRadioButton>
+        </ElRadioGroup>
+      </div>
       <ElTooltip content="时间排序" placement="top" effect="light">
-        <ElButton plain>
-          <template #default>
+        <ElTag type="info" effect="plain" size="large">
+          <div class="flex flex-items-center">
             <span>时间</span>
             <div class="flex flex-col ml-2">
               <Icon
                 icon="ep:caret-top"
                 class="cursor-pointer"
-                :class="order === 'asc' ? '' : 'text-gray-400'"
-                @click="order = 'asc'"
-              ></Icon>
+                :class="sortBy === SORTBY.ASC ? '!text-gray-900' : '!text-gray-300'"
+                @click="handleSortBy(SORTBY.ASC)"
+              />
               <Icon
                 icon="ep:caret-bottom"
                 class="cursor-pointer"
-                :class="order === 'desc' ? '' : 'text-gray-400'"
-                @click="order = 'desc'"
-              ></Icon>
+                :class="sortBy === SORTBY.DESC ? '!text-gray-900' : '!text-gray-300'"
+                @click="handleSortBy(SORTBY.DESC)"
+              />
             </div>
-          </template>
-        </ElButton>
+          </div>
+        </ElTag>
       </ElTooltip>
       <div class="ml-10">
         <span class="mr-2">调整时间范围</span>
@@ -372,6 +443,75 @@ onMounted(() => {})
             </ElTabs>
           </template>
         </ElPopover>
+      </div>
+      <div class="ml-auto flex items-center">
+        <ElButton
+          link
+          type="primary"
+          class="!border !border-gray-300"
+          :disabled="!pageInfo.hasPrev"
+          @click="handleCurrentChange(pageInfo.beforeCursor, 'before')"
+        >
+          <Icon icon="vi-ep:arrow-left"></Icon>
+        </ElButton>
+        <ElButton
+          link
+          type="primary"
+          class="!border !border-gray-300 mr-2"
+          :disabled="!pageInfo.hasNext"
+          @click="handleCurrentChange(pageInfo.afterCursor, 'after')"
+        >
+          <Icon icon="vi-ep:arrow-right"></Icon>
+        </ElButton>
+        <ElPagination
+          v-model:current-page="currentPage2"
+          v-model:page-size="limit"
+          :page-sizes="[10, 20, 50, 100]"
+          size="small"
+          :disabled="disabled"
+          :background="background"
+          layout="sizes"
+          :total="total"
+          @size-change="getLogs"
+        />
+      </div>
+    </div>
+    <div class="overflow-auto h-screen mt-4" ref="scrollContainer">
+      <div v-for="(item, index) in tableList" :key="index" class="m-2">
+        <div
+          :id="`log-item-${index}`"
+          class="grid grid-cols-[1%_5%_70%] gap-5"
+          :class="currentIndex === index ? 'bg-gray-100 border border-blue-300' : ''"
+          @mouseenter="currentIndex = index"
+        >
+          <p>{{ index + 1 }}</p>
+          <p>
+            {{ item.TimeFriendly }}
+          </p>
+          <div>
+            <div>
+              <ElButton link type="primary">
+                <Icon icon="vi-ep:copy-document"></Icon>
+              </ElButton>
+              <ElButton link type="primary" class="!border !border-gray-300" @click="nextItem">
+                <Icon icon="vi-ep:arrow-down"></Icon>
+              </ElButton>
+              <ElButton link type="primary" class="!border !border-gray-300" @click="prevItem">
+                <Icon icon="vi-ep:arrow-up"></Icon>
+              </ElButton>
+            </div>
+            <div
+              v-for="(value, key) in displayList(item)"
+              :key="key"
+              class="text-sm text-gray-600 py-1"
+            >
+              <ElTag type="info" color="rgb(197 197 199)">
+                <strong>{{ key }}:</strong>
+              </ElTag>
+              {{ value }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </ContentWrap>
