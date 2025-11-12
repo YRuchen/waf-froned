@@ -1,24 +1,40 @@
 import service from './service'
 import { CONTENT_TYPE } from '@/constants'
 import { useUserStoreWithOut } from '@/store/modules/user'
-
+import qs from 'qs'
 const request = (option: AxiosConfig) => {
   const { url, method, params, data, headers, responseType } = option
-
   const userStore = useUserStoreWithOut()
-  return service.request({
-    url: url,
-    method,
-    params,
-    data: data,
-    responseType: responseType,
-    headers: {
-      'Content-Type': CONTENT_TYPE,
-      [userStore.getTokenKey ?? 'Authorization']: userStore.getToken ? userStore.getToken : `Bearer ${localStorage.getItem('auth_token')}`,
-      ...headers
-    }
-  })
+
+  if (method?.toLowerCase() === 'get') {
+    // GET 请求把 params 拼到 URL
+    const serializedParams = params ? qs.stringify(params, { arrayFormat: 'repeat' }) : ''
+    return service.request({
+      url: url + (serializedParams ? `?${serializedParams}` : ''),
+      method,
+      responseType,
+      headers: {
+        'Content-Type': CONTENT_TYPE,
+        [userStore.getTokenKey ?? 'Authorization']: userStore.getToken || `Bearer ${localStorage.getItem('auth_token')}`,
+        ...headers
+      }
+    })
+  } else {
+    // POST/PUT/DELETE 等请求放到 data
+    return service.request({
+      url,
+      method,
+      data: params || data,
+      responseType,
+      headers: {
+        'Content-Type': CONTENT_TYPE,
+        [userStore.getTokenKey ?? 'Authorization']: userStore.getToken || `Bearer ${localStorage.getItem('auth_token')}`,
+        ...headers
+      }
+    })
+  }
 }
+
 
 export default {
   get: <T = any>(option: AxiosConfig) => {

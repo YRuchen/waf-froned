@@ -297,12 +297,18 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
   </template>
 </template>
 <style lang="less" scoped>
-:deep(.el-form-item) {
+:deep(.el-form-item:not(:has(.el-button, .el-input-group__prepend))) {
   border: var(--el-border);
   .el-select__wrapper {
     border-radius: unset;
     box-shadow: none !important;
     border-left: 1px solid var(--el-border-color);
+  }
+  .el-form-item__label {
+    // border: var(--el-border);
+    // border-right: unset;
+    height: auto;
+    margin: auto 0;
   }
 }
 </style>

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watchEffect } from 'vue'
 import { FormSchema } from '@/components/Form'
 import { useIcon } from '@/hooks/web/useIcon'
 import {
@@ -15,7 +15,9 @@ import {
   ElOption,
   ElCheckbox,
   ElPagination,
-  ElTag
+  ElTag,
+  ElTableColumn,
+  ElTable
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
@@ -179,11 +181,16 @@ const filterSchema = reactive<FormSchema[]>([
   },
   {
     field: 'severity',
-    component: 'SelectLabel',
+    component: 'Select',
+    label: '风险等级',
+    formItemProps: {
+      labelWidth: '80'
+    },
     componentProps: {
       placeholder: '请选择',
-      label: '风险等级',
       multiple: true,
+      collapseTags: true,
+      collapseTagsTooltip: true,
       options: [
         { label: '严重', value: 'Critical' },
         { label: '高危', value: 'High' },
@@ -212,11 +219,16 @@ const filterSchema = reactive<FormSchema[]>([
   },
   {
     field: 'attack',
-    component: 'SelectLabel',
+    component: 'Select',
+    label: '攻击类型',
+    formItemProps: {
+      labelWidth: '80'
+    },
     componentProps: {
       placeholder: '请选择',
-      label: '攻击类型',
       multiple: true,
+      collapseTags: true,
+      collapseTagsTooltip: true,
       // TODO: 以下注释掉的，是暂时不做的功能
       options: [
         { label: 'web漏洞攻击', value: 'WebVulnerability' }
@@ -228,11 +240,16 @@ const filterSchema = reactive<FormSchema[]>([
   },
   {
     field: 'runType',
-    component: 'SelectLabel',
+    component: 'Select',
+    label: '执行动作',
+    formItemProps: {
+      labelWidth: '80'
+    },
     componentProps: {
       placeholder: '请选择',
-      label: '执行动作',
       multiple: true,
+      collapseTags: true,
+      collapseTagsTooltip: true,
       // TODO: 以下注释掉的，是暂时不做的功能
       options: [
         { label: '通过', value: 'Pass' },
@@ -276,6 +293,7 @@ const selectRangeText = ref('')
 const handleRangeUpdate = (displayRange, rangeText) => {
   selectedRange.value = displayRange
   selectRangeText.value = rangeText
+  getLogs()
 }
 const displayText = computed(() => {
   if (!selectedRange.value) return '请选择时间范围'
@@ -311,7 +329,8 @@ const getLogs = async (params?: any) => {
     limit: limit.value,
     sortBy: sortBy.value,
     ...params,
-    ...searchParams.value
+    ...searchParams.value,
+    domain: domainArr.value.domain == 'all' ? '' : domainArr.value.domain
   })
 
   tableList.value = res.data.list.map((item) =>
@@ -320,6 +339,7 @@ const getLogs = async (params?: any) => {
   limit.value = res.data.limit
   total.value = Number(res.data.total) || 0
   pageInfo.value = res.data.pageInfo
+  rawColumns.value = Object.entries(tableList.value[0] ?? []).map(([key]) => ({ prop: key }))
 }
 const excludes = ['timeFriendly']
 /**处理展示数据  */
@@ -353,10 +373,76 @@ const scrollToItem = (index: number) => {
 }
 const nextItem = () => scrollToItem(currentIndex.value + 1)
 const prevItem = () => scrollToItem(currentIndex.value - 1)
+
+const rawColumns = ref(Object.entries(tableList.value[0] ?? []).map(([key]) => ({ prop: key })))
+const formatValue = (val: any) => {
+  if (typeof val === 'object') {
+    return JSON.stringify(val)
+  }
+  return val
+}
+
+// 自动计算宽度
+const columns = ref(
+  rawColumns.value.map((col) => ({
+    ...col,
+    width: 100 // 初始值，后面会自动覆盖
+  }))
+)
+
+const canvas = document.createElement('canvas')
+const ctx = canvas.getContext('2d')!
+ctx.font = '14px Arial'
+
+watchEffect(() => {
+  if (!tableList.value?.length) {
+    columns.value = rawColumns.value.map((col) => ({
+      ...col,
+      width: 120 // 默认宽度
+    }))
+    return
+  }
+
+  const padding = 32 // 单元格左右留白
+  const minWidth = 80
+
+  columns.value = rawColumns.value.map((col) => {
+    // ==== 计算表头宽度 ====
+    let maxWidth = ctx.measureText(col.prop).width
+
+    // ==== 遍历所有行 ====
+    for (const row of tableList.value) {
+      const cellValue = row[col.prop]
+
+      // 对象 → 转成字符串显示
+      let text = ''
+      if (typeof cellValue === 'object' && cellValue !== null) {
+        text = Object.entries(cellValue)
+          .map(([k, v]) => `${k}:${v}`)
+          .join(', ')
+      } else {
+        text = String(cellValue ?? '')
+      }
+
+      const width = ctx.measureText(text).width
+      if (width > maxWidth) {
+        maxWidth = width
+      }
+    }
+
+    // ==== 加 padding 并保证最小宽度 ====
+    const computedWidth = Math.ceil(maxWidth + padding)
+    return {
+      ...col,
+      width: Math.max(minWidth, computedWidth)
+    }
+  })
+})
 onMounted(() => {
   getLogs()
 })
 </script>
+<style scoped></style>
 
 <template>
   <ContentWrap title="日志管理 详情" class="h-screen">
@@ -377,7 +463,6 @@ onMounted(() => {
     </div>
     <Search
       :schema="filterSchema"
-      labelWidth="160"
       layout="inline"
       @search="resetSearchParams"
       @reset="resetSearchParams"
@@ -476,7 +561,7 @@ onMounted(() => {
         />
       </div>
     </div>
-    <div class="overflow-auto h-screen mt-4" ref="scrollContainer">
+    <div class="overflow-auto h-70vh mt-4" ref="scrollContainer" v-if="!isTable">
       <div v-for="(item, index) in tableList" :key="index" class="m-2">
         <div
           :id="`log-item-${index}`"
@@ -513,6 +598,22 @@ onMounted(() => {
           </div>
         </div>
       </div>
+    </div>
+    <div class="overflow-auto h-70vh mt-4" v-else>
+      <ElTable :data="tableList" height="97%">
+        <ElTableColumn type="index"> </ElTableColumn>
+        <ElTableColumn
+          v-for="(col, index) in columns"
+          :key="index"
+          :prop="col.prop"
+          :label="col.prop"
+          :width="col.width"
+        >
+          <template #default="scope">
+            <span>{{ formatValue(scope.row[col.prop]) }}</span>
+          </template>
+        </ElTableColumn>
+      </ElTable>
     </div>
   </ContentWrap>
 </template>
