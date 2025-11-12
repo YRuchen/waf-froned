@@ -620,8 +620,8 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="overflow-hidden h-70vh mt-4" v-else>
-      <ElTable :data="tableList" border height="97%">
+    <div class="overflow-hidden h-68vh mt-4" v-else>
+      <ElTable :data="tableList" border height="96%">
         <ElTableColumn type="index"> </ElTableColumn>
         <ElTableColumn
           v-for="(col, index) in columns"
