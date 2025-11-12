@@ -17,7 +17,8 @@ import {
   ElPagination,
   ElTag,
   ElTableColumn,
-  ElTable
+  ElTable,
+  ElMessage
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
@@ -311,7 +312,7 @@ const pageInfo = ref<any>({})
 const background = ref(false)
 const disabled = ref(false)
 const tableList = ref<any[]>([])
-
+const rawColumns = ref<Array<{ prop: string; label: string }>>([])
 /**切换分页 */
 const handleCurrentChange = (val: any, action: string) => {
   const data = action == 'before' ? { beforeCursor: val } : { afterCursor: val }
@@ -339,7 +340,19 @@ const getLogs = async (params?: any) => {
   limit.value = res.data.limit
   total.value = Number(res.data.total) || 0
   pageInfo.value = res.data.pageInfo
-  rawColumns.value = Object.entries(tableList.value[0] ?? []).map(([key]) => ({ prop: key }))
+
+  const entries = Object.entries(tableList.value[0] ?? []) as [string, any][]
+  const time = entries.find(([key]) => key === 'TimeFriendly')
+  const others = entries.filter(([key]) => key !== 'TimeFriendly')
+
+  rawColumns.value = [...(time ? [[time[0], time[1]]] : []), ...others].map(([key]) => ({
+    prop: key,
+    label: key === 'TimeFriendly' ? '时间' : key
+  }))
+  // rawColumns.value = Object.entries(tableList.value[0] ?? []).map(([key]) => ({
+  //   prop: key,
+  //   label: key == 'TimeFriendly' ? '时间' : key
+  // }))
 }
 const excludes = ['timeFriendly']
 /**处理展示数据  */
@@ -374,7 +387,15 @@ const scrollToItem = (index: number) => {
 const nextItem = () => scrollToItem(currentIndex.value + 1)
 const prevItem = () => scrollToItem(currentIndex.value - 1)
 
-const rawColumns = ref(Object.entries(tableList.value[0] ?? []).map(([key]) => ({ prop: key })))
+/**复制 */
+const handleCopy = (item) => {
+  navigator.clipboard.writeText(JSON.stringify(item, null, 2))
+  ElMessage({
+    message: '复制成功',
+    type: 'success'
+  })
+}
+
 const formatValue = (val: any) => {
   if (typeof val === 'object') {
     return JSON.stringify(val)
@@ -408,7 +429,7 @@ watchEffect(() => {
 
   columns.value = rawColumns.value.map((col) => {
     // ==== 计算表头宽度 ====
-    let maxWidth = ctx.measureText(col.prop).width
+    let maxWidth = ctx.measureText(col.label).width
 
     // ==== 遍历所有行 ====
     for (const row of tableList.value) {
@@ -445,7 +466,7 @@ onMounted(() => {
 <style scoped></style>
 
 <template>
-  <ContentWrap title="日志管理 详情" class="h-screen">
+  <ContentWrap title="日志管理 详情" class="h-98vh">
     <div class="flex">
       <Search
         :schema="searchSchema"
@@ -576,7 +597,7 @@ onMounted(() => {
           <div>
             <div>
               <ElButton link type="primary">
-                <Icon icon="vi-ep:copy-document"></Icon>
+                <Icon icon="vi-ep:copy-document" @click="handleCopy(item)"></Icon>
               </ElButton>
               <ElButton link type="primary" class="!border !border-gray-300" @click="nextItem">
                 <Icon icon="vi-ep:arrow-down"></Icon>
@@ -599,14 +620,14 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="overflow-auto h-70vh mt-4" v-else>
-      <ElTable :data="tableList" height="97%">
+    <div class="overflow-hidden h-70vh mt-4" v-else>
+      <ElTable :data="tableList" border height="97%">
         <ElTableColumn type="index"> </ElTableColumn>
         <ElTableColumn
           v-for="(col, index) in columns"
           :key="index"
           :prop="col.prop"
-          :label="col.prop"
+          :label="col.label"
           :width="col.width"
         >
           <template #default="scope">
