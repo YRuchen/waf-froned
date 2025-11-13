@@ -331,7 +331,7 @@ const getLogs = async (params?: any) => {
     sortBy: sortBy.value,
     ...params,
     ...searchParams.value,
-    domain: domainArr.value.domain == 'all' ? '' : domainArr.value.domain
+    domain: domainArr.value.includes('all') ? '' : domainArr.value
   })
 
   tableList.value = res.data.list.map((item) =>
@@ -459,6 +459,7 @@ watchEffect(() => {
     }
   })
 })
+
 onMounted(() => {
   getLogs()
 })
@@ -621,7 +622,7 @@ onMounted(() => {
       </div>
     </div>
     <div class="overflow-hidden h-68vh mt-4" v-else>
-      <ElTable :data="tableList" border height="96%">
+      <ElTable :data="tableList" border height="96%" v-if="tableList.length">
         <ElTableColumn type="index"> </ElTableColumn>
         <ElTableColumn
           v-for="(col, index) in columns"
@@ -634,6 +635,9 @@ onMounted(() => {
             <span>{{ formatValue(scope.row[col.prop]) }}</span>
           </template>
         </ElTableColumn>
+      </ElTable>
+      <ElTable :data="tableList" border height="96%" v-else>
+        <ElTableColumn label="时间" align="center"> </ElTableColumn>
       </ElTable>
     </div>
   </ContentWrap>

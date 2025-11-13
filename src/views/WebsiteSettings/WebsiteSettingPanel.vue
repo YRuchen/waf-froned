@@ -46,13 +46,14 @@ import InputTags from './components/InputTags.vue'
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 /**列表数据请求获取 */
-const { tableRegister, tableState, tableMethods } = useTable({
+const { tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
     const { currentPage, pageSize } = tableState
     const res = await getTableListApi({
       page: unref(currentPage),
       pageSize: unref(pageSize),
-      ...unref(searchParams)
+      ...unref(searchParams),
+      ...unref(searchParamsFilter)
     })
     handleGetCount()
     return {
@@ -285,7 +286,11 @@ const columns = reactive<TableColumn[]>([
               v-slots={{
                 dropdown: () => (
                   <ElDropdownMenu>
-                    <ElDropdownItem command="protect" onClick={() => action(data.row, 'protect')}>
+                    <ElDropdownItem
+                      command="protect"
+                      onClick={() => action(data.row, 'protect')}
+                      style="display:none"
+                    >
                       防护设置
                     </ElDropdownItem>
                     <ElDropdownItem command="enableLog" onClick={() => action(data.row, 'logs')}>
@@ -409,9 +414,9 @@ const searchSchema = reactive<FormSchema[]>([
       label: '接入状态',
       options: [
         { label: '正常', value: '1' },
-        { label: '未接入', value: '2' },
-        { label: '配置失败', value: '3' },
-        { label: '回源失败', value: '4' }
+        { label: '未接入', value: '0' },
+        { label: '配置失败', value: '2' },
+        { label: '回源失败', value: '3' }
       ]
     }
   }
@@ -591,21 +596,41 @@ const handleProtect = async () => {
 /**查询 */
 // search组件
 const searchExpose = ref<any>(null)
+const searchExposeFilter = ref<any>(null)
 // 查询的输入项
-const searchParams = ref({})
+const searchParams = ref<{ statusList: string; name: string } | any>({})
+const searchParamsFilter = ref<any>({})
 // search组件的入口方法
 const register = (expose: any) => {
   searchExpose.value = expose
+}
+const registerFilter = (expose: any) => {
+  searchExposeFilter.value = expose
 }
 // 搜索
 const handleSearch = (params: Record<string, any>) => {
   searchParams.value = params
   getList()
 }
-// 重置
-const resetSearchParams = (params: any) => {
-  searchParams.value = params
+const handleFilterSearch = (params: Record<string, any>) => {
+  searchParamsFilter.value = params
+  getList()
+}
+
+/**重置按钮 */
+const resetSearchParams = () => {
+  searchParams.value = {}
   searchExpose.value?.reset?.()
+  searchParamsFilter.value = {}
+  searchExposeFilter.value?.reset?.()
+  getList()
+}
+/**卡片的搜索 */
+const handleCardSearch = (key, title) => {
+  searchParams.value.statusList = key
+  if (title === '未防护域名') {
+    searchParamsFilter.value.protectStatusList = false
+  }
   getList()
 }
 </script>
@@ -647,11 +672,11 @@ const resetSearchParams = (params: any) => {
               class="inline-block w-2.5 h-2.5 rounded-full"
               :style="{ backgroundColor: filterMap(key)?.color }"
             ></span>
-            <span class="text-sm">
+            <span class="text-sm cursor-pointer" @click="handleCardSearch(key, item.title)">
               {{ filterMap(key)?.name }} <strong>{{ value }}</strong>
+              <Icon icon="ep:arrow-right" />
             </span>
           </div>
-          <Icon icon="ep:arrow-right" />
         </div>
       </ElCard>
     </div>
@@ -691,7 +716,8 @@ const resetSearchParams = (params: any) => {
         labelWidth="160px"
         :autoSearch="true"
         :autoSearchDebounce="1000"
-        @search="handleSearch"
+        @search="handleFilterSearch"
+        @register="registerFilter"
       />
     </div>
     <Table
@@ -711,7 +737,7 @@ const resetSearchParams = (params: any) => {
     </Table>
     <div class="mt-4">
       <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
-      <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton>
+      <!-- <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton> -->
       <ElButton size="large" :disabled="totalSelection.length === 0" @click="handleLogsConfigure"
         >日志配置</ElButton
       >
@@ -757,7 +783,7 @@ const resetSearchParams = (params: any) => {
         </span>
         <p class="ml-2" v-else>
           <span>仅将记录通用的常见Header字段，</span>
-          <ElButton link type="primary">查看常见Header</ElButton>
+          <!-- <ElButton link type="primary">查看常见Header</ElButton> -->
         </p>
       </ElFormItem>
       <template v-if="logsConfigureForm.logAllHeaders">
@@ -791,6 +817,9 @@ const resetSearchParams = (params: any) => {
           >
             <Icon icon="ep:question-filled" class="ml-1" />
           </ElTooltip>
+          <span class="text-gray-500 text-xs">
+            此实例已配置 {{ logsConfigureForm.statHeaders.length }} 条，最多 100 条，对所有域名生效
+          </span>
           <InputTags
             v-model:tagsList="logsConfigureForm.statHeaders"
             :max="100"

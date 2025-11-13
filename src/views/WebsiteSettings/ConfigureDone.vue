@@ -35,6 +35,7 @@ const { t } = useI18n()
 const { push } = useRouter()
 const route = useRoute()
 const domainId = route.query.domainId as string
+const domainName = route.query.domainName as string
 interface RuleForm {
   domain: string
 }
@@ -74,10 +75,20 @@ const action = (name: string) => {
         type: 'success'
       })
       break
-    case 'CNAME接入测试':
-      dialogVisible.value = true
-      showLoadingText.value = 1
+    case 'CNAME接入测试': //domainName
       dialogTitle.value = name
+      if (domainName.startsWith('*.')) {
+        dialogVisible.value = true
+        showLoadingText.value = 1
+      } else {
+        cnamesTestApi({ domain: domainName, domainId: domainId }).then((res) => {
+          if (res.data.reachable == false) {
+            ElMessage.error(res.data.reason)
+          } else {
+            ElMessage.success('测试成功')
+          }
+        })
+      }
       break
     case '复制全部IP地址':
       navigator.clipboard.writeText(egress.value)
@@ -87,6 +98,7 @@ const action = (name: string) => {
       })
       break
     case '回源测试':
+      getCnamesAndEgress()
       dialogVisible.value = true
       showLoadingText.value = 1
       dialogTitle.value = name
@@ -98,7 +110,7 @@ const action = (name: string) => {
 }
 const validName = (rule: any, value: any, callback: any) => {
   if (!value) {
-    callback(new Error('请输入域名名称'))
+    callback(new Error('请输入域名'))
   } else {
     const domainRegex = /^(?!-)(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/
     if (!domainRegex.test(value)) {
@@ -108,11 +120,14 @@ const validName = (rule: any, value: any, callback: any) => {
     }
   }
 }
-
+// 表单验证规则
 const rules = reactive<FormRules<RuleForm>>({
   domain: [{ required: true, validator: validName, trigger: 'blur' }]
 })
 const handleClose = () => {
+  if (showLoadingText.value == 2) {
+    ElMessage('暂停测试')
+  }
   dialogVisible.value = false
   ruleForm.domain = ''
 }
@@ -165,6 +180,7 @@ const getCnamesAndEgress = async () => {
   const res = await streamsTestListApi({ domainId: domainId })
   tableData.value = res.data.testInfos
 }
+
 onMounted(() => {
   getCnamesAndEgress()
 })
@@ -231,9 +247,9 @@ onBeforeUnmount(() => {
     </div>
     <div class="m-t-10 flex items-center justify-center">
       <ElButton size="large" @click="push('/websiteSettings/index')">生效并返回网站列表</ElButton>
-      <ElButton type="primary" size="large" class="flex items-center justify-center">
+      <!-- <ElButton type="primary" size="large" class="flex items-center justify-center">
         生效并继续配置防护策略
-      </ElButton>
+      </ElButton> -->
     </div>
   </div>
   <!-- <lineContent></lineContent> -->
@@ -247,7 +263,7 @@ onBeforeUnmount(() => {
         :rules="rules"
       >
         <ElFormItem label="域名名称" prop="name">
-          <ElInput v-model="ruleForm.domain" placeholder="请输入域名名称" />
+          <ElInput v-model="ruleForm.domain" placeholder="请输入域名" />
           <span class="leading-5 break-words max-w-full" v-if="showLoadingText == 4">
             失败原因：{{ testResult.reason }}
           </span>
@@ -272,10 +288,15 @@ onBeforeUnmount(() => {
             </span>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="reason" label="失败原因" />
+        <ElTableColumn prop="reason" label="失败原因">
+          <template #default="scope">
+            {{ scope.row.reachable ? '' : scope.row.reason }}
+          </template>
+        </ElTableColumn>
       </ElTable>
     </div>
     <div class="flex justify-end m-t-4">
+      <ElButton size="large" @click="handleClose">取消</ElButton>
       <ElButton size="large" type="primary" @click="startTest" v-if="showLoadingText == 1">
         开始测试
       </ElButton>
@@ -286,13 +307,12 @@ onBeforeUnmount(() => {
         v-else-if="showLoadingText == 2"
         >测试中</ElButton
       >
-      <ElButton size="large" type="info" @click="handleClose" v-else-if="showLoadingText == 3"
+      <ElButton size="large" type="primary" @click="handleClose" v-else-if="showLoadingText == 3"
         >测试完成</ElButton
       >
       <ElButton size="large" type="danger" @click="startTest" v-else-if="showLoadingText == 4"
         >重新测试</ElButton
       >
-      <ElButton size="large" @click="handleClose">取消</ElButton>
     </div>
     <div class="loading-container" v-if="showLoadingText == 2">
       <!-- 使用 Element Plus 图标 -->

@@ -131,7 +131,10 @@ const remove = (row) => {
   })
     .then(() => {
       nextTick(() => {
-        menuData.value = menuData.value.filter((i) => i.groupName !== row.groupName)
+        const index = menuData.value.findIndex((item) => item.groupName === row.groupName)
+        if (index !== -1) {
+          menuData.value.splice(index, 1)
+        }
         handleSelect(menuData.value[menuData.value.length - 1])
       })
       ElMessage.success('删除成功')
@@ -273,7 +276,7 @@ defineExpose({ activeGroupId })
       </ElMenu>
     </ElScrollbar>
 
-    <ElDialog v-model="dialogFormVisible" title="编辑目录" width="400">
+    <ElDialog v-model="dialogFormVisible" title="编辑分组名称" width="400">
       <ElForm ref="formRef" :model="form" :rules="rules">
         <ElFormItem label="目录名称" prop="name">
           <ElInput v-model="form.name" autocomplete="off" />

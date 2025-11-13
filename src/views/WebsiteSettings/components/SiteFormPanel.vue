@@ -264,7 +264,8 @@ const handleSave = async () => {
     push({
       path: '/websiteSettings/configureDone',
       query: {
-        domainId: res.data.domain?.id || domainId
+        domainId: res.data.domain?.id || domainId,
+        domainName: ruleForm.hostname
       }
     })
   } else {
@@ -636,7 +637,7 @@ onMounted(() => {
             </span>
             <p class="ml-2" v-else>
               <span>仅将记录通用的常见Header字段，</span>
-              <ElButton link type="primary">查看常见Header</ElButton>
+              <!-- <ElButton link type="primary">查看常见Header</ElButton> -->
             </p>
           </ElFormItem>
           <template v-if="ruleForm.logAllHeaders">
@@ -690,8 +691,8 @@ onMounted(() => {
           >
             <template class="flex">
               <ElInputNumber v-model="ruleForm.connSetting[items.prop]" />
-              <span class="px-4">{{ items.unit }}</span>
-              <span>{{ items.describe }}</span>
+              <span class="px-4 text-gray-500">{{ items.unit }}</span>
+              <span class="text-gray-500">{{ items.describe }}</span>
             </template>
           </ElFormItem>
         </template>
