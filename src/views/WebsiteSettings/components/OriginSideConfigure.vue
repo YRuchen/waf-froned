@@ -17,7 +17,8 @@ import {
   ElPopover,
   type FormInstance,
   type FormRules,
-  type FormItemRule
+  type FormItemRule,
+  ElMessage
 } from 'element-plus'
 
 import Side from './Side.vue'
@@ -257,20 +258,47 @@ const validatDesc = (rule: any, value: any, callback: any) => {
     callback()
   }
 }
+const isServerValid = (server: any): boolean => {
+  // 校验协议
+  if (!server.protol || server.protol === '') return false
 
-const submitForm = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (!ruleFormRef.value) {
-      resolve(false)
-      return
-    }
-    ruleFormRef.value.validate((valid) => {
-      if (valid) {
-        showError.value = 0
+  // 校验地址
+  const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+  const ipRegex =
+    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+
+  if (!server.address || !(domainRegex.test(server.address) || ipRegex.test(server.address)))
+    return false
+
+  // 校验端口
+  if (!server.port || server.port === '') return false
+
+  // 校验权重
+  if (!server.weight || server.weight === '') return false
+
+  return true
+}
+
+/** 优化后的提交校验函数，校验所有分组的服务器数据 */
+const submitForm = (): boolean => {
+  let valid = true
+
+  // 遍历所有分组
+  for (const group of originList.value) {
+    for (const server of group.servers) {
+      if (!isServerValid(server)) {
+        ElMessage({
+          message: `分组 "${group.groupName}" 中存在无效的服务器配置，请检查后重新提交。`,
+          type: 'warning'
+        })
+        valid = false
+        break
       }
-      resolve(valid)
-    })
-  })
+    }
+    if (!valid) break
+  }
+
+  return valid
 }
 
 const resetForm = () => {
@@ -318,22 +346,18 @@ const filterPort = () => {
 const sideRef = ref<InstanceType<typeof Side>>()
 // 操作分组的时候，右侧table也跟着改变
 const getTableList = async (data: serverGroupItem) => {
-  const res = await submitForm()
+  ruleFormRef.value?.clearValidate()
+  showError.value = 0
   if (!sideRef.value) return
-  if (res) {
-    originListItem.value = data
-    originListItem.value.servers = data.servers.map((item) => ({
-      ...item,
-      protol: data.protocol == 'PROTOCOL_UNSPECIFIED' ? '' : data.protocol
-    }))
-    allUsedPorts.value = originList.value.map((items) => items.accessPorts).flat()
-    filterPort()
-    if (!sideRef.value) return
-    sideRef.value.activeGroupId = data.groupName
-  } else {
-    if (!sideRef.value) return
-    sideRef.value.activeGroupId = originListItem.value.groupName
-  }
+  originListItem.value = data
+  originListItem.value.servers = data.servers.map((item) => ({
+    ...item,
+    protol: data.protocol == 'PROTOCOL_UNSPECIFIED' ? '' : data.protocol
+  }))
+  allUsedPorts.value = originList.value.map((items) => items.accessPorts).flat()
+  filterPort()
+  if (!sideRef.value) return
+  sideRef.value.activeGroupId = data.groupName
 }
 /***自定义接入端的端口选择 */
 const handleSelect = (index: string) => {
@@ -352,18 +376,16 @@ const selectPort = (isCheck, port) => {
 const handleChange = (val: string[]) => {
   originListItem.value.accessPorts = JSON.parse(JSON.stringify(checkList.value))
 }
-// watch(
-//   () => originListItem.value.servers.map((item) => item.address),
-//   () => {
-//     nextTick(() => {
-//       // 对每一行触发验证
-//       originListItem.value.servers.forEach((item, index) => {
-//         if (item.address) ruleFormRef.value?.validateField(`${index}.address`)
-//       })
-//     })
-//   },
-//   { deep: true }
-// )
+watch(
+  () => sideRef.value?.activeGroupId,
+  () => {
+    nextTick(() => {
+      // 对每一行触发验证
+      ruleFormRef.value?.validateField()
+    })
+  },
+  { deep: true }
+)
 watch([httpPorts, httpsPorts], () => {
   filterPort()
 })

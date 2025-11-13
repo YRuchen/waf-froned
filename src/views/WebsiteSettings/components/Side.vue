@@ -148,16 +148,6 @@ const handleSelect = (data: serverGroupItem) => {
   menuKey.value++
   emit('change', data)
 }
-// watch(
-//   menuData,
-//   (val) => {
-//     if (val.length > 0) {
-//       handleSelect(val[0]) // 自动触发选择第一个
-//       activeGroupId.value = val[0].groupName
-//     }
-//   },
-//   { immediate: true } // 立即执行一次，如果已经有值也会触发
-// )
 onMounted(() => {
   handleSelect(menuData.value[0])
 })
