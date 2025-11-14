@@ -8,3 +8,5 @@ pnpm-debug
 stats.html
 .idea
 .github
+/src/views/newPanel*
+/scripts/replace-endpoints.js
