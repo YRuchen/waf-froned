@@ -2,7 +2,7 @@
 import { reactive, ref, h, onMounted, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
-import { RuleForm } from '@/api/websiteSettingPanel/types'
+import { RuleForm, HTTP_PORTS, HTTPS_PORTS } from '@/api/websiteSettingPanel/types'
 import {
   getTlsVersionsApi,
   getTlstCiphersApi,
@@ -346,11 +346,17 @@ const getDatail = async () => {
   if (res.code === 200) {
     Object.keys(res.data.domain).forEach((key) => {
       if (key in ruleForm) {
-        ruleForm[key] = res.data.domain[key]
+        ruleForm[key] =
+          key === 'httpPorts' || key === 'httpsPorts'
+            ? res.data.domain[key].map(String)
+            : res.data.domain[key]
       }
     })
     flag.value = true
   }
+}
+const isValidPort = (port: string, PORTS: readonly string[]) => {
+  return PORTS.includes(port)
 }
 const rendElOption = (item) => {
   return (
@@ -442,11 +448,10 @@ onMounted(() => {
                     :tagsList="ruleForm.httpPorts"
                     @update:tagsList="
                       (newTags) => {
-                        const added = newTags.filter((tag) => !ruleForm.httpPorts.includes(tag))
-                        const invalid = added.find((tag) => ruleForm.httpsPorts.includes(tag))
-                        if (invalid) {
-                          ElMessage.warning(`端口号 ${invalid} 不符合`)
-                          ruleForm.httpPorts = newTags.filter((tag) => tag !== invalid)
+                        const added = newTags.find((tag) => !ruleForm.httpPorts.includes(tag))
+                        if (added && !isValidPort(added, HTTP_PORTS)) {
+                          ElMessage.warning(`端口号 ${added} 不符合`)
+                          ruleForm.httpPorts = newTags.filter((tag) => tag !== added)
                           return
                         }
                         ruleForm.httpPorts = newTags
@@ -485,11 +490,10 @@ onMounted(() => {
                     :tagsList="ruleForm.httpsPorts"
                     @update:tagsList="
                       (newTags) => {
-                        const added = newTags.filter((tag) => !ruleForm.httpsPorts.includes(tag))
-                        const invalid = added.find((tag) => ruleForm.httpPorts.includes(tag))
-                        if (invalid) {
-                          ElMessage.warning(`端口号 ${invalid} 不符合`)
-                          ruleForm.httpsPorts = newTags.filter((tag) => tag !== invalid)
+                        const added = newTags.find((tag) => !ruleForm.httpsPorts.includes(tag))
+                        if (added && !isValidPort(added, HTTPS_PORTS)) {
+                          ElMessage.warning(`端口号 ${added} 不符合`)
+                          ruleForm.httpsPorts = newTags.filter((tag) => tag !== added)
                           return
                         }
                         ruleForm.httpsPorts = newTags

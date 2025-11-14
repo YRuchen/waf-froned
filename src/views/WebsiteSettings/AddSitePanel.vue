@@ -45,12 +45,12 @@ onUnmounted(() => {
 })
 </script>
 <template>
+  <div class="font-size-5 cursor-pointer" @click="() => push('/websiteSettings/index')">
+    <Icon icon="ep:arrow-left" class="align-middle mr-1 font-size-6" />
+    <span>{{ currentRoute.meta?.title }}</span>
+  </div>
   <ContentWrap>
-    <div class="font-size-4 cursor-pointer h-[45px]" @click="() => push('/websiteSettings/index')">
-      <Icon icon="ep:arrow-left" class="align-middle mr-1 font-size-5" />
-      <span>{{ currentRoute.meta?.title }}</span>
-    </div>
-    <div class="flex h-80%">
+    <div class="flex">
       <div ref="containerRef" class="h-screen overflow-y-auto relative w-85%">
         <!-- 顶部横幅 -->
         <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">

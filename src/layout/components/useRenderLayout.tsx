@@ -76,7 +76,8 @@ export const useRenderLayout = () => {
                 !collapse.value &&
                 !mobile.value &&
                 !mobile.value,
-              'fixed !w-full !left-0': currentRoute.value.meta.hiddenMenu || mobile.value
+              '!w-full': currentRoute.value.meta.hiddenMenu || mobile.value,
+              'fixed !left-0': mobile.value
             }
           ]}
           style="transition: all var(--transition-time-02);"

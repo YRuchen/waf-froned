@@ -478,7 +478,7 @@ defineExpose({
         <span>回源到源站地址：</span>
       </div>
       <ElForm ref="ruleFormRef" :model="originListItem.servers" label-position="left">
-        <Table :columns="columns" :data="originListItem.servers" />
+        <Table :columns="columns" :data="originListItem.servers" height="300" />
         <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
           {{ showErrorList.find((item) => item.key == showError)?.label }}
         </span>
