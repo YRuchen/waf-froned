@@ -24,15 +24,13 @@ router.beforeEach(async (to, from, next) => {
   if (window.__POWERED_BY_QIANKUN__ && !userStore.getToken) {
     // 尝试从 qiankun props 获取登录信息
     if (qiankunProps.token) {
-
       userStore.setToken(qiankunProps.token)
     }
     if (qiankunProps.userInfo) {
       userStore.setUserInfo(qiankunProps.userInfo)
     }
-
   } else {
-    console.log(99999);
+    console.log(99999)
     userStore.setUserInfo({
       username: 'admin',
       password: 'admin',

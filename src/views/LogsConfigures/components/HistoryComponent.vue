@@ -46,7 +46,7 @@ onMounted(() => {
             class="cursor-pointer my-2 flex justify-between"
           >
             <span>{{ short.text }}</span>
-            <icon icon="vi-ep:delete"></icon>
+            <Icon icon="vi-ep:delete" />
           </div>
         </div>
       </div>

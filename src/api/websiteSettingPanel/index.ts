@@ -1,5 +1,5 @@
 import request from '@/axios'
-import qs from 'qs';
+import qs from 'qs'
 // 获取列表
 export const getTableListApi = (params: any) => {
   return request.get({

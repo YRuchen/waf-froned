@@ -1,5 +1,9 @@
 import axios, { AxiosError } from 'axios'
-import { defaultRequestInterceptors, defaultResponseInterceptors, defaultErrorInterceptors } from './config'
+import {
+  defaultRequestInterceptors,
+  defaultResponseInterceptors,
+  defaultErrorInterceptors
+} from './config'
 
 import { AxiosInstance, InternalAxiosRequestConfig, RequestConfig, AxiosResponse } from './types'
 import { ElMessage } from 'element-plus'
@@ -35,15 +39,13 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response) {
       const { data, status } = error.response as any
-      const message =
-        data?.message || data?.msg || `请求错误 (${status})`
+      const message = data?.message || data?.msg || `请求错误 (${status})`
       ElMessage.error(message)
     } else {
       // 说明根本没到服务器
       ElMessage.error('网络异常或服务器未响应')
     }
     return Promise.reject(error)
-
   }
 )
 
@@ -52,7 +54,6 @@ axiosInstance.interceptors.response.use(defaultResponseInterceptors, defaultErro
 
 const service = {
   request: (config: RequestConfig) => {
-
     return new Promise((resolve, reject) => {
       if (config.interceptors?.requestInterceptors) {
         config = config.interceptors.requestInterceptors(config as any)

@@ -9,7 +9,7 @@ export const useTimeShortcuts = (fixedList: TimeList[], exactHour = ref(false)) 
    */
   const makeRangeByMs = (msOffset: number): [Date, Date] => {
     const now = new Date()
-    let end = new Date(now.getTime())
+    const end = new Date(now.getTime())
 
     // 整点时间模式，仅在大于1小时的时间段生效
     if (exactHour.value && msOffset >= 60 * 60 * 1000) {

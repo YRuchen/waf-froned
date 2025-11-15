@@ -48,13 +48,11 @@ const defaultResponseInterceptors = (response: AxiosResponse) => {
     const userStore = useUserStoreWithOut()
     userStore.resetApp?.()
   }
-
 }
 const defaultErrorInterceptors = (error: AxiosError) => {
   if (error.response) {
     const { data, status } = error.response as any
-    const message =
-      data?.message || data?.msg || `请求错误 (${status})`
+    const message = data?.message || data?.msg || `请求错误 (${status})`
     ElMessage.error(message)
     if (status === 401 || status === 403) {
       const userStore = useUserStoreWithOut()

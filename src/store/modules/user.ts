@@ -69,12 +69,12 @@ export const useUserStore = defineStore('user', {
         type: 'warning'
       })
         .then(async () => {
-          const res = await loginOutApi().catch(() => { })
+          const res = await loginOutApi().catch(() => {})
           if (res) {
             this.reset()
           }
         })
-        .catch(() => { })
+        .catch(() => {})
     },
     /** 重置应用 */
     resetApp() {

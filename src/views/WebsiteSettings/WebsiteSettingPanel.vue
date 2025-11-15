@@ -555,12 +555,6 @@ const action = (row, name) => {
         logEnabled: !row.logEnabled
       })
       break
-    case 'edit':
-      push({
-        path: '/websiteSettings/editSitePanel',
-        query: { type: name }
-      })
-      break
 
     default:
       break

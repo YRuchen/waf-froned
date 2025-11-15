@@ -1,6 +1,6 @@
 import request from '@/axios'
 import { LogsParams } from './types'
-import qs from 'qs';
+import qs from 'qs'
 // 获取域名
 export const getTableListApi = (params?: any) => {
   return request.get({

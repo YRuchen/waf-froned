@@ -15,7 +15,8 @@ const request = (option: AxiosConfig) => {
       responseType,
       headers: {
         'Content-Type': CONTENT_TYPE,
-        [userStore.getTokenKey ?? 'Authorization']: userStore.getToken || `Bearer ${localStorage.getItem('auth_token')}`,
+        [userStore.getTokenKey ?? 'Authorization']:
+          userStore.getToken || `Bearer ${localStorage.getItem('auth_token')}`,
         ...headers
       }
     })
@@ -28,13 +29,13 @@ const request = (option: AxiosConfig) => {
       responseType,
       headers: {
         'Content-Type': CONTENT_TYPE,
-        [userStore.getTokenKey ?? 'Authorization']: userStore.getToken || `Bearer ${localStorage.getItem('auth_token')}`,
+        [userStore.getTokenKey ?? 'Authorization']:
+          userStore.getToken || `Bearer ${localStorage.getItem('auth_token')}`,
         ...headers
       }
     })
   }
 }
-
 
 export default {
   get: <T = any>(option: AxiosConfig) => {
