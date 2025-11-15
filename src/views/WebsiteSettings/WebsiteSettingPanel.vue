@@ -106,7 +106,7 @@ const configureText = [
     descriptionsItem: [
       {
         label: '回源方式',
-        prop: 'defaultGroupName',
+        prop: 'domainSource',
         isTag: false
       },
       {
@@ -141,7 +141,13 @@ const columns = reactive<TableColumn[]>([
                 {items.descriptionsItem.map((item) => (
                   <ElDescriptionsItem label={item.label}>
                     {accessConfiguration(item.prop, data.row)?.map((label) =>
-                      item.isTag ? <ElTag type="info">{label}</ElTag> : label
+                      item.isTag ? (
+                        <ElTag type="info" class={'mr-1'}>
+                          {label}
+                        </ElTag>
+                      ) : (
+                        label
+                      )
                     )}
                     {/* <ElTag type="info">{accessConfiguration(item.prop, data.row)}</ElTag> */}
                   </ElDescriptionsItem>
