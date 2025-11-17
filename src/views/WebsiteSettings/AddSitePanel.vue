@@ -51,18 +51,17 @@ onUnmounted(() => {
   </div>
   <ContentWrap>
     <div class="flex">
-      <div ref="containerRef" class="h-screen overflow-y-auto relative w-85%">
+      <div ref="containerRef" class="h-screen overflow-y-auto relative w-100%">
         <!-- 顶部横幅 -->
-        <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
-          顶部横幅
-        </div>
-
+        <!-- <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
+          接入方式：CNAME
+        </div> -->
+        <div ref="bannerRef"> </div>
         <div class="flex relative">
           <!-- 左侧导航 -->
           <ElAnchor
             ref="anchorRef"
             :container="containerRef"
-            :offset="300"
             type="underline"
             class="!fixed !ml-20 !w-32"
             :style="{ top: `${navTop}px` }"
@@ -80,7 +79,7 @@ onUnmounted(() => {
           <siteForm :sections="sections"></siteForm>
         </div>
       </div>
-      <div class="flex-1"> </div>
+      <!-- <div class="flex-1"> </div> -->
     </div>
   </ContentWrap>
 </template>
