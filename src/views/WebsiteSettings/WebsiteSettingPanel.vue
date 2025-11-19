@@ -257,12 +257,7 @@ const columns = reactive<TableColumn[]>([
                       ElMessage.success(data.row.responseCheckStatus ? '关闭成功' : '开启成功')
                     getList()
                   })
-                  .catch(() => {
-                    ElMessage({
-                      type: 'info',
-                      message: '已取消'
-                    })
-                  })
+                  .catch(() => {})
               }}
             />
           </div>

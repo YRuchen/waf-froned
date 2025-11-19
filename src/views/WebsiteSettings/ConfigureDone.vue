@@ -51,7 +51,7 @@ const textList = [
     buttonText2: 'CNAME接入测试'
   },
   {
-    describe: '加回WAF回源地址，以确保回源IP不受源站安全策略影响',
+    describe: '加白WAF回源地址，以确保回源IP不受源站安全策略影响',
     buttonText1: '复制全部IP地址',
     buttonText2: '回源测试'
   }

@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { reactive, ref, h, onMounted, watch, computed, nextTick } from 'vue'
+import { reactive, ref, h, onMounted, computed, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Table, TableColumn } from '@/components/Table'
 import { RuleForm, HTTP_PORTS, HTTPS_PORTS } from '@/api/websiteSettingPanel/types'
@@ -34,9 +34,7 @@ import {
   ElDescriptionsItem,
   ElTag,
   ElDialog,
-  ElEmpty,
   ElTable,
-  ElTableColumn,
   ElCheckboxGroup,
   type FormInstance,
   type FormRules,
@@ -118,12 +116,11 @@ const parentFormRef = ref<FormInstance>()
 const showTLSDialog = ref<boolean>(false)
 const openTLSConfigure = ref<boolean>(true)
 const loading = ref<boolean>(false)
-const showErrorTips = ref<boolean>(false)
 const selected = ref<Array<any>>([])
 const tableRef = ref<InstanceType<typeof ElTable> | null>(null)
 const childRef = ref<InstanceType<typeof originSideConfigure>>()
 const tlsVersionsArr = ref<Array<{ key: string; label: string }>>([])
-const tlsCiphersArr = ref<Array<{ key: string; label: string; tlsVersions: Array<string[]> }>>([])
+const tlsCiphersArr = ref<Array<{ key: string; label: string; tlsVersions: string[] }>>([])
 const ruleForm = reactive<RuleForm>({
   hostname: '',
   publicServer: true,
@@ -171,8 +168,12 @@ const ruleForm = reactive<RuleForm>({
 // tls编辑弹窗的相关变量
 const currentPage = ref<number>(1)
 const pageSize = ref<number>(7)
-const cancelList = ref<Array<{ key: string; label: string; tlsVersions: Array<string[]> }>>([])
+const cancelList = ref<Array<{ key: string; label: string; tlsVersions: string[] }>>([])
 const temporaryCheckList = ref<string[]>([])
+const lastSelectedProtocols = ref<string[]>([])
+const updateProtocolSnapshot = (list: string[]) => {
+  lastSelectedProtocols.value = [...list]
+}
 const tlsTableList = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
@@ -288,17 +289,26 @@ const handleCloseDialog = () => {
   showTLSDialog.value = false
 }
 /**取消勾选，就把符合条件的tble也取消勾选 */
-const handleCancel = (val) => {
-  if (!tableRef.value) return
-  // 获取符合条件的行
-  cancelList.value = tlsCiphersArr.value.filter((item) =>
-    item.tlsVersions.some((checkItem) => val.includes(checkItem))
-  )
-  tableRef.value?.clearSelection()
-  // 遍历取消勾选这些行
-  cancelList.value.forEach((row) => {
-    tableRef.value?.toggleRowSelection(row, true)
+const handleCancel = (val: string[]) => {
+  if (!tableRef.value) {
+    updateProtocolSnapshot(val)
+    return
+  }
+  const removedVersions = lastSelectedProtocols.value.filter((item) => !val.includes(item))
+  updateProtocolSnapshot(val)
+  if (!removedVersions.length) return
+  const currentSelection = tableRef.value?.getSelectionRows?.() || []
+  const remainRows: typeof currentSelection = []
+  currentSelection.forEach((row) => {
+    const supportedVersions = row.tlsVersions || []
+    const stillSupported = supportedVersions.some((version) => val.includes(version))
+    if (!stillSupported) {
+      tableRef.value?.toggleRowSelection(row, false)
+    } else {
+      remainRows.push(row)
+    }
   })
+  cancelList.value = remainRows
 }
 
 /**table的方法 */
@@ -311,10 +321,20 @@ const onRegister = (_parent: any, elTableRef: any) => {
     })
   })
 }
+
+const handleSelectionChange = (
+  rows: Array<{ key: string; label: string; tlsVersions: string[] }>
+) => {
+  cancelList.value = rows
+}
+
+const showErrorTips = computed(
+  () => temporaryCheckList.value.length == 0 || cancelList.value.length == 0
+)
 /**TLS配置提交 */
 const handleSubmit = () => {
   selected.value = tableRef.value?.getSelectionRows?.() || []
-  showErrorTips.value = !(ruleForm.sslProtocols.length !== 0 && selected.value.length !== 0)
+  // showErrorTips.value = !(ruleForm.sslProtocols.length !== 0 && selected.value.length !== 0)
   if (showErrorTips.value) return
   showTLSDialog.value = false
   ruleForm.sslCiphers = selected.value.map((item) => item.label)
@@ -325,11 +345,28 @@ const handleGetTls = async () => {
   const resVersions = await getTlsVersionsApi()
   const resCiphers = await getTlstCiphersApi()
   tlsVersionsArr.value = resVersions.data?.items ?? []
-  ruleForm.sslProtocols = resVersions.data?.items.map((item) => item.label) ?? []
-  temporaryCheckList.value = resVersions.data?.items.map((item) => item.label) ?? []
   tlsCiphersArr.value = resCiphers.data?.items ?? []
-  ruleForm.sslCiphers = resCiphers.data?.items.map((item) => item.label) ?? []
-  cancelList.value = resCiphers.data?.items ?? []
+  if (!domainId) {
+    ruleForm.sslProtocols = resVersions.data?.items.map((item) => item.label) ?? []
+    ruleForm.sslCiphers = resCiphers.data?.items.map((item) => item.label) ?? []
+    cancelList.value = resCiphers.data?.items ?? []
+    temporaryCheckList.value = resVersions.data?.items.map((item) => item.label) ?? []
+    updateProtocolSnapshot(temporaryCheckList.value)
+  } else {
+    cancelList.value = resCiphers.data?.items ?? []
+    temporaryCheckList.value = ruleForm.sslProtocols ?? []
+    updateProtocolSnapshot(temporaryCheckList.value)
+    cancelList.value = tlsCiphersArr.value.filter((item) =>
+      item.tlsVersions.some((checkItem) => temporaryCheckList.value.includes(checkItem))
+    )
+    nextTick(() => {
+      cancelList.value.forEach((row) => {
+        tableRef.value?.toggleRowSelection(row, true)
+      })
+    })
+
+    // cancelList.value = tlsTableList.value
+  }
 }
 /**获取证书 */
 const getCerts = async () => {
@@ -352,6 +389,10 @@ const getDatail = async () => {
             : res.data.domain[key]
       }
     })
+    if (ruleForm.sslProtocols?.length) {
+      temporaryCheckList.value = ruleForm.sslProtocols.slice()
+      updateProtocolSnapshot(temporaryCheckList.value)
+    }
     flag.value = true
   }
 }
@@ -367,6 +408,11 @@ const rendElOption = (item) => {
     </>
   )
 }
+const goToCert = () => {
+  const base = import.meta.env.VITE_API_BASE_PATH
+  window.location.href = `${base}/app/cert#/certificateManagement/index`
+}
+
 onMounted(() => {
   handleGetTls()
   getCerts()
@@ -509,7 +555,7 @@ onMounted(() => {
           </ElFormItem>
           <template v-if="ruleForm.httpsEnabled">
             <ElFormItem label="证书选择" prop="certId">
-              <ElSelect v-model="ruleForm.certId" placeholder="请选择" class="!w-[80%]">
+              <ElSelect v-model="ruleForm.certId" placeholder="请" class="!w-[80%]">
                 <ElOption
                   v-for="item in options"
                   :key="item.id"
@@ -533,7 +579,7 @@ onMounted(() => {
                 </ElOption>
               </ElSelect>
               <ElButton link type="primary" @click="getCerts">刷新</ElButton>
-              <ElButton link type="primary">新增证书</ElButton>
+              <ElButton link type="primary" @click="goToCert">新增证书</ElButton>
             </ElFormItem>
             <ElFormItem label="SNI配置" prop="sniEnabled">
               <ElSwitch v-model="ruleForm.sniEnabled" />
@@ -561,6 +607,7 @@ onMounted(() => {
                         v-for="item in ruleForm.sslProtocols"
                         :key="item"
                         class="mr-2"
+                        type="info"
                       >
                         {{ item }}
                       </ElTag>
@@ -571,6 +618,7 @@ onMounted(() => {
                         v-for="item in ruleForm.sslCiphers"
                         :key="item"
                         class="mr-2"
+                        type="info"
                       >
                         {{ item }}
                       </ElTag>
@@ -736,11 +784,13 @@ onMounted(() => {
           total: total,
           pageSize: pageSize
         }"
+        height="350"
         @register="onRegister"
+        @selection-change="handleSelectionChange"
       >
       </Table>
-      <span class="color-[red]" v-if="showErrorTips"> TLSv1、TLSv1.1至少有一个对应的加密事件 </span>
     </ElForm>
+    <span class="color-[red]" v-if="showErrorTips"> TLSv1、TLSv1.1至少有一个对应的加密事件 </span>
     <template #footer>
       <div class="dialog-footer">
         <ElButton size="small" @click="showTLSDialog = false">取消</ElButton>
