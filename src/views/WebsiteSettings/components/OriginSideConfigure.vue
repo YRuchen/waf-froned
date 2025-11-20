@@ -15,15 +15,15 @@ import {
   ElCheckbox,
   ElInputTag,
   ElPopover,
-  type FormInstance,
-  type FormRules,
-  type FormItemRule,
-  ElMessage
+  ElTooltip,
+  ElMessage,
+  type FormInstance
 } from 'element-plus'
 
 import Side from './Side.vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
+import { Icon } from '@/components/Icon'
 
 import { Table, TableColumn } from '@/components/Table'
 import { BaseButton } from '@/components/Button'
@@ -45,7 +45,7 @@ const columns: TableColumn[] = [
             prop={`${$index}.protol`}
             rules={[{ required: true, validator: validateName, trigger: 'change' }]}
           >
-            <ElSelect v-model={row.protol}>
+            <ElSelect v-model={row.protol} onChange={handleChangeProtol}>
               <ElOption label="HTTP" value="1" />
               <ElOption label="HTTPS" value="2" />
             </ElSelect>
@@ -105,7 +105,29 @@ const columns: TableColumn[] = [
             prop={`${$index}.weight`}
             rules={[{ required: true, validator: validatDesc, trigger: 'blur' }]}
           >
-            <ElInput v-model={row.weight} placeholder="请填写权重" />
+            <div class="flex flex-items-center">
+              <ElInput
+                v-model={row.weight}
+                placeholder="请填写权重"
+                onInput={(value: string) => {
+                  let val = Number(value)
+                  if (val < 0) val = 0
+                  else if (val > 100) val = 100
+                  row.weight = val
+                }}
+              />
+              <ElTooltip
+                effect="dark"
+                content="表示后端服务器收到请求的概率，支持设置 1-100 的任意整数，源站权重之和可以大于 100"
+                placement="top-start"
+                popper-style="max-width: 300px; white-space: normal;"
+              >
+                <Icon
+                  icon="vi-ep:question-filled"
+                  class="ml-1 !text-[var(--el-text-color-regular)]"
+                />
+              </ElTooltip>
+            </div>
           </ElFormItem>
         )
       }
@@ -176,7 +198,13 @@ const showErrorList = ref([
   { key: 7, label: '后端服务器组重复' }
 ])
 const allUsedPorts = ref<string[]>([])
-
+const handleChangeProtol = (value: string) => {
+  if (new Set(originListItem.value.servers.map((item) => item.protol)).size !== 1) {
+    originListItem.value.servers.map(
+      (item) => ((item.protol = value), (item.port = value == '1' ? '80' : '443'))
+    )
+  }
+}
 const validateName = (rule: any, value: any, callback: any) => {
   if (value === '') {
     showError.value = 2
@@ -184,10 +212,8 @@ const validateName = (rule: any, value: any, callback: any) => {
       callback(new Error('请输入源站协议'))
     })
   } else {
-    if (new Set(originListItem.value.servers.map((item) => item.protol)).size !== 1)
-      originListItem.value.servers.map((item) => (item.protol = value))
-    callback()
     showError.value = 0
+    callback()
   }
 }
 const validateRegion = (rule: any, value: any, callback: any) => {
@@ -451,6 +477,7 @@ defineExpose({
               <div class="flex-1 ml-3">
                 <template v-if="filteredPorts.length > 0">
                   <ElCheckboxGroup v-model="checkList">
+                    <ElCheckbox value="All"> 全部 </ElCheckbox>
                     <ElCheckbox
                       v-for="port in filteredPorts"
                       :key="port"

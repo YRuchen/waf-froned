@@ -400,19 +400,14 @@ const searchSchema = reactive<FormSchema[]>([
   {
     field: 'name',
     component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>防护网站</>
-      }
-    }
+    label: '防护网站'
   },
   {
     field: 'statusList',
-    // label: '接入状态',
-    component: 'SelectLabel',
+    label: '接入状态',
+    component: 'Select',
     componentProps: {
       placeholder: '请选择',
-      label: '接入状态',
       options: [
         { label: '正常', value: '1' },
         { label: '未接入', value: '0' },
@@ -426,31 +421,27 @@ const searchSchema = reactive<FormSchema[]>([
 const filterSchema = reactive<FormSchema[]>([
   {
     field: 'targetIp',
-    // label: 'IP地址',
-    component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>IP地址</>
-      }
-    }
+    label: 'IP地址',
+    component: 'Input'
   },
   {
     field: 'domainSources',
-    // label: '接入方式',
-    component: 'SelectLabel',
+    label: '接入方式',
+    component: 'Select',
     componentProps: {
       placeholder: '请选择',
-      label: '接入方式',
       options: [{ label: 'CNAME接入', value: 'CNAME接入' }]
     }
   },
   {
     field: 'attackIn3days',
-    // label: '3天攻击监控',
-    component: 'SelectLabel',
+    label: '3天攻击监控',
+    component: 'Select',
+    formItemProps: {
+      labelWidth: '100px'
+    },
     componentProps: {
       placeholder: '请选择',
-      label: '3天攻击监控',
       multiple: true,
       options: [
         { label: '未发现攻击', value: 'false' },
@@ -460,11 +451,10 @@ const filterSchema = reactive<FormSchema[]>([
   },
   {
     field: 'protectStatusList',
-    // label: '防护模式',
-    component: 'SelectLabel',
+    label: '防护模式',
+    component: 'Select',
     componentProps: {
       placeholder: '请选择',
-      label: '防护模式',
       multiple: true,
       options: [
         { label: '启用防护', value: true },
@@ -474,11 +464,10 @@ const filterSchema = reactive<FormSchema[]>([
   },
   {
     field: 'logEnableStatusList',
-    // label: '日志采集',
-    component: 'SelectLabel',
+    label: '日志采集',
+    component: 'Select',
     componentProps: {
       placeholder: '请选择',
-      label: '日志采集',
       multiple: true,
       options: [
         { label: '关闭', value: false },
@@ -488,11 +477,10 @@ const filterSchema = reactive<FormSchema[]>([
   },
   {
     field: 'publicServerStatusList',
-    // label: '回源方式',
-    component: 'SelectLabel',
+    label: '回源方式',
+    component: 'Select',
     componentProps: {
       placeholder: '请选择',
-      label: '回源方式',
       multiple: true,
       options: [
         { label: '公网回源', value: true },
@@ -507,11 +495,13 @@ const filterSchema = reactive<FormSchema[]>([
   // },
   {
     field: 'responseCheckStatusList',
-    // label: '响应数据检测',
-    component: 'SelectLabel',
+    label: '响应数据检测',
+    component: 'Select',
+    formItemProps: {
+      labelWidth: '100px'
+    },
     componentProps: {
       placeholder: '请选择',
-      label: '响应数据检测',
       multiple: true,
       options: [
         { label: '关闭', value: false },
@@ -681,7 +671,8 @@ const handleCardSearch = (key, title) => {
           :schema="searchSchema"
           :showSearch="false"
           :showReset="false"
-          labelWidth="160px"
+          labelWidth="80px"
+          labelPosition="left"
           :autoSearch="true"
           :autoSearchDebounce="1000"
           @search="handleSearch"
@@ -708,7 +699,8 @@ const handleCardSearch = (key, title) => {
         :schema="filterSchema"
         :showSearch="false"
         :showReset="false"
-        labelWidth="160px"
+        labelWidth="80px"
+        labelPosition="left"
         :autoSearch="true"
         :autoSearchDebounce="1000"
         @search="handleFilterSearch"
@@ -766,63 +758,66 @@ const handleCardSearch = (key, title) => {
   </ElDialog>
   <!-- 日志配置 -->
   <ElDialog v-model="showLogsConfigure" title="日志配置" width="40%">
-    <span class="bg-[#fef8eb] px-2 py-2 flex items-center mb-3">
-      <Icon icon="ep:warning-filled" class="text-[#eaa92d] mr-2 text-xl" />
-      当前已选择 {{ totalSelection.length }} 项域名，以下配置提交后，将替换当前日志配置
-    </span>
-    <ElForm ref="ruleFormRef" :model="logsConfigureForm" label-width="auto" label-position="left">
-      <ElFormItem label="记录全量Header" prop="logAllHeaders">
-        <ElSwitch v-model="logsConfigureForm.logAllHeaders" />
-        <span class="ml-2" v-if="logsConfigureForm.logAllHeaders">
-          将记录流量中全部Header字段，部分字段在Headers中，开启可能导致日志存储空间增加
-        </span>
-        <p class="ml-2" v-else>
-          <span>仅将记录通用的常见Header字段，</span>
-          <!-- <ElButton link type="primary">查看常见Header</ElButton> -->
-        </p>
-      </ElFormItem>
-      <template v-if="logsConfigureForm.logAllHeaders">
-        <ElFormItem label=" " prop="logExcludeHeaders">
-          <ElButton link type="primary" @click="showInputTags = !showInputTags">
-            配置例外Header({{ logsConfigureForm.logExcludeHeaders.length }})
-            <Icon :icon="showInputTags ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
-          </ElButton>
-          <ElTooltip
-            effect="dark"
-            content="防止日志存储量过大，可配置无需记录的Header头字段名"
-            placement="top"
-          >
-            <Icon icon="ep:question-filled" class="ml-1" />
-          </ElTooltip>
-          <InputTags
-            v-model:tagsList="logsConfigureForm.logExcludeHeaders"
-            :limit="100"
-            v-if="showInputTags"
-          />
-        </ElFormItem>
-        <ElFormItem label=" " prop="statHeaders">
-          <ElButton link type="primary" @click="showStatHeaders = !showStatHeaders">
-            配置统计Header({{ logsConfigureForm.statHeaders.length }})
-            <Icon :icon="showStatHeaders ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
-          </ElButton>
-          <ElTooltip
-            effect="dark"
-            content="在记录的Header范围内，配置需要统计、分析、告警的Header头字段名"
-            placement="top"
-          >
-            <Icon icon="ep:question-filled" class="ml-1" />
-          </ElTooltip>
-          <span class="text-gray-500 text-xs">
-            此实例已配置 {{ logsConfigureForm.statHeaders.length }} 条，最多 100 条，对所有域名生效
+    <div class="h-400px">
+      <span class="bg-[#fef8eb] px-2 py-2 flex items-center mb-3">
+        <Icon icon="ep:warning-filled" class="text-[#eaa92d] mr-2 text-xl" />
+        当前已选择 {{ totalSelection.length }} 项域名，以下配置提交后，将替换当前日志配置
+      </span>
+      <ElForm ref="ruleFormRef" :model="logsConfigureForm" label-width="auto" label-position="left">
+        <ElFormItem label="记录全量Header" prop="logAllHeaders">
+          <ElSwitch v-model="logsConfigureForm.logAllHeaders" />
+          <span class="ml-2" v-if="logsConfigureForm.logAllHeaders">
+            将记录流量中全部Header字段，部分字段在Headers中，开启可能导致日志存储空间增加
           </span>
-          <InputTags
-            v-model:tagsList="logsConfigureForm.statHeaders"
-            :max="100"
-            v-if="showStatHeaders"
-          />
+          <p class="ml-2" v-else>
+            <span>仅将记录通用的常见Header字段，</span>
+            <!-- <ElButton link type="primary">查看常见Header</ElButton> -->
+          </p>
         </ElFormItem>
-      </template>
-    </ElForm>
+        <template v-if="logsConfigureForm.logAllHeaders">
+          <ElFormItem label=" " prop="logExcludeHeaders">
+            <ElButton link type="primary" @click="showInputTags = !showInputTags">
+              配置例外Header({{ logsConfigureForm.logExcludeHeaders.length }})
+              <Icon :icon="showInputTags ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
+            </ElButton>
+            <ElTooltip
+              effect="dark"
+              content="防止日志存储量过大，可配置无需记录的Header头字段名"
+              placement="top"
+            >
+              <Icon icon="ep:question-filled" class="ml-1" />
+            </ElTooltip>
+            <InputTags
+              v-model:tagsList="logsConfigureForm.logExcludeHeaders"
+              :limit="100"
+              v-if="showInputTags"
+            />
+          </ElFormItem>
+          <ElFormItem label=" " prop="statHeaders">
+            <ElButton link type="primary" @click="showStatHeaders = !showStatHeaders">
+              配置统计Header({{ logsConfigureForm.statHeaders.length }})
+              <Icon :icon="showStatHeaders ? 'ep:arrow-up' : 'ep:arrow-down'" class="m-r-2" />
+            </ElButton>
+            <ElTooltip
+              effect="dark"
+              content="在记录的Header范围内，配置需要统计、分析、告警的Header头字段名"
+              placement="top"
+            >
+              <Icon icon="ep:question-filled" class="ml-1" />
+            </ElTooltip>
+            <span class="text-gray-500 text-xs">
+              此实例已配置 {{ logsConfigureForm.statHeaders.length }} 条，最多 100
+              条，对所有域名生效
+            </span>
+            <InputTags
+              v-model:tagsList="logsConfigureForm.statHeaders"
+              :max="100"
+              v-if="showStatHeaders"
+            />
+          </ElFormItem>
+        </template>
+      </ElForm>
+    </div>
     <template #footer>
       <div class="dialog-footer">
         <ElButton size="large" @click="showLogsConfigure = false">取消</ElButton>

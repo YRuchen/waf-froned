@@ -1,8 +1,8 @@
 <script setup lang="tsx">
 import { ref, computed, watch } from 'vue'
-import { ElMessage, ElTag } from 'element-plus'
+import { ElMessage, ElTag, ElTooltip, ElIcon } from 'element-plus'
+import { CircleCloseFilled, Close } from '@element-plus/icons-vue'
 import { propTypes } from '@/utils/propTypes'
-import { number } from 'vue-types'
 
 const props = defineProps({
   /** 绑定的标签数组 */
@@ -19,6 +19,9 @@ const props = defineProps({
 
   /** 可清空 */
   clearable: propTypes.bool.def(false),
+
+  /** 鼠标上移删除的tips的content */
+  tipsContent: propTypes.string.def(''),
 
   /** 不可删除的标签（受保护） */
   protectedPorts: {
@@ -76,6 +79,11 @@ const focusInput = () => {
 const isClosable = (tag: string) => {
   return !(props.protectedPorts || []).includes(tag)
 }
+/**自定义删除 */
+const removeTag = (clearTag) => {
+  headers.value = headers.value.filter((tag) => tag !== clearTag)
+  emit('update:tagsList', headers.value)
+}
 watch(
   () => props.tagsList,
   (newVal) => {
@@ -100,6 +108,7 @@ watch(
   background-color: var(--el-fill-color-blank);
   cursor: text;
   transition: border-color 0.2s;
+  overflow-x: auto;
   &:focus-within {
     border-color: var(--el-color-primary);
   }
@@ -111,13 +120,21 @@ watch(
     <ElTag
       v-for="(item, index) in headers"
       :key="index"
-      :closable="isClosable(item)"
       type="info"
       size="small"
+      :closable="!props.tipsContent && isClosable(item)"
       @close="removeHeader(index)"
       class="m-[2px] mr-1"
     >
       {{ item }}
+      <ElTooltip class="box-item" effect="dark" :content="props.tipsContent" placement="top">
+        <template v-if="props.tipsContent && isClosable(item)">
+          <ElIcon class="group" @click.stop="removeTag(item)">
+            <Close class="group-hover:hidden" />
+            <CircleCloseFilled class="hidden group-hover:block" />
+          </ElIcon>
+        </template>
+      </ElTooltip>
     </ElTag>
 
     <input

@@ -445,7 +445,7 @@ onMounted(() => {
           <ElFormItem prop="hostname">
             <template #label>
               <div class="flex flex-items-center">
-                <span>防护名称</span>
+                <span>防护域名</span>
                 <ElTooltip
                   effect="dark"
                   content="如需同时配置泛域名和域名主体本身，请分别配置。如：需要同时配置*.b.a.com和b.a.com，需要分别接入域名并配置策略。"
@@ -492,6 +492,7 @@ onMounted(() => {
                   <!-- <ElInputTag v-model="ruleForm.httpPorts" :max="10" prefix-icon="Search" /> -->
                   <InputTags
                     :tagsList="ruleForm.httpPorts"
+                    tipsContent="点击编辑"
                     @update:tagsList="
                       (newTags) => {
                         const added = newTags.find((tag) => !ruleForm.httpPorts.includes(tag))
@@ -526,14 +527,15 @@ onMounted(() => {
                     type="info"
                     class="ml-2"
                     v-if="ruleForm.httpsEnabled && !ruleForm.httpEnabled"
-                    >HTTP请求默认重定向到HTTPS</ElTag
-                  >
+                    >HTTP请求默认重定向到HTTPS
+                  </ElTag>
                 </ElFormItem>
               </ElCol>
               <ElCol v-if="ruleForm.httpsEnabled">
                 <ElFormItem prop="httpsPorts">
                   <InputTags
                     :tagsList="ruleForm.httpsPorts"
+                    tipsContent="点击编辑"
                     @update:tagsList="
                       (newTags) => {
                         const added = newTags.find((tag) => !ruleForm.httpsPorts.includes(tag))
@@ -597,7 +599,7 @@ onMounted(() => {
                 </ElButton>
                 <div class="flex flex-col" v-if="!openTLSConfigure">
                   <div>
-                    <span>允许使用的TLS加密版本和加密套件，不匹配请求将默认丢弃</span>
+                    <span>允许使用的TLS协议版本和加密套件，不匹配请求将默认丢弃</span>
                     <ElButton link type="primary" @click="handleEditTLS">编辑配置</ElButton>
                   </div>
                   <ElDescriptions class="margin-top w-full" :column="1">
@@ -657,7 +659,19 @@ onMounted(() => {
           </ElFormItem>
           <ElFormItem label="自定义获取客户端IP" prop="clientIpSource" v-if="ruleForm.proxy">
             <ElRadioGroup v-model="ruleForm.clientIpSource">
-              <ElRadio value="XFORWARD">X-forwarded-For</ElRadio>
+              <ElRadio value="XFORWARD">
+                <div class="flex items-center">
+                  <span>X-forwarded-For</span>
+                  <ElTooltip
+                    effect="dark"
+                    content="从X-Forwarded-For最左侧获取客户端IP"
+                    placement="top-start"
+                    popper-style="max-width: 300px; white-space: normal;"
+                  >
+                    <Icon icon="ep:warning-filled" class="ml-1" />
+                  </ElTooltip>
+                </div>
+              </ElRadio>
               <ElRadio value="CUSTOM_HEADER">自定义Header</ElRadio>
             </ElRadioGroup>
           </ElFormItem>
@@ -782,7 +796,9 @@ onMounted(() => {
         :pagination="{
           layout: 'prev, pager, next',
           total: total,
-          pageSize: pageSize
+          pageSize: pageSize,
+          background: true,
+          small: true
         }"
         height="350"
         @register="onRegister"
@@ -792,7 +808,7 @@ onMounted(() => {
     </ElForm>
     <span class="color-[red]" v-if="showErrorTips"> TLSv1、TLSv1.1至少有一个对应的加密事件 </span>
     <template #footer>
-      <div class="dialog-footer">
+      <div class="dialog-footer m-t-4">
         <ElButton size="small" @click="showTLSDialog = false">取消</ElButton>
         <ElButton size="small" type="primary" @click="handleSubmit">确定</ElButton>
       </div>

@@ -205,7 +205,17 @@ defineExpose({ activeGroupId })
     <div class="flex flex-justify-between">
       <ElPopover ref="popoverRef" placement="bottom-start" width="300" trigger="click">
         <template #reference>
-          <ElButton link class="m-y-2"> 分组 <Icon icon="vi-ep:search"></Icon> </ElButton>
+          <ElButton link class="m-y-2">
+            <span class="m-x-2">分组</span>
+            <ElTooltip
+              effect="dark"
+              content="搜索"
+              placement="top"
+              popper-style="max-width: 300px; white-space: normal;"
+            >
+              <Icon icon="vi-ep:search"></Icon>
+            </ElTooltip>
+          </ElButton>
         </template>
         <template #default>
           <ElInput

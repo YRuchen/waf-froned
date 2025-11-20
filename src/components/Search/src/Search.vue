@@ -22,6 +22,9 @@ const props = defineProps({
   isCol: propTypes.bool.def(false),
   // 表单label宽度
   labelWidth: propTypes.oneOfType([String, Number]).def('auto'),
+  labelPosition: propTypes.string
+    .validate((v: string) => ['left', 'top', 'right'].includes(v))
+    .def('right'),
   // 操作按钮风格位置
   layout: propTypes.string.validate((v: string) => ['inline', 'bottom'].includes(v)).def(''),
   // 底部按钮的对齐方式
@@ -271,6 +274,7 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     :model="formModel"
     :is-custom="false"
     :label-width="getProps.labelWidth"
+    :label-position="getProps.labelPosition"
     hide-required-asterisk
     :inline="getProps.inline"
     :is-col="getProps.isCol"
@@ -296,7 +300,7 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     </div>
   </template>
 </template>
-<style lang="less" scoped>
+<!-- <style lang="less" scoped>
 :deep(.el-form-item:not(:has(.el-button, .el-input-group__prepend))) {
   border: var(--el-border);
   .el-select__wrapper {
@@ -311,4 +315,4 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     margin: auto 0;
   }
 }
-</style>
+</style> -->
