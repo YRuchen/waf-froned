@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { useTimeShortcuts } from './useTimeShortcuts'
 import { Shortcut, TimeList } from '@/api/logsConfigure/types'
-import { ref, watch, reactive, nextTick, onMounted } from 'vue'
+import { ref, watch, reactive, nextTick, onMounted, computed } from 'vue'
 import { formatToDateTime } from '@/utils/dateUtil'
 import { ElSwitch } from 'element-plus'
 
@@ -41,9 +41,20 @@ const { fixedShortcuts: hourShortcuts } = useTimeShortcuts(hourList, exactHour)
 const { fixedShortcuts: dayShortcuts } = useTimeShortcuts(dayList, exactHour)
 const { fixedShortcuts: nowShortcuts } = useTimeShortcuts(nowCutList, exactHour)
 const { fixedShortcuts: lastShortcuts } = useTimeShortcuts(lastCutList, exactHour)
-const firstShortcuts = [minuteShortcuts, hourShortcuts, dayShortcuts]
-const secondShortcuts = [nowShortcuts, lastShortcuts]
-const selectedShortcut = ref<Shortcut | null>(dayShortcuts[2])
+const firstShortcuts = computed(() => {
+  return [
+    minuteShortcuts.value || [],
+    hourShortcuts.value || [],
+    dayShortcuts.value || []
+  ]
+})
+const secondShortcuts = computed(() => {
+  return [
+    nowShortcuts.value || [],
+    lastShortcuts.value || []
+  ]
+})
+const selectedShortcut = ref<Shortcut | null>(null)
 const range = ref<[Date, Date]>([new Date(), new Date()])
 const handleClick = (short) => {
   selectedShortcut.value = short
@@ -58,7 +69,9 @@ const handleClick = (short) => {
 // })
 
 onMounted(() => {
-  handleClick(dayShortcuts[2])
+  if (dayShortcuts.value && dayShortcuts.value.length > 2) {
+    handleClick(dayShortcuts.value[2])
+  }
 })
 </script>
 
@@ -77,14 +90,15 @@ onMounted(() => {
           v-for="(item, index) in firstShortcuts"
           :key="index"
         >
-          <span
-            v-for="short in item"
-            :key="short.text"
-            @click="handleClick(short)"
-            class="cursor-pointer my-1"
-          >
-            {{ short.text }}
-          </span>
+          <template v-for="(short, shortIndex) in (item || [])" :key="short?.text || `${index}-${shortIndex}`">
+            <span
+              v-if="short"
+              @click="handleClick(short)"
+              class="cursor-pointer my-1"
+            >
+              {{ short.text }}
+            </span>
+          </template>
         </div>
       </div>
       <div class="flex">
@@ -93,14 +107,15 @@ onMounted(() => {
           v-for="(item, index) in secondShortcuts"
           :key="index"
         >
-          <span
-            v-for="short in item"
-            :key="short.text"
-            @click="handleClick(short)"
-            class="cursor-pointer my-1"
-          >
-            {{ short.text }}
-          </span>
+          <template v-for="(short, shortIndex) in (item || [])" :key="short?.text || `${index}-${shortIndex}`">
+            <span
+              v-if="short"
+              @click="handleClick(short)"
+              class="cursor-pointer my-1"
+            >
+              {{ short.text }}
+            </span>
+          </template>
         </div>
       </div>
     </div>

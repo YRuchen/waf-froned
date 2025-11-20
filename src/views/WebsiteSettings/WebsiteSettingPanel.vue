@@ -713,7 +713,7 @@ const handleCardSearch = (key, title) => {
       :columns="columns"
       :data="dataList"
       :loading="loading"
-      height="500"
+      height="450"
       @selection-change="handleSelectionChange"
       row-key="id"
     >
