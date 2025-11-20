@@ -197,7 +197,8 @@ const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
 }
 const validSelectHostName = (_rule: any, value: any, callback: any) => {
   if (value) {
-    const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+    const domainRegex =
+      /^(?:\*\.)?(?!:\/\/)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/
     if (domainRegex.test(value.trim()) === false) {
       callback(new Error('请输入正确的域名'))
       return
@@ -243,7 +244,9 @@ const rules = reactive<FormRules<RuleForm>>({
   ]
 })
 /**保存提交 */
+const loadingButton = ref(false)
 const handleSave = async () => {
+  loadingButton.value = true
   let parentValid = false
   if (!parentFormRef.value) return
   parentValid = await new Promise<boolean>((resolve) => {
@@ -255,7 +258,7 @@ const handleSave = async () => {
   if (!childRef.value) return
   childValid = await childRef.value[0]?.submitForm()
   if (parentValid && childValid) {
-    // console.log('父组件和子组件表单都校验通过，可以提交')
+    // ('父组件和子组件表单都校验通过，可以提交')
     const apiPost = domainId ? updateDomainsApi : saveDomainsApi
     const res = await apiPost({
       id: domainId,
@@ -273,6 +276,7 @@ const handleSave = async () => {
       }
     })
   } else {
+    loadingButton.value = false
     console.log('父组件和子组件表单都校验不通过', ruleForm)
   }
 }
@@ -779,7 +783,7 @@ onMounted(() => {
     </ElForm>
     <div class="flex justify-end my-6">
       <ElButton @click="resetForm()">取消</ElButton>
-      <ElButton type="primary" @click="handleSave()">提交</ElButton>
+      <ElButton type="primary" @click="handleSave()" :loading="loadingButton">提交</ElButton>
     </div>
   </div>
   <ElDialog

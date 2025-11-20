@@ -205,6 +205,7 @@ const handleChangeProtol = (value: string) => {
       (item) => ((item.protol = value), (item.port = value == '1' ? '80' : '443'))
     )
   }
+  originListItem.value.protocol = value == '1' ? 'HTTP' : 'HTTPS'
 }
 const validateName = (rule: any, value: any, callback: any) => {
   if (value === '') {
