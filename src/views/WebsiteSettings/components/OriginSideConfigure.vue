@@ -17,7 +17,8 @@ import {
   ElPopover,
   ElTooltip,
   ElMessage,
-  type FormInstance
+  type FormInstance,
+  type CheckboxValueType
 } from 'element-plus'
 
 import Side from './Side.vue'
@@ -368,13 +369,22 @@ const filterPort = () => {
   checkList.value = port
   const result = protocolPorts.filter((port) => !allUsedPorts.value.includes(port)).concat(port)
   filteredPorts.value = protocolPorts.filter((port) => result.includes(port))
+  if (originListItem.value.accessPorts.length === filteredPorts.value.length) {
+    checkAll.value = true
+    isIndeterminate.value = false
+  } else if (originListItem.value.accessPorts.length > 0) {
+    isIndeterminate.value = true
+    checkAll.value = false
+  } else {
+    isIndeterminate.value = false
+    checkAll.value = false
+  }
 }
 const sideRef = ref<InstanceType<typeof Side>>()
 // 操作分组的时候，右侧table也跟着改变
 const getTableList = async (data: serverGroupItem) => {
   ruleFormRef.value?.clearValidate()
   showError.value = 0
-  if (!sideRef.value) return
   originListItem.value = data
   originListItem.value.servers = data.servers.map((item) => ({
     ...item,
@@ -401,6 +411,19 @@ const selectPort = (isCheck, port) => {
 }
 const handleChange = (val: string[]) => {
   originListItem.value.accessPorts = JSON.parse(JSON.stringify(checkList.value))
+}
+/**全选 */
+const checkAll = ref(false)
+const isIndeterminate = ref(false)
+const handleCheckAllChange = (val: CheckboxValueType) => {
+  checkList.value = val ? filteredPorts.value : []
+  originListItem.value.accessPorts = val ? filteredPorts.value : []
+  isIndeterminate.value = false
+}
+const handleCheckedCitiesChange = (value: CheckboxValueType[]) => {
+  const checkedCount = value.length
+  checkAll.value = checkedCount === filteredPorts.value.length
+  isIndeterminate.value = checkedCount > 0 && checkedCount < filteredPorts.value.length
 }
 watch(
   () => sideRef.value?.activeGroupId,
@@ -476,8 +499,14 @@ defineExpose({
               <!-- 右侧端口列表 -->
               <div class="flex-1 ml-3">
                 <template v-if="filteredPorts.length > 0">
-                  <ElCheckboxGroup v-model="checkList">
-                    <ElCheckbox value="All"> 全部 </ElCheckbox>
+                  <ElCheckbox
+                    v-model="checkAll"
+                    :indeterminate="isIndeterminate"
+                    @change="handleCheckAllChange"
+                  >
+                    全部
+                  </ElCheckbox>
+                  <ElCheckboxGroup v-model="checkList" @change="handleCheckedCitiesChange">
                     <ElCheckbox
                       v-for="port in filteredPorts"
                       :key="port"

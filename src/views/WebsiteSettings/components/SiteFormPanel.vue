@@ -557,7 +557,7 @@ onMounted(() => {
           </ElFormItem>
           <template v-if="ruleForm.httpsEnabled">
             <ElFormItem label="证书选择" prop="certId">
-              <ElSelect v-model="ruleForm.certId" placeholder="请" class="!w-[80%]">
+              <ElSelect v-model="ruleForm.certId" placeholder="请选择/搜索证书" class="!w-[80%]">
                 <ElOption
                   v-for="item in options"
                   :key="item.id"
@@ -782,6 +782,8 @@ onMounted(() => {
             {{ item.label }}
           </ElCheckbox>
         </ElCheckboxGroup>
+        <span>勾选取消：自动取消当前仅支持该版本的对应套件。</span>
+        <span>重新勾选：不会自动添加对应加密套件，若同时有新增加密套件需手动选择。</span>
       </ElFormItem>
 
       <Table
