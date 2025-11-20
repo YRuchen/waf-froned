@@ -188,8 +188,6 @@ const total = computed(() => {
   return tlsCiphersArr.value.length ?? 0
 })
 
-const options = ref<Array<any>>([])
-
 const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
   if (ruleForm.httpEnabled || ruleForm.httpsEnabled) {
     callback()
@@ -199,6 +197,11 @@ const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
 }
 const validSelectHostName = (_rule: any, value: any, callback: any) => {
   if (value) {
+    const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+    if (domainRegex.test(value.trim()) === false) {
+      callback(new Error('请输入正确的域名'))
+      return
+    }
     existsApi({ currDomainId: domainId ?? null, name: value.trim() }).then((res) => {
       if (!res.data.exists) {
         callback()
@@ -368,14 +371,7 @@ const handleGetTls = async () => {
     // cancelList.value = tlsTableList.value
   }
 }
-/**获取证书 */
-const getCerts = async () => {
-  const res = await getCertsApi({
-    page: 1,
-    pageSize: 1000
-  })
-  options.value = res.data.list
-}
+
 const flag = ref(false)
 /**获取详情 */
 const getDatail = async () => {
@@ -411,6 +407,18 @@ const rendElOption = (item) => {
 const goToCert = () => {
   const base = import.meta.env.VITE_API_BASE_PATH
   window.location.href = `${base}/app/cert#/certificateManagement/index`
+}
+
+/**证书的搜索 */
+const options = ref<Array<any>>([])
+
+/**获取证书 */
+const getCerts = async () => {
+  const res = await getCertsApi({
+    page: 1,
+    pageSize: 1000
+  })
+  options.value = res.data.list
 }
 
 onMounted(() => {
@@ -557,12 +565,17 @@ onMounted(() => {
           </ElFormItem>
           <template v-if="ruleForm.httpsEnabled">
             <ElFormItem label="证书选择" prop="certId">
-              <ElSelect v-model="ruleForm.certId" placeholder="请选择/搜索证书" class="!w-[80%]">
+              <ElSelect
+                v-model="ruleForm.certId"
+                placeholder="请选择/搜索证书"
+                filterable
+                class="!w-[80%]"
+              >
                 <ElOption
                   v-for="item in options"
                   :key="item.id"
                   :value="item.id"
-                  :label="item.name"
+                  :label="item.name + item.subjectNames.join(',')"
                 >
                   <template #default>
                     <ElTooltip

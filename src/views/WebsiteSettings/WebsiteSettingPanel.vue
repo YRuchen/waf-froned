@@ -38,7 +38,8 @@ import {
   ElMessage,
   ElSwitch,
   ElTooltip,
-  ElMessageBox
+  ElMessageBox,
+  ElEmpty
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
@@ -712,14 +713,19 @@ const handleCardSearch = (key, title) => {
       :columns="columns"
       :data="dataList"
       :loading="loading"
+      height="500"
       @selection-change="handleSelectionChange"
       row-key="id"
     >
       <template #empty>
-        <span class="align-middle">暂无数据</span>
-        <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
-          新建站点
-        </ElButton>
+        <ElEmpty>
+          <template #description>
+            <span class="align-middle">暂无数据</span>
+            <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
+              新建站点
+            </ElButton>
+          </template>
+        </ElEmpty>
       </template>
     </Table>
     <div class="mt-4">

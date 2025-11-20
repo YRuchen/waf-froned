@@ -206,7 +206,7 @@ defineExpose({ activeGroupId })
       <ElPopover ref="popoverRef" placement="bottom-start" width="300" trigger="click">
         <template #reference>
           <ElButton link class="m-y-2">
-            <span class="m-x-2">分组</span>
+            <span class="m-x-1">分组</span>
             <ElTooltip
               effect="dark"
               content="搜索"
@@ -234,7 +234,7 @@ defineExpose({ activeGroupId })
             </p>
           </template>
           <template v-else>
-            <ElEmpty>
+            <ElEmpty :image-size="100">
               <template #description v-if="searchName && searchNameList.length === 0">
                 暂无搜索结果，<ElButton link type="primary" @click="searchName = ''"
                   >清空搜索条件</ElButton
