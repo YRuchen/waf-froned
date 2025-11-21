@@ -193,7 +193,7 @@ const showErrorList = ref([
   { key: 1, label: '源站地址不能为空' },
   { key: 2, label: '请输入源站协议' },
   { key: 3, label: '源站地址格式不对，请输入正确的域名地址或IP地址' },
-  { key: 4, label: '源地址不支持混合回源' },
+  { key: 4, label: '源站地址不支持混合回源' },
   { key: 5, label: '源站端口不能为空' },
   { key: 6, label: '源站权重不能为空' },
   { key: 7, label: '后端服务器组重复' }

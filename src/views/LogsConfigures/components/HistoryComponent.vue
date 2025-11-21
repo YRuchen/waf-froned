@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { useTimeShortcuts } from './useTimeShortcuts'
 import { Shortcut, TimeList } from '@/api/logsConfigure/types'
-import { ref, watch, reactive, computed, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const emit = defineEmits(['update:range'])
 
@@ -56,12 +56,12 @@ const handleDelete = (e, index) => {
   // 检查删除的是否是当前选中的项
   const deletedShortcut = minuteShortcuts.value[index]
   const isDeletingSelected = selectedShortcut.value?.text === deletedShortcut?.text
-  
+
   // 从响应式列表中删除
   minuteList.value.splice(index, 1)
   // 更新 localStorage
   localStorage.setItem('historyTimeShortcurs', JSON.stringify(minuteList.value))
-  
+
   // 如果删除的是当前选中的项，或者删除后列表发生变化，自动选中第一项
   if (isDeletingSelected && minuteShortcuts.value.length > 0) {
     selectedShortcut.value = minuteShortcuts.value[0]
