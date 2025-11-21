@@ -42,17 +42,10 @@ const { fixedShortcuts: dayShortcuts } = useTimeShortcuts(dayList, exactHour)
 const { fixedShortcuts: nowShortcuts } = useTimeShortcuts(nowCutList, exactHour)
 const { fixedShortcuts: lastShortcuts } = useTimeShortcuts(lastCutList, exactHour)
 const firstShortcuts = computed(() => {
-  return [
-    minuteShortcuts.value || [],
-    hourShortcuts.value || [],
-    dayShortcuts.value || []
-  ]
+  return [minuteShortcuts.value || [], hourShortcuts.value || [], dayShortcuts.value || []]
 })
 const secondShortcuts = computed(() => {
-  return [
-    nowShortcuts.value || [],
-    lastShortcuts.value || []
-  ]
+  return [nowShortcuts.value || [], lastShortcuts.value || []]
 })
 const selectedShortcut = ref<Shortcut | null>(null)
 const range = ref<[Date, Date]>([new Date(), new Date()])
@@ -90,12 +83,11 @@ onMounted(() => {
           v-for="(item, index) in firstShortcuts"
           :key="index"
         >
-          <template v-for="(short, shortIndex) in (item || [])" :key="short?.text || `${index}-${shortIndex}`">
-            <span
-              v-if="short"
-              @click="handleClick(short)"
-              class="cursor-pointer my-1"
-            >
+          <template
+            v-for="(short, shortIndex) in item || []"
+            :key="short?.text || `${index}-${shortIndex}`"
+          >
+            <span v-if="short" @click="handleClick(short)" class="cursor-pointer my-1">
               {{ short.text }}
             </span>
           </template>
@@ -107,12 +99,11 @@ onMounted(() => {
           v-for="(item, index) in secondShortcuts"
           :key="index"
         >
-          <template v-for="(short, shortIndex) in (item || [])" :key="short?.text || `${index}-${shortIndex}`">
-            <span
-              v-if="short"
-              @click="handleClick(short)"
-              class="cursor-pointer my-1"
-            >
+          <template
+            v-for="(short, shortIndex) in item || []"
+            :key="short?.text || `${index}-${shortIndex}`"
+          >
+            <span v-if="short" @click="handleClick(short)" class="cursor-pointer my-1">
               {{ short.text }}
             </span>
           </template>
