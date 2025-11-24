@@ -131,7 +131,7 @@ const ruleForm = reactive<RuleForm>({
   sslProtocols: [],
   sslCiphers: [],
   certId: '',
-  sniEnabled: false,
+  sniEnabled: true,
   snis: [],
   loadBalancing: 'ROUND_ROBIN',
   proxy: false,
@@ -195,10 +195,10 @@ const validSelectProtocol = (_rule: any, _value: any, callback: any) => {
     callback(new Error('请选择协议'))
   }
 }
+const domainRegex =
+  /^(?:\*\.)?(?!:\/\/)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/
 const validSelectHostName = (_rule: any, value: any, callback: any) => {
   if (value) {
-    const domainRegex =
-      /^(?:\*\.)?(?!:\/\/)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/
     if (domainRegex.test(value.trim()) === false) {
       callback(new Error('请输入正确的域名'))
       return
@@ -243,6 +243,16 @@ const rules = reactive<FormRules<RuleForm>>({
     }
   ]
 })
+/**tag校验是不是域名 */
+const handleTag = (tag: string) => {
+  const value = tag.trim()
+  if (!domainRegex.test(value)) {
+    // 不合法，删除
+    const index = ruleForm.snis.indexOf(value)
+    if (index > -1) ruleForm.snis.splice(index, 1)
+    ElMessage.warning(`无效的域名: ${value}`)
+  }
+}
 /**保存提交 */
 const loadingButton = ref(false)
 const handleSave = async () => {
@@ -268,17 +278,23 @@ const handleSave = async () => {
         httpsPorts: ruleForm.httpsPorts.map(Number)
       }
     })
-    push({
-      path: '/websiteSettings/configureDone',
-      query: {
-        domainId: res.data.domain?.id || domainId,
-        domainName: ruleForm.hostname
-      }
-    })
+    if (route.name === 'EditSitePanel') {
+      push({
+        path: '/websiteSettings/index'
+      })
+    } else {
+      push({
+        path: '/websiteSettings/configureDone',
+        query: {
+          domainId: res.data.domain?.id || domainId,
+          domainName: ruleForm.hostname
+        }
+      })
+    }
   } else {
-    loadingButton.value = false
     console.log('父组件和子组件表单都校验不通过', ruleForm)
   }
+  loadingButton.value = false
 }
 
 /**取消表单 */
@@ -606,6 +622,7 @@ onMounted(() => {
                 v-if="ruleForm.sniEnabled"
                 v-model="ruleForm.snis"
                 placeholder="可自定义SNI的host，若不填写则跟随流量中的host"
+                @add-tag="handleTag"
               />
             </ElFormItem>
             <ElFormItem label="TLS配置">
