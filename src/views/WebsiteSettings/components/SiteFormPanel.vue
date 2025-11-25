@@ -72,6 +72,7 @@ const columns: TableColumn[] = [
 ]
 const createConfig = (
   title: string,
+  des: string,
   prop: string,
   unit: string,
   min: number,
@@ -79,21 +80,54 @@ const createConfig = (
   defaultValue: number
 ) => ({
   title,
+  des,
   prop,
   unit,
   min,
   max,
   default: defaultValue,
-  describe: `${title}，支持 ${min}–${max} ${unit}，默认：${defaultValue} ${unit}`
+  describe: `${des}，支持 ${min}–${max} ${unit}，默认：${defaultValue} ${unit}`
 })
 
 const domainId = route.query.id as string
 const InternetParamsConfiguration = [
-  createConfig('请求body最大值', 'bodyMaxSize', 'MB', 1, 10240, 60),
-  createConfig('建连超时时间', 'connectTimeout', '秒', 4, 120, 30),
-  createConfig('写连接超时时间', 'writeTimeout', '秒', 30, 3600, 60),
-  createConfig('读连接超时时间', 'readTimeout', '秒', 30, 3600, 60),
-  createConfig('回源重试次数', 'retries', '次', 1, 10, 3)
+  createConfig(
+    '请求body最大值',
+    '可以接收客户端请求正文的最大值',
+    'bodyMaxSize',
+    'MB',
+    1,
+    10240,
+    60
+  ),
+  createConfig(
+    '建连超时时间',
+    'WAF 和后端服务器的建连超时时间',
+    'connectTimeout',
+    '秒',
+    4,
+    120,
+    30
+  ),
+  createConfig(
+    '写连接超时时间',
+    'WAF 将请求传输到后端服务器的超时时间',
+    'writeTimeout',
+    '秒',
+    30,
+    3600,
+    60
+  ),
+  createConfig(
+    '读连接超时时间',
+    'WAF 从后端服务器读取响应的超时时间',
+    'readTimeout',
+    '秒',
+    30,
+    3600,
+    60
+  ),
+  createConfig('回源重试', 'WAF 回源重试次数', 'retries', '次', 1, 10, 3)
 ]
 const getRules = (items: any): FormItemRule[] => {
   return [

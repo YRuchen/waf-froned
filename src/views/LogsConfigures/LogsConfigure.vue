@@ -18,7 +18,8 @@ import {
   ElTag,
   ElTableColumn,
   ElTable,
-  ElMessage
+  ElMessage,
+  ElEmpty
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
@@ -638,6 +639,9 @@ onMounted(() => {
       </ElTable>
       <ElTable :data="tableList" border height="96%" v-else>
         <ElTableColumn label="时间" align="center"> </ElTableColumn>
+        <template #empty>
+          <ElEmpty> </ElEmpty>
+        </template>
       </ElTable>
     </div>
   </ContentWrap>
