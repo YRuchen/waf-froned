@@ -200,11 +200,9 @@ const showErrorList = ref([
 ])
 const allUsedPorts = ref<string[]>([])
 const handleChangeProtol = (value: string) => {
-  if (new Set(originListItem.value.servers.map((item) => item.protol)).size !== 1) {
-    originListItem.value.servers.map(
-      (item) => ((item.protol = value), (item.port = value == '1' ? '80' : '443'))
-    )
-  }
+  originListItem.value.servers.map(
+    (item) => ((item.protol = value), (item.port = value == '1' ? '80' : '443'))
+  )
   originListItem.value.protocol = value == '1' ? 'HTTP' : 'HTTPS'
 }
 const validateName = (rule: any, value: any, callback: any) => {
