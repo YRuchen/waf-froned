@@ -180,7 +180,7 @@ const ruleForm = reactive<RuleForm>({
       servers: [
         {
           address: '',
-          port: '',
+          port: '80',
           weight: '',
           protol: ''
         }
@@ -474,7 +474,16 @@ const getCerts = async () => {
   })
   options.value = res.data.list
 }
-
+const onPaste = (e) => {
+  const text = e.clipboardData.getData('text')
+  if (text.includes('.')) {
+    e.preventDefault()
+  }
+  // 如果不是纯数字，也阻止
+  if (!/^\d+$/.test(text)) {
+    e.preventDefault()
+  }
+}
 onMounted(() => {
   handleGetTls()
   getCerts()
@@ -822,6 +831,7 @@ onMounted(() => {
             :min="items.min"
             :max="items.max"
             :rules="getRules(items)"
+            @paste="onPaste"
           >
             <template class="flex">
               <ElInputNumber v-model="ruleForm.connSetting[items.prop]" />
