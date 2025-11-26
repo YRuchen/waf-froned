@@ -449,9 +449,9 @@ defineExpose({
 </script>
 <style></style>
 <template>
-  <div class="grid grid-cols-[20%_80%] h-[500px]">
+  <div class="grid grid-cols-[20%_80%]">
     <Side @change="getTableList" v-model:originList="originList" ref="sideRef" />
-    <div class="p-20px border-1 border-solid border-#ebeef5">
+    <div class="p-x-20px border-1 border-solid border-#ebeef5">
       <div class="m-b-2">
         <ElTag type="info" effect="dark" class="m-r-2">如果</ElTag>
         <span>接入端口输入</span>
@@ -533,12 +533,12 @@ defineExpose({
         <span>回源到源站地址：</span>
       </div>
       <ElForm ref="ruleFormRef" :model="originListItem.servers" label-position="left">
-        <Table :columns="columns" :data="originListItem.servers" height="300" />
+        <Table :columns="columns" :data="originListItem.servers" height="330" />
         <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
           {{ showErrorList.find((item) => item.key == showError)?.label }}
         </span>
       </ElForm>
-      <BaseButton :icon="plusIcon" link class="m-y-3" @click="action('add')" v-if="allcount > 0">
+      <BaseButton :icon="plusIcon" link class="my-3" @click="action('add')" v-if="allcount > 0">
         添加
       </BaseButton>
       <span class="m-x-3 color-[#7e7777]" v-if="allcount > 0">还可添加{{ allcount }}个</span>

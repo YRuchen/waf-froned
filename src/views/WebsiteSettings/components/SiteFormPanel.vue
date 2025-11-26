@@ -827,10 +827,9 @@ onMounted(() => {
             :min="items.min"
             :max="items.max"
             :rules="getRules(items)"
-            @paste="onPaste"
           >
             <template class="flex">
-              <ElInputNumber v-model="ruleForm.connSetting[items.prop]" />
+              <ElInputNumber v-model="ruleForm.connSetting[items.prop]" :precision="0" />
               <span class="px-4 text-gray-500">{{ items.unit }}</span>
               <span class="text-gray-500">{{ items.describe }}</span>
             </template>
