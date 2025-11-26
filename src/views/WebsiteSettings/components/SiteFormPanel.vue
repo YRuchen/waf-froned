@@ -476,11 +476,7 @@ const getCerts = async () => {
 }
 const onPaste = (e) => {
   const text = e.clipboardData.getData('text')
-  if (text.includes('.')) {
-    e.preventDefault()
-  }
-  // 如果不是纯数字，也阻止
-  if (!/^\d+$/.test(text)) {
+  if (text.includes('.') || !/^\d+$/.test(text)) {
     e.preventDefault()
   }
 }
