@@ -480,6 +480,22 @@ const onPaste = (e) => {
     e.preventDefault()
   }
 }
+const allowedKeys = [
+  'Backspace',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Delete',
+  'Tab'
+]
+
+const onKeyDown = (e: KeyboardEvent) => {
+  if (allowedKeys.includes(e.key)) return
+  if (!/^\d$/.test(e.key)) {
+    e.preventDefault() // 阻止非数字输入
+  }
+}
 onMounted(() => {
   handleGetTls()
   getCerts()
@@ -829,7 +845,11 @@ onMounted(() => {
             :rules="getRules(items)"
           >
             <template class="flex">
-              <ElInputNumber v-model="ruleForm.connSetting[items.prop]" :precision="0" />
+              <ElInputNumber
+                v-model="ruleForm.connSetting[items.prop]"
+                @paste="onPaste"
+                @keykeydown="onKeyDown"
+              />
               <span class="px-4 text-gray-500">{{ items.unit }}</span>
               <span class="text-gray-500">{{ items.describe }}</span>
             </template>
