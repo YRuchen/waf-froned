@@ -4,6 +4,7 @@ import qs from 'qs'
 import { SUCCESS_CODE, TRANSFORM_REQUEST_DATA } from '@/constants'
 import { useUserStoreWithOut } from '@/store/modules/user'
 import { objToFormData } from '@/utils'
+import { AxiosError } from 'axios'
 
 const defaultRequestInterceptors = (config: InternalAxiosRequestConfig) => {
   if (
@@ -41,13 +42,28 @@ const defaultResponseInterceptors = (response: AxiosResponse) => {
     return response
   } else if (response.data.code === SUCCESS_CODE) {
     return response.data
-  } else {
-    ElMessage.error(response?.data?.message)
-    if (response?.data?.code === 401) {
-      const userStore = useUserStoreWithOut()
-      userStore.logout()
-    }
+  }
+  ElMessage.error(response?.data?.message)
+  if (response?.data?.code === 401 || response?.data?.code === 403) {
+    const userStore = useUserStoreWithOut()
+    userStore.resetApp?.()
   }
 }
+const defaultErrorInterceptors = (error: AxiosError) => {
+  if (error.response) {
+    const { data, status } = error.response as any
+    const message = data?.message || data?.msg || `请求错误 (${status})`
+    ElMessage.error(message)
+    if (status === 401 || status === 403) {
+      const userStore = useUserStoreWithOut()
+      userStore.resetApp?.()
+    }
+  } else {
+    // 说明根本没到服务器
+    ElMessage.error('网络异常或服务器未响应')
+  }
 
-export { defaultResponseInterceptors, defaultRequestInterceptors }
+  return Promise.reject(error)
+}
+
+export { defaultResponseInterceptors, defaultRequestInterceptors, defaultErrorInterceptors }

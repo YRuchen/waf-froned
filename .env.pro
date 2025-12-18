@@ -2,10 +2,10 @@
 VITE_NODE_ENV=production
 
 # 接口前缀
-VITE_API_BASE_PATH=
+VITE_API_BASE_PATH=https://www.wafscloud.com
 
 # 打包路径
-VITE_BASE_PATH=/
+VITE_BASE_PATH=/waf/
 
 # 是否删除debugger
 VITE_DROP_DEBUGGER=true
@@ -38,4 +38,4 @@ VITE_USE_CSS_SPLIT=true
 VITE_USE_ONLINE_ICON=false
 
 # 是否隐藏全局设置按钮
-VITE_HIDE_GLOBAL_SETTING=false
+VITE_HIDE_GLOBAL_SETTING=true

@@ -10,6 +10,7 @@ import ActionButton from './components/ActionButton.vue'
 import { SearchProps } from './types'
 import { FormItemProp } from 'element-plus'
 import { isObject, isEmptyVal } from '@/utils/is'
+import { debounce } from 'lodash-es'
 
 const props = defineProps({
   // 生成Form的布局结构数组
@@ -21,8 +22,11 @@ const props = defineProps({
   isCol: propTypes.bool.def(false),
   // 表单label宽度
   labelWidth: propTypes.oneOfType([String, Number]).def('auto'),
+  labelPosition: propTypes.string
+    .validate((v: string) => ['left', 'top', 'right'].includes(v))
+    .def('right'),
   // 操作按钮风格位置
-  layout: propTypes.string.validate((v: string) => ['inline', 'bottom'].includes(v)).def('inline'),
+  layout: propTypes.string.validate((v: string) => ['inline', 'bottom'].includes(v)).def(''),
   // 底部按钮的对齐方式
   buttonPosition: propTypes.string
     .validate((v: string) => ['left', 'center', 'right'].includes(v))
@@ -41,7 +45,9 @@ const props = defineProps({
     default: () => ({})
   },
   searchLoading: propTypes.bool.def(false),
-  resetLoading: propTypes.bool.def(false)
+  resetLoading: propTypes.bool.def(false),
+  autoSearch: propTypes.bool.def(false),
+  autoSearchDebounce: propTypes.number.def(400)
 })
 
 const emit = defineEmits(['search', 'reset', 'register', 'validate'])
@@ -219,6 +225,28 @@ const addSchema = (formSchema: FormSchema, index?: number) => {
   schema.push(formSchema)
 }
 
+let triggerAutoSearch: (() => void) | null = null
+
+// 初始化防抖触发函数
+watch(
+  () => unref(getProps).autoSearch,
+  (val) => {
+    if (val) {
+      triggerAutoSearch = debounce(async () => {
+        const model = await filterModel()
+        emit('search', model)
+      }, unref(getProps).autoSearchDebounce)
+    }
+  },
+  { immediate: true }
+)
+
+const onFormChange = async () => {
+  if (unref(getProps).autoSearch && triggerAutoSearch) {
+    const model = await filterModel()
+    triggerAutoSearch()
+  }
+}
 const defaultExpose = {
   getElFormExpose,
   setProps,
@@ -226,7 +254,8 @@ const defaultExpose = {
   setValues,
   delSchema,
   addSchema,
-  getFormData
+  getFormData,
+  reset
 }
 
 onMounted(() => {
@@ -245,12 +274,14 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     :model="formModel"
     :is-custom="false"
     :label-width="getProps.labelWidth"
+    :label-position="getProps.labelPosition"
     hide-required-asterisk
     :inline="getProps.inline"
     :is-col="getProps.isCol"
     :schema="schemaRef"
     @register="formRegister"
     @validate="onFormValidate"
+    @change="onFormChange"
   />
 
   <template v-if="layout === 'bottom'">
@@ -269,3 +300,19 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
     </div>
   </template>
 </template>
+<!-- <style lang="less" scoped>
+:deep(.el-form-item:not(:has(.el-button, .el-input-group__prepend))) {
+  border: var(--el-border);
+  .el-select__wrapper {
+    border-radius: unset;
+    box-shadow: none !important;
+    border-left: 1px solid var(--el-border-color);
+  }
+  .el-form-item__label {
+    // border: var(--el-border);
+    // border-right: unset;
+    height: auto;
+    margin: auto 0;
+  }
+}
+</style> -->

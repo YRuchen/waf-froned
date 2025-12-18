@@ -38,10 +38,15 @@ import App from './App.vue'
 
 import './permission'
 
+// 把qiankuan的登录信息存储到子应用
+import { useUserStore } from '@/store/modules/user'
+
 let app: any = null
+export let qiankunProps: QiankunProps = {}
 // 创建实例
-async function render(props: any = {}) {
+async function render(props: QiankunProps = {}) {
   app = createApp(App)
+  qiankunProps = props
 
   await setupI18n(app)
   setupStore(app)
@@ -66,6 +71,12 @@ renderWithQiankun({
   mount(props) {
     console.log('子应用 mount', props)
     render(props)
+    const authStore = useUserStore()
+    props.onGlobalStateChange((state: any) => {
+      console.log('子应用接收到的全局状态：', state)
+      authStore.userInfo = state.userInfo
+      authStore.resetApp = state.resetApp
+    }, true)
   },
   unmount() {
     console.log('子应用 unmount')

@@ -1,5 +1,6 @@
 <script lang="tsx">
-import { defineComponent, computed } from 'vue'
+import { defineComponent, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Collapse } from '@/components/Collapse'
 import { LocaleDropdown } from '@/components/LocaleDropdown'
 import { SizeDropdown } from '@/components/SizeDropdown'
@@ -8,6 +9,7 @@ import { Screenfull } from '@/components/Screenfull'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { useAppStore } from '@/store/modules/app'
 import { useDesign } from '@/hooks/web/useDesign'
+import { Icon } from '@iconify/vue'
 
 const { getPrefixCls, variables } = useDesign()
 
@@ -36,6 +38,8 @@ const locale = computed(() => appStore.getLocale)
 export default defineComponent({
   name: 'ToolHeader',
   setup() {
+    const { currentRoute } = useRouter()
+    const router = useRouter()
     return () => (
       <div
         id={`${variables.namespace}-tool-header`}
@@ -45,7 +49,7 @@ export default defineComponent({
         ]}
       >
         {layout.value !== 'top' ? (
-          <div class="h-full flex items-center">
+          <div class="h-full flex items-center ml-2">
             {hamburger.value && layout.value !== 'cutMenu' ? (
               <Collapse class="custom-hover" color="var(--top-header-text-color)"></Collapse>
             ) : undefined}
@@ -65,7 +69,7 @@ export default defineComponent({
               color="var(--top-header-text-color)"
             ></LocaleDropdown>
           ) : undefined}
-          <UserInfo></UserInfo>
+          {/* <UserInfo></UserInfo> */}
         </div>
       </div>
     )

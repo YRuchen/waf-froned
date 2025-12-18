@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
 import type { App } from 'vue'
 import { Layout, getParentLayout } from '@/utils/routerHelper'
 import { useI18n } from '@/hooks/web/useI18n'
@@ -33,39 +34,6 @@ export const constantRouterMap: AppRouteRecordRaw[] = [
       hidden: true,
       noTagsView: true
     }
-  },
-  {
-    path: '/login',
-    component: () => import('@/views/Login/Login.vue'),
-    name: 'Login',
-    meta: {
-      hidden: true,
-      title: t('router.login'),
-      noTagsView: true
-    }
-  },
-  {
-    path: '/personal',
-    component: Layout,
-    redirect: '/personal/personal-center',
-    name: 'Personal',
-    meta: {
-      title: t('router.personal'),
-      hidden: true,
-      canTo: true
-    },
-    children: [
-      {
-        path: 'personal-center',
-        component: () => import('@/views/Personal/PersonalCenter/PersonalCenter.vue'),
-        name: 'PersonalCenter',
-        meta: {
-          title: t('router.personalCenter'),
-          hidden: true,
-          canTo: true
-        }
-      }
-    ]
   }
   // {
   //   path: '/404',
@@ -89,11 +57,44 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/websiteSettings/websiteSetting.vue'),
-        name: 'websiteSettingsList',
+        component: () => import('@/views/WebsiteSettings/WebsiteSettingPanel.vue'),
+        name: 'WebsiteSettingPanel',
         meta: {
           title: '网站设置',
           icon: 'vi-ep:management'
+        }
+      },
+      {
+        path: 'addSitePanel',
+        component: () => import('@/views/WebsiteSettings/AddSitePanel.vue'),
+        name: 'AddSitePanel',
+        meta: {
+          title: '新建站点',
+          icon: 'vi-ep:management',
+          hidden: true,
+          hiddenMenu: true
+        }
+      },
+      {
+        path: 'editSitePanel',
+        component: () => import('@/views/WebsiteSettings/AddSitePanel.vue'),
+        name: 'EditSitePanel',
+        meta: {
+          title: '编辑站点',
+          icon: 'vi-ep:management',
+          hidden: true,
+          hiddenMenu: true
+        }
+      },
+
+      {
+        path: 'configureDone',
+        component: () => import('@/views/WebsiteSettings/ConfigureDone.vue'),
+        name: 'ConfigureDone',
+        meta: {
+          title: '提交配置',
+          icon: 'vi-ep:management',
+          hidden: true
         }
       }
     ]
@@ -116,18 +117,19 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     ]
   },
   {
-    path: '/logManagement',
+    path: '/logsConfigures',
     component: Layout,
-    name: 'LogManagement',
+    name: 'logsConfigures',
     meta: {},
+    redirect: '/logsConfigures/index',
     children: [
       {
         path: 'index',
-        // component: () => import('@/views/Dashboard/Analysis.vue'),
-        name: 'LogManagementList',
+        component: () => import('@/views/LogsConfigures/LogsConfigure.vue'),
+        name: 'logsConfigure',
         meta: {
           title: '日志管理',
-          icon: 'vi-clarity:document-solid'
+          icon: 'vi-ep:management'
         }
       }
     ]

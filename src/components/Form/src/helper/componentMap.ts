@@ -21,6 +21,7 @@ import {
   ElUpload
 } from 'element-plus'
 import { InputPassword } from '@/components/InputPassword'
+import { SelectWithLabel } from '@/components/SelectWithLabel'
 import { Editor } from '@/components/Editor'
 import { JsonEditor } from '@/components/JsonEditor'
 import { IconPicker } from '@/components/IconPicker'
@@ -53,7 +54,8 @@ const componentMap: Recordable<Component, ComponentName> = {
   Upload: ElUpload,
   JsonEditor: JsonEditor,
   IconPicker: IconPicker,
-  IAgree: IAgree
+  IAgree: IAgree,
+  SelectLabel: SelectWithLabel
 }
 
 export { componentMap }

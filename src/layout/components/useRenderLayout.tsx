@@ -8,6 +8,7 @@ import AppView from './AppView.vue'
 import ToolHeader from './ToolHeader.vue'
 import { ElScrollbar } from 'element-plus'
 import { useDesign } from '@/hooks/web/useDesign'
+import { useRouter } from 'vue-router'
 
 const { getPrefixCls } = useDesign()
 
@@ -35,7 +36,10 @@ const mobile = computed(() => appStore.getMobile)
 // 固定菜单
 const fixedMenu = computed(() => appStore.getFixedMenu)
 
+// 当前路由
+
 export const useRenderLayout = () => {
+  const { currentRoute } = useRouter()
   const renderClassic = () => {
     return (
       <>
@@ -58,7 +62,7 @@ export const useRenderLayout = () => {
               style="transition: all var(--transition-time-02);"
             ></Logo>
           ) : undefined}
-          <Menu class={[{ '!h-[calc(100%-var(--logo-height))]': logo.value }]}></Menu>
+          <Menu></Menu>
         </div>
         <div
           class={[
@@ -68,8 +72,12 @@ export const useRenderLayout = () => {
               'w-[calc(100%-var(--left-menu-min-width))] left-[var(--left-menu-min-width)]':
                 collapse.value && !mobile.value && !mobile.value,
               'w-[calc(100%-var(--left-menu-max-width))] left-[var(--left-menu-max-width)]':
-                !collapse.value && !mobile.value && !mobile.value,
-              'fixed !w-full !left-0': mobile.value
+                !currentRoute.value.meta.hiddenMenu &&
+                !collapse.value &&
+                !mobile.value &&
+                !mobile.value,
+              '!w-full': currentRoute.value.meta.hiddenMenu || mobile.value,
+              'fixed !left-0': mobile.value
             }
           ]}
           style="transition: all var(--transition-time-02);"
@@ -81,10 +89,11 @@ export const useRenderLayout = () => {
               {
                 '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
                   fixedHeader.value
-              }
+              },
+              '!h-93vh'
             ]}
           >
-            {/* <div
+            <div
               class={[
                 {
                   'fixed top-0 left-0 z-10': fixedHeader.value,
@@ -109,7 +118,7 @@ export const useRenderLayout = () => {
               {tagsView.value ? (
                 <TagsView class="layout-border__bottom layout-border__top"></TagsView>
               ) : undefined}
-            </div> */}
+            </div>
 
             <AppView></AppView>
           </ElScrollbar>

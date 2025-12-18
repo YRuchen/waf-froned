@@ -7,6 +7,7 @@ import { usePermissionStoreWithOut } from '@/store/modules/permission'
 import { usePageLoading } from '@/hooks/web/usePageLoading'
 import { NO_REDIRECT_WHITE_LIST } from '@/constants'
 import { useUserStoreWithOut } from '@/store/modules/user'
+import { qiankunProps } from '@/main'
 
 const { start, done } = useNProgress()
 
@@ -18,6 +19,26 @@ router.beforeEach(async (to, from, next) => {
   const permissionStore = usePermissionStoreWithOut()
   const appStore = useAppStoreWithOut()
   const userStore = useUserStoreWithOut()
+
+  // qiankun 子应用，从主应用传递 token 和用户信息
+  if (window.__POWERED_BY_QIANKUN__ && !userStore.getToken) {
+    // 尝试从 qiankun props 获取登录信息
+    if (qiankunProps.token) {
+      userStore.setToken(qiankunProps.token)
+    }
+    if (qiankunProps.userInfo) {
+      userStore.setUserInfo(qiankunProps.userInfo)
+    }
+  } else {
+    console.log(99999)
+    userStore.setUserInfo({
+      username: 'admin',
+      password: 'admin',
+      role: 'admin',
+      roleId: '1'
+    })
+  }
+
   if (userStore.getUserInfo) {
     if (to.path === '/login') {
       next({ path: '/' })
@@ -28,7 +49,7 @@ router.beforeEach(async (to, from, next) => {
       }
 
       // 开发者可根据实际情况进行修改
-      const roleRouters = userStore.getRoleRouters || []
+      // const roleRouters = userStore.getRoleRouters || []
 
       // 是否使用动态路由
       // if (appStore.getDynamicRouter) {

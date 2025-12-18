@@ -76,13 +76,17 @@ export const useUserStore = defineStore('user', {
         })
         .catch(() => {})
     },
+    /** 重置应用 */
+    resetApp() {
+      localStorage.removeItem('historyTimeShortcurs')
+      console.log('重置应用')
+    },
     reset() {
       const tagsViewStore = useTagsViewStore()
       tagsViewStore.delAllViews()
       this.setToken('')
       this.setUserInfo(undefined)
       this.setRoleRouters([])
-      router.replace('/login')
     },
     logout() {
       this.reset()

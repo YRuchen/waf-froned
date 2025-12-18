@@ -32,7 +32,7 @@ declare global {
     | 'multipart/form-data'
     | 'text/plain'
 
-  declare type AxiosMethod = 'get' | 'post' | 'delete' | 'put'
+  declare type AxiosMethod = 'get' | 'post' | 'delete' | 'put' | 'patch'
 
   declare type AxiosResponseType = 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' | 'stream'
 
@@ -83,5 +83,16 @@ declare global {
     readonly VITE_USE_ONLINE_ICON: string
     readonly VITE_ICON_PREFIX: string
     readonly VITE_HIDE_GLOBAL_SETTING: string
+  }
+  declare interface QiankunProps {
+    container?: HTMLElement
+    token?: string
+    userInfo?: any
+    onGlobalStateChange?: Function
+    setGlobalState?: Function
+    [key: string]: any
+  }
+  interface Window {
+    __POWERED_BY_QIANKUN__?: boolean
   }
 }

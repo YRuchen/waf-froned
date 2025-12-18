@@ -35,6 +35,7 @@ watch(
       appStore.setCollapse(true)
       appStore.getLayout !== 'classic' ? appStore.setLayout('classic') : undefined
     } else {
+      appStore.setCollapse(false)
       appStore.getMobile ? appStore.setMobile(false) : undefined
       setCssVar('--left-menu-min-width', '64px')
     }
