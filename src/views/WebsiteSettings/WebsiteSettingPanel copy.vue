@@ -39,8 +39,7 @@ import {
   ElSwitch,
   ElTooltip,
   ElMessageBox,
-  ElEmpty,
-  ElDivider
+  ElEmpty
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
@@ -48,7 +47,7 @@ import InputTags from './components/InputTags.vue'
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 /**列表数据请求获取 */
-const { tableRegister, tableState, tableMethods } = useTable({
+const { tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
     const { currentPage, pageSize } = tableState
     const res = await getTableListApi({
@@ -60,12 +59,11 @@ const { tableRegister, tableState, tableMethods } = useTable({
     handleGetCount()
     return {
       list: res.data.domains,
-      total: Number(res.data.pagination.total)
+      total: res.data.pagination.total
     }
   }
 })
-
-const { loading, dataList, total, currentPage, pageSize } = tableState
+const { loading, dataList } = tableState
 const { getList } = tableMethods
 
 const { t } = useI18n()
@@ -167,7 +165,7 @@ const columns = reactive<TableColumn[]>([
     label: '防护网站',
     sortable: true,
     formatter: (_: Recordable, __: TableColumn, cellValue: string) => {
-      return h('span', { class: 'text-blue-500 ' }, cellValue)
+      return h('span', { class: 'text-blue-500 cursor-pointer' }, cellValue)
     }
   },
   {
@@ -223,7 +221,7 @@ const columns = reactive<TableColumn[]>([
           <div onClick={(e) => e.stopPropagation()}>
             <ElSwitch
               modelValue={data.row.responseCheckStatus}
-              size="small"
+              size="large"
               onChange={() => {
                 const oldValue = data.row.responseCheckStatus
                 ElMessageBox({
@@ -425,10 +423,7 @@ const filterSchema = reactive<FormSchema[]>([
   {
     field: 'targetIp',
     label: 'IP地址',
-    component: 'Input',
-    formItemProps: {
-      labelWidth: '3.4rem'
-    }
+    component: 'Input'
   },
   {
     field: 'domainSources',
@@ -444,7 +439,7 @@ const filterSchema = reactive<FormSchema[]>([
     label: '3天攻击监控',
     component: 'Select',
     formItemProps: {
-      labelWidth: '5.6rem'
+      labelWidth: '100px'
     },
     componentProps: {
       placeholder: '请选择',
@@ -504,7 +499,7 @@ const filterSchema = reactive<FormSchema[]>([
     label: '响应数据检测',
     component: 'Select',
     formItemProps: {
-      labelWidth: '6rem'
+      labelWidth: '100px'
     },
     componentProps: {
       placeholder: '请选择',
@@ -671,21 +666,13 @@ const handleCardSearch = (key, title) => {
         </div>
       </ElCard>
     </div>
-  </ContentWrap>
-  <ContentWrap>
     <div class="flex justify-between">
-      <div class="flex justify-between">
-        <div>
-          <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')"
-            >新建站点</ElButton
-          >
-          <ElDivider direction="vertical" class="!m-a !h-22px !mx-12px" />
-        </div>
+      <div class="flex">
         <Search
           :schema="searchSchema"
           :showSearch="false"
           :showReset="false"
-          labelWidth="4rem"
+          labelWidth="80px"
           labelPosition="left"
           :autoSearch="true"
           :autoSearchDebounce="1000"
@@ -695,7 +682,7 @@ const handleCardSearch = (key, title) => {
         <BaseButton :icon="filterIcon" plain @click="() => (isShowFilter = !isShowFilter)">
           {{ t('common.advancedFilter') }}
         </BaseButton>
-        <BaseButton :loading="resetLoading" plain @click="resetSearchParams">
+        <BaseButton :loading="resetLoading" plain :icon="refreshIcon" @click="resetSearchParams">
           {{ t('common.reset') }}
         </BaseButton>
       </div>
@@ -704,13 +691,16 @@ const handleCardSearch = (key, title) => {
           <Icon icon="ep:refresh-right" />
         </ElButton>
       </div>
+      <div>
+        <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')">新建站点</ElButton>
+      </div>
     </div>
-    <div v-if="isShowFilter" class="ml-6.8rem">
+    <div v-if="isShowFilter">
       <Search
         :schema="filterSchema"
         :showSearch="false"
         :showReset="false"
-        labelWidth="4rem"
+        labelWidth="80px"
         labelPosition="left"
         :autoSearch="true"
         :autoSearchDebounce="1000"
@@ -723,17 +713,9 @@ const handleCardSearch = (key, title) => {
       :columns="columns"
       :data="dataList"
       :loading="loading"
-      :border="false"
-      v-model:pageSize="pageSize"
-      v-model:currentPage="currentPage"
-      :pagination="{
-        total: total
-      }"
-      :stripe="true"
+      height="450"
       @selection-change="handleSelectionChange"
-      @register="tableRegister"
       row-key="id"
-      class="border-1 border-solid border-[#DBDFE7]"
     >
       <template #empty>
         <ElEmpty>
