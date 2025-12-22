@@ -1,0 +1,23 @@
+{
+  "id": "5095113",
+  "name": "web应用防火墙",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "46420796",
+      "name": "remove_moderator",
+      "font_class": "remove_moderator",
+      "unicode": "e612",
+      "unicode_decimal": 58898
+    },
+    {
+      "icon_id": "46420795",
+      "name": "captive_portal",
+      "font_class": "captive_portal",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    }
+  ]
+}

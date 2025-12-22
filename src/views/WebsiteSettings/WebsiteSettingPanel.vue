@@ -45,6 +45,8 @@ import {
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import InputTags from './components/InputTags.vue'
+import { IconFont } from '@/components/IconFont'
+
 const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 /**列表数据请求获取 */
@@ -379,12 +381,16 @@ const cardsType = computed(() => [
   {
     title: '域名总数',
     count: cardList.value.totalCount,
-    statusMap: cardList.value.statusCountMapTotal
+    statusMap: cardList.value.statusCountMapTotal,
+    iconfont: 'captive_portal',
+    bg: 'total'
   },
   {
     title: '未防护域名',
     count: cardList.value.unprotected,
-    statusMap: cardList.value.statusCountMapUnprotected
+    statusMap: cardList.value.statusCountMapUnprotected,
+    iconfont: 'remove_moderator',
+    bg: 'unprotected'
   }
 ])
 /**统计的标签和颜色转义 */
@@ -633,27 +639,32 @@ const handleCardSearch = (key, title) => {
 </style>
 <template>
   <ContentWrap :title="currentRoute.meta.title">
-    <div class="flex w-full mb-4">
+    <div class="card-content">
       <ElCard
-        :class="[
-          'flex-1 h-24 flex items-center p-4',
-          index !== cardsType.length - 1 ? 'mr-24' : ''
-        ]"
-        body-class="flex items-center"
+        :class="[index !== cardsType.length - 1 ? 'mr-10px' : '']"
+        body-class="card-body"
         v-for="(item, index) in cardsType"
         :key="index"
       >
+        <!-- icon -->
+        <div class="icon-wrapper" :class="item.bg">
+          <IconFont
+            :name="item.iconfont"
+            color="white"
+            :style="item.bg === 'unprotected' ? '' : 'filter: drop-shadow(0px 0px 4px #007dff)'"
+          ></IconFont>
+        </div>
         <!-- 左边块 -->
         <div class="flex-shrink-0">
           <p>{{ item.title }}</p>
-          <p>{{ item.count }}</p>
+          <p class="font-bold font-size-6">{{ item.count }}</p>
         </div>
 
         <!-- 分割线 -->
         <div class="w-px bg-gray-300 mx-4 h-30px"></div>
 
         <!-- 右边状态列表 -->
-        <div class="flex items-center space-x-4 flex-1">
+        <div class="flex items-center space-x-5 flex-1">
           <div
             v-for="(value, key) in item.statusMap"
             :key="key"
@@ -671,87 +682,87 @@ const handleCardSearch = (key, title) => {
         </div>
       </ElCard>
     </div>
-  </ContentWrap>
-  <ContentWrap>
-    <div class="flex justify-between">
+    <div class="bg-[var(--el-bg-color)] border-rd-[var(--primary-raduis)] p-3">
       <div class="flex justify-between">
-        <div>
-          <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')"
-            >新建站点</ElButton
-          >
-          <ElDivider direction="vertical" class="!m-a !h-22px !mx-12px" />
+        <div class="flex justify-between">
+          <div>
+            <ElButton type="primary" @click="push('/websiteSettings/addSitePanel')"
+              >新建站点</ElButton
+            >
+            <ElDivider direction="vertical" class="!m-a !h-22px !mx-12px" />
+          </div>
+          <Search
+            :schema="searchSchema"
+            :showSearch="false"
+            :showReset="false"
+            labelWidth="4rem"
+            labelPosition="left"
+            :autoSearch="true"
+            :autoSearchDebounce="1000"
+            @search="handleSearch"
+            @register="register"
+          />
+          <BaseButton :icon="filterIcon" plain @click="() => (isShowFilter = !isShowFilter)">
+            {{ t('common.advancedFilter') }}
+          </BaseButton>
+          <BaseButton :loading="resetLoading" plain @click="resetSearchParams">
+            {{ t('common.reset') }}
+          </BaseButton>
         </div>
+        <div>
+          <ElButton @click="getList()">
+            <Icon icon="ep:refresh-right" />
+          </ElButton>
+        </div>
+      </div>
+      <div v-if="isShowFilter" class="ml-6.8rem">
         <Search
-          :schema="searchSchema"
+          :schema="filterSchema"
           :showSearch="false"
           :showReset="false"
           labelWidth="4rem"
           labelPosition="left"
           :autoSearch="true"
           :autoSearchDebounce="1000"
-          @search="handleSearch"
-          @register="register"
+          @search="handleFilterSearch"
+          @register="registerFilter"
         />
-        <BaseButton :icon="filterIcon" plain @click="() => (isShowFilter = !isShowFilter)">
-          {{ t('common.advancedFilter') }}
-        </BaseButton>
-        <BaseButton :loading="resetLoading" plain @click="resetSearchParams">
-          {{ t('common.reset') }}
-        </BaseButton>
       </div>
-      <div>
-        <ElButton @click="getList()">
-          <Icon icon="ep:refresh-right" />
-        </ElButton>
-      </div>
-    </div>
-    <div v-if="isShowFilter" class="ml-6.8rem">
-      <Search
-        :schema="filterSchema"
-        :showSearch="false"
-        :showReset="false"
-        labelWidth="4rem"
-        labelPosition="left"
-        :autoSearch="true"
-        :autoSearchDebounce="1000"
-        @search="handleFilterSearch"
-        @register="registerFilter"
-      />
-    </div>
-    <Table
-      ref="tableRef"
-      :columns="columns"
-      :data="dataList"
-      :loading="loading"
-      :border="false"
-      v-model:pageSize="pageSize"
-      v-model:currentPage="currentPage"
-      :pagination="{
-        total: total
-      }"
-      :stripe="true"
-      @selection-change="handleSelectionChange"
-      @register="tableRegister"
-      row-key="id"
-      class="border-1 border-solid border-[#DBDFE7]"
-    >
-      <template #empty>
-        <ElEmpty>
-          <template #description>
-            <span class="align-middle">暂无数据</span>
-            <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
-              新建站点
-            </ElButton>
-          </template>
-        </ElEmpty>
-      </template>
-    </Table>
-    <div class="mt-4">
-      <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
-      <!-- <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton> -->
-      <ElButton size="large" :disabled="totalSelection.length === 0" @click="handleLogsConfigure"
-        >日志配置</ElButton
+      <Table
+        ref="tableRef"
+        :columns="columns"
+        :data="dataList"
+        :loading="loading"
+        :border="false"
+        v-model:pageSize="pageSize"
+        v-model:currentPage="currentPage"
+        :pagination="{
+          total: total
+        }"
+        :stripe="true"
+        @selection-change="handleSelectionChange"
+        @register="tableRegister"
+        row-key="id"
+        class="table-content"
       >
+        <template #empty>
+          <ElEmpty>
+            <template #description>
+              <span class="align-middle">暂无数据</span>
+              <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
+                新建站点
+              </ElButton>
+            </template>
+          </ElEmpty>
+        </template>
+      </Table>
+      <div class="mt-4">
+        <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
+        <!-- <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton> -->
+        <ElButton size="large" :disabled="totalSelection.length === 0" @click="handleLogsConfigure"
+          >日志配置</ElButton
+        >
+      </div>
     </div>
   </ContentWrap>
   <ElDialog v-model="dialogVisible" :title="dialogTitle" width="600">
@@ -850,3 +861,52 @@ const handleCardSearch = (key, title) => {
     </template>
   </ElDialog>
 </template>
+
+<style lang="less">
+.card-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 1rem;
+  background-color: var(--el-bg-color);
+  padding: var(--app-inner-padding);
+  border-radius: var(--primary-raduis);
+  .card-body {
+    display: flex;
+    align-items: center;
+    height: 4rem; /* 使用 rem 更好响应 */
+    padding: 0.75rem 0.625rem; /* 12px 10px 转换为 rem */
+    box-sizing: border-box;
+  }
+}
+.table-content {
+  border: 1px solid #dbdfe7;
+  border-radius: var(--primary-raduis);
+}
+
+.icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--primary-raduis);
+  margin-right: var(--app-content-padding);
+  background: radial-gradient(
+    circle at top left,
+    #86d8ff 0%,
+    #9bc9ff 20%,
+    #eaf0ff 70%,
+    #87cbff 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  .icon-placeholder {
+    font-size: 20px;
+    color: #ffffff;
+    font-weight: 600;
+  }
+  &.unprotected {
+    background: radial-gradient(100% 100% at 0% 0%, #909399 25.48%, #dcdfe6 80.29%);
+  }
+}
+</style>

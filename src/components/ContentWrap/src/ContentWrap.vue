@@ -34,3 +34,10 @@ defineProps({
     </div>
   </ElCard>
 </template>
+
+<style lang="less">
+@prefix-cls: ~'@{adminNamespace}-content-wrap';
+.@{prefix-cls} {
+  background-color: var(--app-content-bg-color);
+}
+</style>

@@ -47,13 +47,19 @@
   --tab-menu-collapse-height: 36px;
   /* tab menu end */
 
-  --app-content-padding: 10px;
+  /**  */
+  --app-content-padding: 1rem;
 
-  --app-content-bg-color: #ffffff;
+  --app-content-bg-color: #f2f3f5;
 
   --app-footer-height: 50px;
 
   --transition-time-02: 0.2s;
+  /** 16px的根元素下的转化 -12px*/
+  --app-inner-padding: 0.75rem;
+
+  /** raduis*/
+  --primary-raduis: 0.5rem;
 }
 
 .dark {
