@@ -19,7 +19,9 @@ import {
   ElTableColumn,
   ElTable,
   ElMessage,
-  ElEmpty
+  ElEmpty,
+  ElCollapseItem,
+  ElCollapse
 } from 'element-plus'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
@@ -335,9 +337,10 @@ const getLogs = async (params?: any) => {
     domain: domainArr.value.includes('all') ? '' : domainArr.value
   })
 
-  tableList.value = res.data.list.map((item) =>
-    Object.fromEntries(Object.entries(item).map(([key, value]) => [capitalize(key), value]))
-  )
+  tableList.value = res.data.list.map((item) => ({
+    ...Object.fromEntries(Object.entries(item).map(([key, value]) => [capitalize(key), value])),
+    display: true
+  }))
   limit.value = res.data.limit
   total.value = Number(res.data.total) || 0
   pageInfo.value = res.data.pageInfo
@@ -355,7 +358,7 @@ const getLogs = async (params?: any) => {
   //   label: key == 'TimeFriendly' ? '时间' : key
   // }))
 }
-const excludes = ['timeFriendly']
+const excludes = ['TimeFriendly', 'display']
 /**处理展示数据  */
 const displayList = (item) => {
   return Object.fromEntries(Object.entries(item).filter(([key]) => !excludes.includes(key)))
@@ -366,27 +369,13 @@ const handleSortBy = (val) => {
   getLogs()
 }
 const currentIndex = ref(0) // 当前高亮list
-const scrollContainer = ref<HTMLElement | null>(null)
 
-/**页面点击切换高亮列表条 */
-const scrollToItem = (index: number) => {
-  if (index >= 0 && index < tableList.value.length) {
-    currentIndex.value = index
-    const container = scrollContainer.value
-    const el = document.getElementById(`log-item-${index}`)
-    if (container && el) {
-      const containerRect = container.getBoundingClientRect()
-      const elRect = el.getBoundingClientRect()
-      const offset = elRect.top - containerRect.top
-      container.scrollTo({
-        top: container.scrollTop + offset,
-        behavior: 'smooth'
-      })
-    }
-  }
+const nextItem = (activeName) => {
+  tableList.value[activeName].display = true
 }
-const nextItem = () => scrollToItem(currentIndex.value + 1)
-const prevItem = () => scrollToItem(currentIndex.value - 1)
+const prevItem = (activeName) => {
+  tableList.value[activeName].display = false
+}
 
 /**复制 */
 const handleCopy = (item) => {
@@ -593,18 +582,28 @@ onMounted(() => {
           @mouseenter="currentIndex = index"
         >
           <p>{{ index + 1 }}</p>
-          <p>
+          <div class="break-words whitespace-normal">
             {{ item.TimeFriendly }}
-          </p>
+          </div>
           <div>
             <div>
               <ElButton link type="primary">
                 <Icon icon="vi-ep:copy-document" @click="handleCopy(item)"></Icon>
               </ElButton>
-              <ElButton link type="primary" class="!border !border-gray-300" @click="nextItem">
+              <ElButton
+                link
+                type="primary"
+                class="!border !border-gray-300"
+                @click="() => nextItem(index)"
+              >
                 <Icon icon="vi-ep:arrow-down"></Icon>
               </ElButton>
-              <ElButton link type="primary" class="!border !border-gray-300" @click="prevItem">
+              <ElButton
+                link
+                type="primary"
+                class="!border !border-gray-300"
+                @click="() => prevItem(index)"
+              >
                 <Icon icon="vi-ep:arrow-up"></Icon>
               </ElButton>
             </div>
@@ -612,12 +611,21 @@ onMounted(() => {
               v-for="(value, key) in displayList(item)"
               :key="key"
               class="text-sm text-gray-600 py-1"
+              :class="item.display ? 'block' : 'hidden'"
             >
               <ElTag type="info" color="rgb(197 197 199)">
                 <strong>{{ key }}:</strong>
               </ElTag>
               {{ value }}
             </div>
+            <!-- <ElCollapse v-model="activeNames" :before-collapse="beforeCollapse">
+              <ElCollapseItem :name="index">
+                <template #icon>
+                  <span @click.stop></span>
+                </template>
+                <template #title> </template>
+              </ElCollapseItem>
+            </ElCollapse> -->
           </div>
         </div>
       </div>
