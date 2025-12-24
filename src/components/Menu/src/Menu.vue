@@ -7,6 +7,7 @@ import { useRenderMenuItem } from './components/useRenderMenuItem'
 import { useRouter } from 'vue-router'
 import { isUrl } from '@/utils/is'
 import { useDesign } from '@/hooks/web/useDesign'
+import { Collapse } from '@/components/Collapse'
 
 const { getPrefixCls } = useDesign()
 
@@ -79,30 +80,32 @@ export default defineComponent({
 
     const renderMenu = () => {
       return (
-        <ElMenu
-          defaultActive={unref(activeMenu)}
-          mode={unref(menuMode)}
-          collapse={
-            unref(layout) === 'top' || unref(layout) === 'cutMenu' ? false : unref(collapse)
-          }
-          uniqueOpened={unref(layout) === 'top' ? false : unref(uniqueOpened)}
-          backgroundColor="var(--left-menu-bg-color)"
-          textColor="var(--left-menu-text-color)"
-          activeTextColor="var(--left-menu-text-active-color)"
-          popperClass={
-            unref(menuMode) === 'vertical'
-              ? `${prefixCls}-popper--vertical`
-              : `${prefixCls}-popper--horizontal`
-          }
-          onSelect={menuSelect}
-        >
-          {{
-            default: () => {
-              const { renderMenuItem } = useRenderMenuItem(menuMode)
-              return renderMenuItem(unref(routers))
+        <>
+          <ElMenu
+            defaultActive={unref(activeMenu)}
+            mode={unref(menuMode)}
+            collapse={
+              unref(layout) === 'top' || unref(layout) === 'cutMenu' ? false : unref(collapse)
             }
-          }}
-        </ElMenu>
+            uniqueOpened={unref(layout) === 'top' ? false : unref(uniqueOpened)}
+            backgroundColor="var(--left-menu-bg-color)"
+            textColor="var(--left-menu-text-color)"
+            activeTextColor="var(--left-menu-text-active-color)"
+            popperClass={
+              unref(menuMode) === 'vertical'
+                ? `${prefixCls}-popper--vertical`
+                : `${prefixCls}-popper--horizontal`
+            }
+            onSelect={menuSelect}
+          >
+            {{
+              default: () => {
+                const { renderMenuItem } = useRenderMenuItem(menuMode)
+                return renderMenuItem(unref(routers))
+              }
+            }}
+          </ElMenu>
+        </>
       )
     }
 
@@ -111,7 +114,7 @@ export default defineComponent({
         id={prefixCls}
         class={[
           `${prefixCls} ${prefixCls}__${unref(menuMode)}`,
-          'h-[100%] overflow-hidden flex-col bg-[var(--left-menu-bg-color)]',
+          '!h-[calc(100vh-var(--qiankun-title-header)-var(--logo-height)-var(--top-bottom-height))] overflow-hidden flex-col bg-[var(--left-menu-bg-color)]',
           {
             'w-[var(--left-menu-min-width)]': unref(collapse) && unref(layout) !== 'cutMenu',
             'w-[var(--left-menu-max-width)]': !unref(collapse) && unref(layout) !== 'cutMenu'
@@ -119,6 +122,9 @@ export default defineComponent({
         ]}
       >
         {renderMenuWrap()}
+        {/* <Collapse class="custom-hover ml-2" color="var(--top-header-text-color)"></Collapse> */}
+        {/* <div>888</div> */}
+        {/* <Collapse class="custom-hover" color="var(--top-header-text-color)"></Collapse> */}
       </div>
     )
   }

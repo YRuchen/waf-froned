@@ -37,7 +37,7 @@ defineProps({
 @prefix-cls: ~'@{adminNamespace}-content-wrap';
 .@{prefix-cls} {
   background-color: var(--app-content-bg-color);
-  min-height: calc(100vh - 5.125rem);
+  min-height: calc(100vh - var(--top-tool-height) - var(--top-heard-height));
   .wrap-title {
     display: flex;
     align-items: center;

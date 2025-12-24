@@ -8,7 +8,8 @@ import AppView from './AppView.vue'
 import ToolHeader from './ToolHeader.vue'
 import { ElScrollbar } from 'element-plus'
 import { useDesign } from '@/hooks/web/useDesign'
-import { useRouter } from 'vue-router'
+
+import { Collapse } from '@/components/Collapse'
 
 const { getPrefixCls } = useDesign()
 
@@ -39,7 +40,6 @@ const fixedMenu = computed(() => appStore.getFixedMenu)
 // 当前路由
 
 export const useRenderLayout = () => {
-  const { currentRoute } = useRouter()
   const renderClassic = () => {
     return (
       <>
@@ -63,6 +63,10 @@ export const useRenderLayout = () => {
             ></Logo>
           ) : undefined}
           <Menu></Menu>
+
+          <div class="!h-[var(--top-bottom-height)] flex items-center pl-5 bg-[var(--left-menu-bg-color)]">
+            <Collapse class="custom-hover " color="var(--top-header-text-color)"></Collapse>
+          </div>
         </div>
         <div
           class={[
@@ -87,36 +91,9 @@ export const useRenderLayout = () => {
                 '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
                   fixedHeader.value
               },
-              '!h-93vh bg-[var(--app-content-bg-color)]'
+              '!h-[calc(100vh-var(--top-tool-height))]  bg-[var(--app-content-bg-color)]'
             ]}
           >
-            <div
-              class={[
-                {
-                  'fixed top-0 left-0 z-10': fixedHeader.value,
-                  'w-[calc(100%-var(--left-menu-min-width))] !left-[var(--left-menu-min-width)]':
-                    collapse.value && fixedHeader.value && !mobile.value,
-                  'w-[calc(100%-var(--left-menu-max-width))] !left-[var(--left-menu-max-width)]':
-                    !collapse.value && fixedHeader.value && !mobile.value,
-                  '!w-full !left-0': mobile.value
-                }
-              ]}
-              style="transition: all var(--transition-time-02);"
-            >
-              <ToolHeader
-                class={[
-                  'bg-[var(--top-header-bg-color)]',
-                  {
-                    'layout-border__bottom': !tagsView.value
-                  }
-                ]}
-              ></ToolHeader>
-
-              {tagsView.value ? (
-                <TagsView class="layout-border__bottom layout-border__top"></TagsView>
-              ) : undefined}
-            </div>
-
             <AppView></AppView>
           </ElScrollbar>
         </div>

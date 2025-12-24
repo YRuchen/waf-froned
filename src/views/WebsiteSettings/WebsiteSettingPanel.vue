@@ -40,8 +40,10 @@ import {
   ElTooltip,
   ElMessageBox,
   ElEmpty,
-  ElDivider
+  ElDivider,
+  ElIcon
 } from 'element-plus'
+import { More } from '@element-plus/icons-vue'
 import { BaseButton } from '@/components/Button'
 import { Search } from '@/components/Search'
 import InputTags from './components/InputTags.vue'
@@ -287,6 +289,9 @@ const columns = reactive<TableColumn[]>([
             <ElButton type="primary" link onClick={() => action(data.row, 'edit')}>
               {t('exampleDemo.edit')}
             </ElButton>
+            <ElButton type="primary" link onClick={() => action(data.row, 'logs')}>
+              {data.row.logEnabled ? '关闭日志采集' : '开启日志采集'}
+            </ElButton>
             <ElDropdown
               trigger="click"
               v-slots={{
@@ -299,9 +304,7 @@ const columns = reactive<TableColumn[]>([
                     >
                       防护设置
                     </ElDropdownItem>
-                    <ElDropdownItem command="enableLog" onClick={() => action(data.row, 'logs')}>
-                      {data.row.logEnabled ? '关闭日志采集' : '开启日志采集'}
-                    </ElDropdownItem>
+
                     <ElDropdownItem
                       command="delete"
                       onClick={() => {
@@ -326,15 +329,17 @@ const columns = reactive<TableColumn[]>([
                           .catch(() => {})
                       }}
                     >
-                      删除
+                      <span class="text-[var(--el-color-danger)]">删除</span>
                     </ElDropdownItem>
                   </ElDropdownMenu>
                 )
               }}
             >
               <ElButton type="primary" link>
-                更多
-                <Icon icon="ep:arrow-down" />
+                <ElIcon color="var(--el-color-primary)">
+                  <More />
+                </ElIcon>
+                {/* <Icon icon="ep:arrow-down" /> */}
               </ElButton>
             </ElDropdown>
           </div>
@@ -639,7 +644,7 @@ const handleCardSearch = (key, title) => {
 }
 </style>
 <template>
-  <ContentWrap :title="currentRoute.meta.title">
+  <ContentWrap>
     <div class="card-content">
       <ElCard
         :class="[index !== cardsType.length - 1 ? 'mr-10px' : '']"

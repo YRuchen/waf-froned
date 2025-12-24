@@ -6,7 +6,6 @@ import siteForm from './components/SiteFormPanel.vue'
 
 const containerRef = ref<HTMLElement | null>(null)
 const bannerRef = ref<HTMLElement | null>(null)
-const anchorRef = ref<InstanceType<typeof ElAnchor> | null>(null)
 
 const navTop = ref(0)
 const sections = [
@@ -15,7 +14,7 @@ const sections = [
   { id: 'part3', title: '源站配置' },
   { id: 'part4', title: '代理配置' },
   { id: 'part5', title: '日志配置' },
-  { id: 'part6', title: '网络参数配置', height: '50%' }
+  { id: 'part6', title: '网络参数配置', height: '30%' }
 ]
 const handleClick = (e: MouseEvent) => {
   e.preventDefault()
@@ -44,7 +43,7 @@ onUnmounted(() => {
 </script>
 <template>
   <ContentWrap>
-    <div class="flex">
+    <div class="add-wrap">
       <div ref="containerRef" class="add-container">
         <!-- 顶部横幅 -->
         <!-- <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
@@ -54,7 +53,6 @@ onUnmounted(() => {
         <div class="flex relative">
           <!-- 左侧导航 -->
           <ElAnchor
-            ref="anchorRef"
             :container="containerRef"
             type="underline"
             class="!fixed !w-32"
@@ -78,6 +76,12 @@ onUnmounted(() => {
   </ContentWrap>
 </template>
 <style lang="less" scoped>
+.add-wrap {
+  // flex !h-[calc(100vh - var(--top-tool-height) - var(--top-heard-height))] hidden
+  display: flex;
+  height: calc(100vh - var(--top-tool-height) - var(--top-heard-height));
+  overflow: hidden;
+}
 .add-container {
   height: 100vh;
   overflow-y: auto;

@@ -1,6 +1,8 @@
 :root {
   --login-bg-color: #293146;
 
+  --qiankun-title-header: 3.125rem;
+
   /* left menu start */
   --left-menu-max-width: 200px;
 
@@ -20,7 +22,7 @@
   /* left menu end */
 
   /* logo start */
-  --logo-height: 40px;
+  --logo-height: 2.5rem;
 
   --logo-title-color: #0c0d0e;
   /* logo end */
@@ -31,8 +33,12 @@
   --top-header-text-color: 'inherit';
 
   --top-header-hover-color: #f6f6f6;
-
+  /**旧的头部的顶部高度*/
   --top-tool-height: 0;
+
+  --top-heard-height: 4.3125rem;
+
+  --top-bottom-height: 1.75rem;
 
   --top-tool-p-x: 0;
 
