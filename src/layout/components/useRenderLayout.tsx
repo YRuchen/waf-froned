@@ -72,11 +72,8 @@ export const useRenderLayout = () => {
               'w-[calc(100%-var(--left-menu-min-width))] left-[var(--left-menu-min-width)]':
                 collapse.value && !mobile.value && !mobile.value,
               'w-[calc(100%-var(--left-menu-max-width))] left-[var(--left-menu-max-width)]':
-                !currentRoute.value.meta.hiddenMenu &&
-                !collapse.value &&
-                !mobile.value &&
-                !mobile.value,
-              '!w-full': currentRoute.value.meta.hiddenMenu || mobile.value,
+                !collapse.value && !mobile.value && !mobile.value,
+              '!w-full': mobile.value,
               'fixed !left-0': mobile.value
             }
           ]}
@@ -90,7 +87,7 @@ export const useRenderLayout = () => {
                 '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
                   fixedHeader.value
               },
-              '!h-93vh'
+              '!h-93vh bg-[var(--app-content-bg-color)]'
             ]}
           >
             <div

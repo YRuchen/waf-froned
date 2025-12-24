@@ -3,6 +3,9 @@ import { useTagsViewStore } from '@/store/modules/tagsView'
 import { useAppStore } from '@/store/modules/app'
 // import { Footer } from '@/components/Footer'
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const { currentRoute, push } = useRouter()
 
 const appStore = useAppStore()
 
@@ -16,6 +19,10 @@ const getCaches = computed((): string[] => {
 </script>
 
 <template>
+  <div class="font-size-5 cursor-pointer" @click="() => push('/websiteSettings/index')">
+    <Icon icon="ep:arrow-left" class="align-middle mr-1 font-size-6" />
+    <span>{{ currentRoute.meta?.title }}</span>
+  </div>
   <section
     :class="[
       'box-border p-[var(--app-content-padding)] w-full bg-[var(--app-content-bg-color)] dark:bg-[var(--el-bg-color)]',

@@ -29,8 +29,6 @@ import { defineComponent } from 'vue'
 
     canTo: true               设置为true即使hidden为true，也依然可以进行路由跳转(默认 false)
 
-    hiddenMenu: false         设置为true的时候，左侧的menu就不展示了
-
     permission: ['edit','add', 'delete']    设置该路由的权限
   }
 **/
@@ -46,7 +44,6 @@ interface RouteMetaCustom extends Record<string | number | symbol, unknown> {
   activeMenu?: string
   noTagsView?: boolean
   canTo?: boolean
-  hiddenMenu?: boolean
   permission?: string[]
 }
 

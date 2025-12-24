@@ -587,7 +587,8 @@ const handleProtect = async () => {
     patchField: 'DOMAIN_PATCH_FIELD_PROTECT_STATUS'
   })
   dialogVisible.value = false
-  if (res.code == 200) ElMessage(ruleForm.value.protectStatus ? '启用防护成功' : '暂停防护成功')
+  if (res.code == 200)
+    ElMessage.success(ruleForm.value.protectStatus ? '启用防护成功' : '暂停防护成功')
   getList()
 }
 /**查询 */
@@ -682,7 +683,7 @@ const handleCardSearch = (key, title) => {
         </div>
       </ElCard>
     </div>
-    <div class="bg-[var(--el-bg-color)] border-rd-[var(--primary-raduis)] p-3">
+    <div class="bottom-wrap">
       <div class="flex justify-between">
         <div class="flex justify-between">
           <div>
@@ -786,8 +787,8 @@ const handleCardSearch = (key, title) => {
     </ElForm>
     <template #footer>
       <div class="dialog-footer">
-        <ElButton size="large" @click="dialogVisible = false">取消</ElButton>
-        <ElButton size="large" type="primary" @click="handleProtect">确定</ElButton>
+        <ElButton @click="dialogVisible = false">取消</ElButton>
+        <ElButton type="primary" @click="handleProtect">确定</ElButton>
       </div>
     </template>
   </ElDialog>
@@ -878,6 +879,14 @@ const handleCardSearch = (key, title) => {
     box-sizing: border-box;
   }
 }
+.bottom-wrap {
+  background-color: var(--el-bg-color);
+  border-radius: var(--primary-raduis);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  min-height: calc(100vh - 14.9375rem);
+}
+
 .table-content {
   border: 1px solid #dbdfe7;
   border-radius: var(--primary-raduis);

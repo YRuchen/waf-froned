@@ -503,7 +503,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <div class="ml-52 flex-1 p-6 flex flex-col">
+  <div class="form-wrap">
     <ElForm
       ref="parentFormRef"
       class="w-90% h-full"
@@ -910,3 +910,14 @@ onMounted(() => {
     </template>
   </ElDialog>
 </template>
+
+<style lang="less">
+.form-wrap {
+  margin-left: 9rem;
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+</style>

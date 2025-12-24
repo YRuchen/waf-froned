@@ -156,7 +156,6 @@ defineExpose({ activeGroupId })
 </script>
 <style lang="less">
 .menu-wrap {
-  // m-y-2 m-x-3 w-15%
   padding: 20px 10px;
   height: 100%;
   border: 1px solid #ededed;

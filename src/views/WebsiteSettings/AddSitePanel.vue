@@ -3,9 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { ContentWrap } from '@/components/ContentWrap'
 import { ElAnchor, ElAnchorLink } from 'element-plus'
 import siteForm from './components/SiteFormPanel.vue'
-import { useRouter } from 'vue-router'
 
-const { currentRoute, push } = useRouter()
 const containerRef = ref<HTMLElement | null>(null)
 const bannerRef = ref<HTMLElement | null>(null)
 const anchorRef = ref<InstanceType<typeof ElAnchor> | null>(null)
@@ -45,13 +43,9 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div class="font-size-5 cursor-pointer" @click="() => push('/websiteSettings/index')">
-    <Icon icon="ep:arrow-left" class="align-middle mr-1 font-size-6" />
-    <span>{{ currentRoute.meta?.title }}</span>
-  </div>
   <ContentWrap>
     <div class="flex">
-      <div ref="containerRef" class="h-screen overflow-y-auto relative w-100%">
+      <div ref="containerRef" class="add-container">
         <!-- 顶部横幅 -->
         <!-- <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
           接入方式：CNAME
@@ -63,7 +57,7 @@ onUnmounted(() => {
             ref="anchorRef"
             :container="containerRef"
             type="underline"
-            class="!fixed !ml-20 !w-32"
+            class="!fixed !w-32"
             :style="{ top: `${navTop}px` }"
             @click="handleClick"
           >
@@ -83,3 +77,11 @@ onUnmounted(() => {
     </div>
   </ContentWrap>
 </template>
+<style lang="less" scoped>
+.add-container {
+  height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  width: 100%;
+}
+</style>

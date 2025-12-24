@@ -90,7 +90,9 @@ export const useTable = (config: UseTableConfig) => {
       } catch (err) {
         console.log('fetchDataApi error', err)
       } finally {
-        loading.value = false
+        setTimeout(() => {
+          loading.value = false
+        }, 500)
       }
     },
 

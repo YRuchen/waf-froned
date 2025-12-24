@@ -14,30 +14,34 @@ defineProps({
 </script>
 
 <template>
-  <ElCard :class="[prefixCls]" shadow="never">
-    <template v-if="title" #header>
-      <div class="flex items-center">
-        <span class="text-16px font-700">{{ title }}</span>
-        <ElTooltip v-if="message" effect="dark" placement="right">
-          <template #content>
-            <div class="max-w-200px">{{ message }}</div>
-          </template>
-          <Icon class="ml-5px" icon="vi-bi:question-circle-fill" :size="14" />
-        </ElTooltip>
-        <div class="flex pl-20px flex-grow">
-          <slot name="header"></slot>
-        </div>
+  <div :class="[prefixCls]" shadow="never">
+    <div class="wrap-title" v-if="title">
+      <span class="text-16px font-700">{{ title }}</span>
+      <ElTooltip v-if="message" effect="dark" placement="right">
+        <template #content>
+          <div class="max-w-200px">{{ message }}</div>
+        </template>
+        <Icon class="ml-5px" icon="vi-bi:question-circle-fill" :size="14" />
+      </ElTooltip>
+      <div class="flex pl-20px flex-grow">
+        <slot name="header"></slot>
       </div>
-    </template>
+    </div>
     <div>
       <slot></slot>
     </div>
-  </ElCard>
+  </div>
 </template>
 
-<style lang="less">
+<style lang="less" scoped>
 @prefix-cls: ~'@{adminNamespace}-content-wrap';
 .@{prefix-cls} {
   background-color: var(--app-content-bg-color);
+  min-height: calc(100vh - 5.125rem);
+  .wrap-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
 }
 </style>
