@@ -1,7 +1,22 @@
 @import './var.css';
 
 // ==================== 基础组件 ====================
+// 输入框
+.el-input {
+  .el-input__wrapper {
+    border-radius: var(--primary-raduis) !important;
 
+    &.is-focus {
+      border-radius: var(--primary-raduis) !important;
+    }
+  }
+
+  // 带后缀/前缀的输入框
+  .el-input-group__prepend,
+  .el-input-group__append {
+    border-radius: var(--primary-raduis) !important;
+  }
+}
 // 按钮
 .el-button {
   border-radius: var(--primary-raduis) !important;

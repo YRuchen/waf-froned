@@ -3,11 +3,14 @@ import { useTagsViewStore } from '@/store/modules/tagsView'
 import { useAppStore } from '@/store/modules/app'
 // import { Footer } from '@/components/Footer'
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { ArrowLeft } from '@element-plus/icons-vue'
-import { ElIcon } from 'element-plus'
+import { useRouter, useRoute } from 'vue-router'
+import { Back } from '@element-plus/icons-vue'
+import { ElPageHeader, ElBreadcrumbItem, ElBreadcrumb, ElIcon } from 'element-plus'
 
 const { currentRoute, back } = useRouter()
+const route = useRoute()
+console.log(route, 888)
+
 const appStore = useAppStore()
 
 const footer = computed(() => appStore.getFooter)
@@ -17,18 +20,41 @@ const tagsViewStore = useTagsViewStore()
 const getCaches = computed((): string[] => {
   return tagsViewStore.getCachedViews
 })
+
+// 面包屑
+const breadcrumbs = computed(() => {
+  return route.matched
+    .filter((v) => v.meta?.title)
+    .map((v, index, arr) => {
+      return {
+        title: v.meta?.title,
+        path: index === arr.length - 1 ? '' : v.path
+      }
+    })
+})
 </script>
 
 <template>
   <div
     class="font-size-5 m-[var(--app-content-padding)]"
-    @click="back"
     :class="currentRoute.meta?.showBack ? 'cursor-pointer' : ''"
   >
-    <span v-if="currentRoute.meta?.showBack" class="flex items-center">
+    <!-- <span class="flex items-center">
       <ElIcon><ArrowLeft /></ElIcon>
       <span class="ml-1">{{ currentRoute.meta?.title }}</span>
-    </span>
+    </span> -->
+    <ElPageHeader v-if="currentRoute.meta?.showBack" @back="back">
+      <template #title>
+        <span class="font-size-4"> 返回 </span>
+      </template>
+      <template #content>
+        <ElBreadcrumb separator="/">
+          <ElBreadcrumbItem v-for="item in breadcrumbs" :key="item.path" :to="item.path">
+            <span class="font-size-5"> {{ item.title }}</span>
+          </ElBreadcrumbItem>
+        </ElBreadcrumb>
+      </template>
+    </ElPageHeader>
     <span v-else class="bold">
       {{ currentRoute.meta?.title }}
     </span>

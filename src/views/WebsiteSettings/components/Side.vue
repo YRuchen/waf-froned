@@ -115,52 +115,41 @@ const handleClosePover = (item) => {
   activeGroupId.value = item.groupName
   searchName.value = ''
 }
-const deleteName = ref<string>('')
-const remove = (name) => {
-  // ElMessageBox({
-  //   // title: '确认删除',
-  //   message: (
-  //     <div class="flex">
-  //       <span class="text-[var(--el-color-warning)] mr-1.5 p-1">{warningIcon}</span>
-  //       <span>
-  //         确认删除?删除分组后将清空组内回源配置，并对组内接入端口按照默认分组配置执行回源操作。
-  //       </span>
-  //     </div>
-  //   ),
-  //   showCancelButton: true,
-  //   confirmButtonText: '删除',
-  //   cancelButtonText: '取消',
-  //   confirmButtonClass: 'el-button--danger'
-  // })
-  //   .then(() => {
-  //     nextTick(() => {
-  //       const index = menuData.value.findIndex((item) => item.groupName === row.groupName)
-  //       if (index !== -1) {
-  //         menuData.value.splice(index, 1)
-  //       }
-  //       handleSelect(menuData.value[menuData.value.length - 1])
-  //     })
-  //     ElMessage.success('删除成功')
-  //   })
-  //   .catch(() => {})
-  const index = menuData.value.findIndex((item) => item.groupName === name)
-  if (index !== -1) {
-    menuData.value.splice(index, 1)
-  }
-  handleSelect(menuData.value[menuData.value.length - 1])
-  deleteName.value = ''
+const remove = (e, row) => {
+  e.stopPropagation()
+  ElMessageBox.confirm(
+    `将删除${row.groupName}，删除该分组后将清空组内回源配置，并对组内接入端口按照默认分组配置执行回源操作，请谨慎操作`,
+    `删除${row.groupName}`,
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      customClass: 'myCustomClass',
+      confirmButtonClass: 'el-button--danger',
+      type: 'warning'
+    }
+  )
+    .then(() => {
+      nextTick(() => {
+        const index = menuData.value.findIndex((item) => item.groupName === row.groupName)
+        if (index !== -1) {
+          menuData.value.splice(index, 1)
+        }
+        handleSelect(menuData.value[menuData.value.length - 1])
+      })
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
+
+  // const index = menuData.value.findIndex((item) => item.groupName === name)
+  // if (index !== -1) {
+  //   menuData.value.splice(index, 1)
+  // }
+  // handleSelect(menuData.value[menuData.value.length - 1])
 }
 const menuKey = ref(0)
 const handleSelect = (data: serverGroupItem) => {
-  // activeGroupId.value = '默认分组'
-  deleteName.value = ''
   menuKey.value++
   emit('change', data)
-}
-// 删除
-const handleDelete = (e, item) => {
-  e.stopPropagation()
-  deleteName.value = item.groupName
 }
 onMounted(() => {
   handleSelect(menuData.value[0])
@@ -213,6 +202,11 @@ defineExpose({ activeGroupId })
         }
       }
     }
+  }
+}
+.myCustomClass {
+  .el-message-box__container {
+    align-items: flex-start;
   }
 }
 </style>
@@ -279,19 +273,13 @@ defineExpose({ activeGroupId })
           :index="item.groupName"
           @click="handleSelect(item)"
         >
-          <ElIcon
-            style="color: var(--el-color-danger) !important"
-            v-if="deleteName === item.groupName"
-            @click="remove(deleteName)"
-            ><CircleCloseFilled
-          /></ElIcon>
           <span class="label">{{ item.groupName }}</span>
           <p class="button-wrap" v-if="item.groupName !== '默认分组'">
             <ElTooltip effect="dark" content="重命名" placement="top">
               <Icon icon="vi-ep:edit" @click="(e) => editDictsort(e, item)"></Icon>
             </ElTooltip>
-            <ElTooltip effect="dark" content="删除" placement="top">
-              <Icon icon="vi-ep:delete" @click="(e) => handleDelete(e, item)"></Icon>
+            <ElTooltip effect="dark" content="删除" placement="top" :enterable="false">
+              <Icon icon="vi-ep:delete" @click="(e) => remove(e, item)"></Icon>
             </ElTooltip>
           </p>
         </ElMenuItem>

@@ -17,10 +17,12 @@ import {
   ElPopover,
   ElTooltip,
   ElMessage,
+  ElButton,
   type FormInstance,
   type CheckboxValueType
 } from 'element-plus'
 
+import { Plus } from '@element-plus/icons-vue'
 import Side from './Side.vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
@@ -32,7 +34,6 @@ import { serverGroupItem, TableItem } from '@/api/websiteSettingPanel/types'
 const { t } = useI18n()
 const copyIcon = useIcon({ icon: 'vi-ep:copy-document' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
-const plusIcon = useIcon({ icon: 'vi-ep:plus' })
 
 const columns: TableColumn[] = [
   {
@@ -458,7 +459,7 @@ defineExpose({
 </script>
 <style></style>
 <template>
-  <div class="grid grid-cols-[15%_83%]">
+  <div class="grid grid-cols-[15%_83%] h-530px">
     <Side @change="getTableList" v-model:originList="originList" ref="sideRef" />
     <div class="p-x-20px border-1 border-solid border-#ebeef5">
       <div class="m-b-2">
@@ -542,15 +543,30 @@ defineExpose({
         <span>回源到源站地址：</span>
       </div>
       <ElForm ref="ruleFormRef" :model="originListItem.servers" label-position="left">
-        <Table :columns="columns" :data="originListItem.servers" height="330" />
+        <Table
+          :columns="columns"
+          :data="originListItem.servers"
+          max-height="330"
+          class="table-wrap"
+        />
         <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
           {{ showErrorList.find((item) => item.key == showError)?.label }}
         </span>
       </ElForm>
-      <BaseButton :icon="plusIcon" link class="my-3" @click="action('add')" v-if="allcount > 0">
-        添加
-      </BaseButton>
-      <span class="m-x-3 color-[#7e7777]" v-if="allcount > 0">还可添加{{ allcount }}个</span>
+      <div class="mt-3">
+        <ElButton type="primary" plain size="small" @click="action('add')" v-if="allcount > 0">
+          <ElIcon :size="24"><Plus /></ElIcon>
+          添加
+        </ElButton>
+        <span class="m-x-3 color-[#7e7777]" v-if="allcount > 0">还可添加{{ allcount }}个</span>
+      </div>
     </div>
   </div>
 </template>
+<style lang="less">
+.table-wrap {
+  .el-form-item {
+    margin: 0 !important;
+  }
+}
+</style>

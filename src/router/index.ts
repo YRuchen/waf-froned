@@ -52,7 +52,9 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     path: '/websiteSettings',
     component: Layout,
     name: 'WebsiteSettings',
-    meta: {},
+    meta: {
+      title: '网站设置',
+    },
     redirect: '/websiteSettings/index',
     children: [
       {

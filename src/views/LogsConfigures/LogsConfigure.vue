@@ -159,37 +159,31 @@ const filterSchema = reactive<FormSchema[]>([
   {
     field: 'path',
     component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>路径</>
-      }
+    label: '路径',
+    formItemProps: {
+      labelWidth: '2.4rem'
     }
   },
   {
     field: 'srcIp',
     component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>源IP</>
-      }
+    label: '源IP',
+    formItemProps: {
+      labelWidth: '2.4rem'
     }
   },
   {
     field: 'statusCode',
     component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>WAF状态码</>
-      }
+    label: 'WAF状态码',
+    formItemProps: {
+      labelWidth: '5.8rem'
     }
   },
   {
     field: 'severity',
     component: 'Select',
     label: '风险等级',
-    formItemProps: {
-      labelWidth: '80'
-    },
     componentProps: {
       placeholder: '请选择',
       multiple: true,
@@ -206,28 +200,23 @@ const filterSchema = reactive<FormSchema[]>([
   {
     field: 'ruleId',
     component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>规则ID</>
-      }
+    label: '规则ID',
+    formItemProps: {
+      labelWidth: '3.3rem'
     }
   },
   {
     field: 'logId',
     component: 'Input',
-    componentProps: {
-      slots: {
-        prepend: () => <>日志ID</>
-      }
+    label: '日志ID',
+    formItemProps: {
+      labelWidth: '3.3rem'
     }
   },
   {
     field: 'attack',
     component: 'Select',
     label: '攻击类型',
-    formItemProps: {
-      labelWidth: '80'
-    },
     componentProps: {
       placeholder: '请选择',
       multiple: true,
@@ -246,9 +235,6 @@ const filterSchema = reactive<FormSchema[]>([
     field: 'runType',
     component: 'Select',
     label: '执行动作',
-    formItemProps: {
-      labelWidth: '80'
-    },
     componentProps: {
       placeholder: '请选择',
       multiple: true,
@@ -309,7 +295,7 @@ const displayText = computed(() => {
 })
 
 const currentPage2 = ref(5)
-const limit = ref(10)
+const limit = ref(20)
 const total = ref(10)
 const pageInfo = ref<any>({})
 const background = ref(false)
@@ -454,16 +440,22 @@ onMounted(() => {
   getLogs()
 })
 </script>
-<style scoped></style>
+<style scoped>
+.log-content {
+  background-color: #ffffff !important;
+  padding: 16px;
+  border-radius: var(--primary-raduis);
+}
+</style>
 
 <template>
-  <ContentWrap title="日志管理 详情" class="h-98vh">
+  <ContentWrap class="log-content">
     <div class="flex">
       <Search
         :schema="searchSchema"
         :showSearch="false"
         :showReset="false"
-        labelWidth="60px"
+        labelWidth="2.5rem"
         :autoSearch="true"
         :autoSearchDebounce="1000"
         @search="handleSearch"
@@ -475,6 +467,7 @@ onMounted(() => {
     </div>
     <Search
       :schema="filterSchema"
+      labelWidth="4rem"
       layout="inline"
       @search="resetSearchParams"
       @reset="resetSearchParams"
