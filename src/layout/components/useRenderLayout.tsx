@@ -91,7 +91,7 @@ export const useRenderLayout = () => {
                 '!h-[calc(100%-var(--top-tool-height)-var(--tags-view-height))] mt-[calc(var(--top-tool-height)+var(--tags-view-height))]':
                   fixedHeader.value
               },
-              '!h-[calc(100vh-var(--top-tool-height))]  bg-[var(--app-content-bg-color)]'
+              '!h-[calc(100vh-var(--top-heard-height))]  bg-[var(--app-content-bg-color)]'
             ]}
           >
             <AppView></AppView>

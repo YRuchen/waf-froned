@@ -14,7 +14,7 @@ const sections = [
   { id: 'part3', title: '源站配置' },
   { id: 'part4', title: '代理配置' },
   { id: 'part5', title: '日志配置' },
-  { id: 'part6', title: '网络参数配置', height: '30%' }
+  { id: 'part6', title: '网络参数配置' }
 ]
 const handleClick = (e: MouseEvent) => {
   e.preventDefault()
@@ -77,13 +77,12 @@ onUnmounted(() => {
 </template>
 <style lang="less" scoped>
 .add-wrap {
-  // flex !h-[calc(100vh - var(--top-tool-height) - var(--top-heard-height))] hidden
   display: flex;
-  height: calc(100vh - var(--top-tool-height) - var(--top-heard-height));
-  overflow: hidden;
+  height: calc(100vh - var(--top-heard-height) - var(--qiankun-title-header) - 1rem);
+  // overflow: hidden;  // TODO
 }
 .add-container {
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
   position: relative;
   width: 100%;

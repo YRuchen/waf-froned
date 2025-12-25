@@ -510,7 +510,7 @@ onMounted(() => {
       :model="ruleForm"
       :rules="rules"
       label-width="auto"
-      label-position="left"
+      label-position="right"
     >
       <div
         v-for="section in props.sections"
@@ -532,7 +532,7 @@ onMounted(() => {
                 <ElTooltip
                   effect="dark"
                   content="如需同时配置泛域名和域名主体本身，请分别配置。如：需要同时配置*.b.a.com和b.a.com，需要分别接入域名并配置策略。"
-                  placement="top-start"
+                  placement="top"
                   popper-style="max-width: 300px; white-space: normal;"
                 >
                   <Icon icon="ep:question-filled" class="ml-1" />
@@ -554,6 +554,7 @@ onMounted(() => {
           </ElFormItem>
 
           <ElFormItem label="协议类型" prop="selectProtocol">
+            <span class="text-[var(--el-text-color-secondary)]">当前域名最多可添加10个端口</span>
             <ElRow class="w-full">
               <ElCol>
                 <ElFormItem>
@@ -754,7 +755,7 @@ onMounted(() => {
                   <ElTooltip
                     effect="dark"
                     content="从X-Forwarded-For最左侧获取客户端IP"
-                    placement="top-start"
+                    placement="top"
                     popper-style="max-width: 300px; white-space: normal;"
                   >
                     <Icon icon="ep:warning-filled" class="ml-1" />

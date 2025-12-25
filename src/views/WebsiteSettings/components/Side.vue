@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
 // import { Icon } from '@iconify/vue'
-import { nextTick, ref, PropType, reactive, onMounted, watch, toRef } from 'vue'
+import { nextTick, ref, PropType, reactive, onMounted, toRef } from 'vue'
 import { debounce } from 'lodash-es'
 import {
   ElMessageBox,
@@ -18,11 +18,14 @@ import {
   ElInput,
   ElMenu,
   ElMenuItem,
+  ElIcon,
   type PopoverInstance
 } from 'element-plus'
+import { CircleCloseFilled } from '@element-plus/icons-vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
 import { serverGroupItem } from '@/api/websiteSettingPanel/types'
+import { ro } from 'element-plus/es/locale'
 const props = defineProps({
   originList: {
     type: Array as PropType<serverGroupItem[]>,
@@ -112,41 +115,52 @@ const handleClosePover = (item) => {
   activeGroupId.value = item.groupName
   searchName.value = ''
 }
-const warningIcon = useIcon({ icon: 'ep:warning-filled' })
-const remove = (row) => {
-  ElMessageBox({
-    // title: '确认删除',
-    message: (
-      <div class="flex">
-        <span class="text-[var(--el-color-warning)] mr-1.5 p-1">{warningIcon}</span>
-        <span>
-          确认删除?删除分组后将清空组内回源配置，并对组内接入端口按照默认分组配置执行回源操作。
-        </span>
-      </div>
-    ),
-    showCancelButton: true,
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
-    confirmButtonClass: 'el-button--danger'
-  })
-    .then(() => {
-      nextTick(() => {
-        const index = menuData.value.findIndex((item) => item.groupName === row.groupName)
-        if (index !== -1) {
-          menuData.value.splice(index, 1)
-        }
-        handleSelect(menuData.value[menuData.value.length - 1])
-      })
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+const deleteName = ref<string>('')
+const remove = (name) => {
+  // ElMessageBox({
+  //   // title: '确认删除',
+  //   message: (
+  //     <div class="flex">
+  //       <span class="text-[var(--el-color-warning)] mr-1.5 p-1">{warningIcon}</span>
+  //       <span>
+  //         确认删除?删除分组后将清空组内回源配置，并对组内接入端口按照默认分组配置执行回源操作。
+  //       </span>
+  //     </div>
+  //   ),
+  //   showCancelButton: true,
+  //   confirmButtonText: '删除',
+  //   cancelButtonText: '取消',
+  //   confirmButtonClass: 'el-button--danger'
+  // })
+  //   .then(() => {
+  //     nextTick(() => {
+  //       const index = menuData.value.findIndex((item) => item.groupName === row.groupName)
+  //       if (index !== -1) {
+  //         menuData.value.splice(index, 1)
+  //       }
+  //       handleSelect(menuData.value[menuData.value.length - 1])
+  //     })
+  //     ElMessage.success('删除成功')
+  //   })
+  //   .catch(() => {})
+  const index = menuData.value.findIndex((item) => item.groupName === name)
+  if (index !== -1) {
+    menuData.value.splice(index, 1)
+  }
+  handleSelect(menuData.value[menuData.value.length - 1])
+  deleteName.value = ''
 }
-const menuRef = ref()
 const menuKey = ref(0)
 const handleSelect = (data: serverGroupItem) => {
   // activeGroupId.value = '默认分组'
+  deleteName.value = ''
   menuKey.value++
   emit('change', data)
+}
+// 删除
+const handleDelete = (e, item) => {
+  e.stopPropagation()
+  deleteName.value = item.groupName
 }
 onMounted(() => {
   handleSelect(menuData.value[0])
@@ -179,7 +193,8 @@ defineExpose({ activeGroupId })
         margin-right: 1px !important;
       }
       .button-wrap {
-        display: none;
+        // display: none;
+        opacity: 0;
       }
       .label {
         margin-right: 2px;
@@ -189,7 +204,9 @@ defineExpose({ activeGroupId })
       }
       &:hover {
         .button-wrap {
-          display: block;
+          // display: block;
+
+          opacity: 1;
         }
         .label {
           width: 60%;
@@ -262,13 +279,19 @@ defineExpose({ activeGroupId })
           :index="item.groupName"
           @click="handleSelect(item)"
         >
+          <ElIcon
+            style="color: var(--el-color-danger) !important"
+            v-if="deleteName === item.groupName"
+            @click="remove(deleteName)"
+            ><CircleCloseFilled
+          /></ElIcon>
           <span class="label">{{ item.groupName }}</span>
           <p class="button-wrap" v-if="item.groupName !== '默认分组'">
             <ElTooltip effect="dark" content="重命名" placement="top">
               <Icon icon="vi-ep:edit" @click="(e) => editDictsort(e, item)"></Icon>
             </ElTooltip>
             <ElTooltip effect="dark" content="删除" placement="top">
-              <Icon icon="vi-ep:delete" @click="remove(item)"></Icon>
+              <Icon icon="vi-ep:delete" @click="(e) => handleDelete(e, item)"></Icon>
             </ElTooltip>
           </p>
         </ElMenuItem>

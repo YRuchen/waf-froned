@@ -117,21 +117,23 @@ const columns: TableColumn[] = [
                   row.weight = val
                 }}
               />
-              <ElTooltip
-                effect="dark"
-                content="表示后端服务器收到请求的概率，支持设置 1-100 的任意整数，源站权重之和可以大于 100"
-                placement="top-start"
-                popper-style="max-width: 300px; white-space: normal;"
-              >
-                <Icon
-                  icon="vi-ep:question-filled"
-                  class="ml-1 !text-[var(--el-text-color-regular)]"
-                />
-              </ElTooltip>
             </div>
           </ElFormItem>
         )
-      }
+      },
+      header: ({ column }) => (
+        <div class="flex items-center gap-4px">
+          <span>{column.label}</span>
+          <ElTooltip
+            effect="dark"
+            content="表示后端服务器收到请求的概率，支持设置 1-100 的任意整数，源站权重之和可以大于 100"
+            placement="top"
+            popper-style="max-width: 300px; white-space: normal;"
+          >
+            <Icon icon="vi-ep:question-filled" class="ml-1 !text-[var(--el-text-color-regular)]" />
+          </ElTooltip>
+        </div>
+      )
     }
   },
   {
@@ -147,12 +149,19 @@ const columns: TableColumn[] = [
               disabled={allcount.value == 0}
               onClick={() => action('edit', row, $index)}
             ></BaseButton>
-            <BaseButton
-              link
-              icon={deleteIcon}
-              disabled={originListItem.value.servers.length === 1}
-              onClick={() => action('delete', row, $index)}
-            ></BaseButton>
+            <ElTooltip
+              effect="dark"
+              content="至少保留一条"
+              placement="top"
+              popper-style="max-width: 300px; white-space: normal;"
+            >
+              <BaseButton
+                link
+                icon={deleteIcon}
+                disabled={originListItem.value.servers.length === 1}
+                onClick={() => action('delete', row, $index)}
+              ></BaseButton>
+            </ElTooltip>
           </ElFormItem>
         )
       }
@@ -449,7 +458,7 @@ defineExpose({
 </script>
 <style></style>
 <template>
-  <div class="grid grid-cols-[20%_80%]">
+  <div class="grid grid-cols-[15%_83%]">
     <Side @change="getTableList" v-model:originList="originList" ref="sideRef" />
     <div class="p-x-20px border-1 border-solid border-#ebeef5">
       <div class="m-b-2">

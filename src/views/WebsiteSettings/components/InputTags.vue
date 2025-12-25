@@ -157,11 +157,11 @@ watch(
     </div>
     <Icon
       icon="ep:close"
-      class="absolute right-2 rounded-full border border-gray-400 bg-gray-300 cursor-pointer"
+      class="absolute right-2 rounded-full border border-gray-400 bg-gray-300 cursor-pointer !text-[var(--el-text-color-secondary)]"
       @click.stop="clearAll"
       width="16"
       height="16"
-      v-if="props.clearable"
+      v-if="props.clearable && headers.length > 1"
     />
   </div>
 </template>

@@ -24,8 +24,8 @@ import { setupElementPlus } from '@/plugins/elementPlus'
 import '@/styles/index.less'
 // 自定义elementpus样式
 import '@/styles/radius.less'
-// 
-import '@/assets/iconFont/iconfont.css';
+// iconfont引入
+import '@/assets/iconFont/iconfont.css'
 
 // 引入动画
 import '@/plugins/animate.css'
