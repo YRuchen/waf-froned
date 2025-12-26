@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { ContentWrap } from '@/components/ContentWrap'
 import { ElAnchor, ElAnchorLink } from 'element-plus'
 import siteForm from './components/SiteFormPanel.vue'
+import WafToolHeader from '@/layout/components/WafToolHeader.vue'
 
 const containerRef = ref<HTMLElement | null>(null)
 const bannerRef = ref<HTMLElement | null>(null)
@@ -42,21 +43,21 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <ContentWrap>
+  <ContentWrap class="!px-0">
     <div class="add-wrap">
       <div ref="containerRef" class="add-container">
         <!-- 顶部横幅 -->
-        <!-- <div ref="bannerRef" class="h-[300px] bg-gray-100 flex items-center justify-center text-xl">
-          接入方式：CNAME
-        </div> -->
-        <div ref="bannerRef"> </div>
+        <div ref="bannerRef" class="h-[var(var(--top-heard-height))]">
+          <WafToolHeader :showHeader="true" ref="bannerRef" />
+        </div>
+        <!-- <div ref="bannerRef"> </div> -->
         <div class="flex relative">
           <!-- 左侧导航 -->
           <ElAnchor
             :container="containerRef"
             type="underline"
             class="!fixed !w-32"
-            :style="{ top: `${navTop}px` }"
+            :style="{ top: `${navTop}px`, background: 'var(--app-content-bg-color)' }"
             @click="handleClick"
           >
             <ElAnchorLink
@@ -78,7 +79,7 @@ onUnmounted(() => {
 <style lang="less" scoped>
 .add-wrap {
   display: flex;
-  height: calc(100vh - var(--top-heard-height) - var(--qiankun-title-header) - 1rem);
+  height: calc(100vh - var(--qiankun-title-header) - 1rem);
   // overflow: hidden;  // TODO
 }
 .add-container {

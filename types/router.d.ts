@@ -32,6 +32,8 @@ import { defineComponent } from 'vue'
     permission: ['edit','add', 'delete']    设置该路由的权限
 
     showBack: false           设置为true，就是带可点击返回上一级（默认false）
+
+    hiddenHeader: true          设置为false，就是不展示头部
   }
 **/
 
@@ -48,6 +50,7 @@ interface RouteMetaCustom extends Record<string | number | symbol, unknown> {
   canTo?: boolean
   permission?: string[]
   showBack?: boolean
+  hiddenHeader?: boolean
 }
 
 declare module 'vue-router' {

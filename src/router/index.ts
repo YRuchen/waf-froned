@@ -74,6 +74,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
           title: '新建站点',
           icon: 'vi-ep:management',
           hidden: true,
+          hiddenHeader: true,
           showBack: true
         }
       },
@@ -85,6 +86,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
           title: '编辑站点',
           icon: 'vi-ep:management',
           hidden: true,
+          hiddenHeader: true,
           showBack: true
         }
       },

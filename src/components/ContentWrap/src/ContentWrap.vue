@@ -38,6 +38,7 @@ defineProps({
 .@{prefix-cls} {
   background-color: var(--app-content-bg-color);
   min-height: calc(100vh - var(--top-tool-height) - var(--top-heard-height));
+  padding: 0 var(--app-content-padding);
   .wrap-title {
     display: flex;
     align-items: center;

@@ -77,7 +77,7 @@ export default defineComponent({
       validator: (v: ComponentSize) => ['default', 'small', 'large'].includes(v)
     },
     fit: propTypes.bool.def(true),
-    showHeader: propTypes.bool.def(true),
+    hiddenHeader: propTypes.bool.def(true),
     highlightCurrentRow: propTypes.bool.def(false),
     currentRowKey: propTypes.oneOfType([Number, String]),
     // row-class-name, 类型为 (row: Recordable, rowIndex: number) => string | string
