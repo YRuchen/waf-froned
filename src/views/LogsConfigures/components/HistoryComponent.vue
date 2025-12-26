@@ -1,10 +1,15 @@
 <script setup lang="tsx">
 import { useTimeShortcuts } from './useTimeShortcuts'
 import { Shortcut, TimeList } from '@/api/logsConfigure/types'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, type PropType } from 'vue'
 
 const emit = defineEmits(['update:range'])
-
+const props = defineProps({
+  selectedRange: {
+    type: Array as unknown as PropType<[Date, Date]>,
+    default: () => [new Date(), new Date()]
+  }
+})
 // 创建响应式的历史记录列表
 const getDefaultHistory = (): TimeList[] => {
   return [
@@ -33,17 +38,24 @@ const selectedShortcut = ref<Shortcut | null>(null)
 const range = ref<[Date, Date]>([new Date(), new Date()])
 
 // 初始化选中项
-watch(
-  minuteShortcuts,
-  (shortcuts) => {
-    if (shortcuts.length > 0 && !selectedShortcut.value) {
-      selectedShortcut.value = shortcuts[0]
-      range.value = shortcuts[0].value()
-      emit('update:range', shortcuts[0].value(), shortcuts[0].text)
-    }
-  },
-  { immediate: true }
-)
+// watch(
+//   minuteShortcuts,
+//   (shortcuts) => {
+//     if (shortcuts.length > 0 && !selectedShortcut.value) {
+//       selectedShortcut.value = shortcuts[0]
+//       range.value = shortcuts[0].value()
+//       emit('update:range', shortcuts[0].value(), shortcuts[0].text)
+//     }
+//   },
+//   { immediate: true }
+// )
+/**比较时间 */
+const isSameRange = (a: [Date, Date], b: [Date, Date], epsilon = 10) => {
+  return (
+    Math.abs(a[0].getTime() - b[0].getTime()) <= epsilon &&
+    Math.abs(a[1].getTime() - b[1].getTime()) <= epsilon
+  )
+}
 
 const handleClick = (short) => {
   selectedShortcut.value = short
@@ -73,6 +85,13 @@ const handleDelete = (e, index) => {
 onMounted(() => {})
 </script>
 
+<style lang="less" scoped>
+.active {
+  background-color: var(--el-color-primary);
+  color: var(--el-color-white);
+  border-radius: var(--primary-raduis);
+}
+</style>
 <template>
   <div>
     <div class="grid">
@@ -84,7 +103,12 @@ onMounted(() => {})
             @click="handleClick(short)"
             class="cursor-pointer my-2 flex justify-between"
           >
-            <span>{{ short.text }}</span>
+            <span
+              class="p-2 h-full"
+              :class="isSameRange(props.selectedRange, short.value()) ? 'active' : ''"
+            >
+              {{ short.text }}
+            </span>
             <Icon icon="vi-ep:delete" @click.stop="(e) => handleDelete(e, index)" />
           </div>
         </div>

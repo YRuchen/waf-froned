@@ -258,12 +258,24 @@ const filterSchema = reactive<FormSchema[]>([
     }
   }
 ])
+// 搜索为空
+const filterEmpty = ref(false)
 // 搜索
 const handleSearch = (params: Params) => {
+  if (Object.values(params)[0].length) {
+    filterEmpty.value = true
+  } else {
+    filterEmpty.value = false
+  }
   searchParams.value = params
   getLogs()
 }
 const resetSearchParams = (data: Params) => {
+  if (Object.keys(data).length) {
+    filterEmpty.value = true
+  } else {
+    filterEmpty.value = false
+  }
   searchParams.value = data
   getLogs()
 }
@@ -271,12 +283,7 @@ const onExpand = () => {
   isShowFilter.value = !isShowFilter.value
 }
 const handleClick = () => {}
-/**获取域名 */
-const getTableList = async () => {
-  const res = await getTableListApi()
-  loading.value = false
-  options.value = res.data.domains
-}
+
 const selectedRange = ref<[Date, Date]>([new Date(), new Date()])
 const selectRangeText = ref('')
 /**渲染时间 */
@@ -391,50 +398,50 @@ const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d')!
 ctx.font = '14px Arial'
 
-watchEffect(() => {
-  if (!tableList.value?.length) {
-    columns.value = rawColumns.value.map((col) => ({
-      ...col,
-      width: 120 // 默认宽度
-    }))
-    return
-  }
+// watchEffect(() => {
+//   if (!tableList.value?.length) {
+//     columns.value = rawColumns.value.map((col) => ({
+//       ...col,
+//       width: 120 // 默认宽度
+//     }))
+//     return
+//   }
 
-  const padding = 32 // 单元格左右留白
-  const minWidth = 80
+//   const padding = 32 // 单元格左右留白
+//   const minWidth = 80
 
-  columns.value = rawColumns.value.map((col) => {
-    // ==== 计算表头宽度 ====
-    let maxWidth = ctx.measureText(col.label).width
+//   columns.value = rawColumns.value.map((col) => {
+//     // ==== 计算表头宽度 ====
+//     let maxWidth = ctx.measureText(col.label).width
 
-    // ==== 遍历所有行 ====
-    for (const row of tableList.value) {
-      const cellValue = row[col.prop]
+//     // ==== 遍历所有行 ====
+//     for (const row of tableList.value) {
+//       const cellValue = row[col.prop]
 
-      // 对象 → 转成字符串显示
-      let text = ''
-      if (typeof cellValue === 'object' && cellValue !== null) {
-        text = Object.entries(cellValue)
-          .map(([k, v]) => `${k}:${v}`)
-          .join(', ')
-      } else {
-        text = String(cellValue ?? '')
-      }
+//       // 对象 → 转成字符串显示
+//       let text = ''
+//       if (typeof cellValue === 'object' && cellValue !== null) {
+//         text = Object.entries(cellValue)
+//           .map(([k, v]) => `${k}:${v}`)
+//           .join(', ')
+//       } else {
+//         text = String(cellValue ?? '')
+//       }
 
-      const width = ctx.measureText(text).width
-      if (width > maxWidth) {
-        maxWidth = width
-      }
-    }
+//       const width = ctx.measureText(text).width
+//       if (width > maxWidth) {
+//         maxWidth = width
+//       }
+//     }
 
-    // ==== 加 padding 并保证最小宽度 ====
-    const computedWidth = Math.ceil(maxWidth + padding)
-    return {
-      ...col,
-      width: Math.max(minWidth, computedWidth)
-    }
-  })
-})
+//     // ==== 加 padding 并保证最小宽度 ====
+//     const computedWidth = Math.ceil(maxWidth + padding)
+//     return {
+//       ...col,
+//       width: Math.max(minWidth, computedWidth)
+//     }
+//   })
+// })
 
 onMounted(() => {
   getLogs()
@@ -522,13 +529,22 @@ onMounted(() => {
           <template #default>
             <ElTabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
               <ElTabPane label="相对时间" name="first">
-                <RelativeTimeComponent @update:range="handleRangeUpdate" />
+                <RelativeTimeComponent
+                  @update:range="handleRangeUpdate"
+                  :selectedRange="selectedRange"
+                />
               </ElTabPane>
               <ElTabPane label="绝对时间" name="second">
-                <AbsoluteTimeComponent @update:range="handleRangeUpdate" />
+                <AbsoluteTimeComponent
+                  @update:range="handleRangeUpdate"
+                  :selectedRange="selectedRange"
+                />
               </ElTabPane>
               <ElTabPane label="历史记录" name="third">
-                <HistoryComponent @update:range="handleRangeUpdate" />
+                <HistoryComponent
+                  @update:range="handleRangeUpdate"
+                  :selectedRange="selectedRange"
+                />
               </ElTabPane>
             </ElTabs>
           </template>
@@ -567,61 +583,64 @@ onMounted(() => {
       </div>
     </div>
     <div class="overflow-auto h-70vh mt-4" ref="scrollContainer" v-if="!isTable">
-      <div v-for="(item, index) in tableList" :key="index" class="m-2">
-        <div
-          :id="`log-item-${index}`"
-          class="grid grid-cols-[1%_5%_70%] gap-5"
-          :class="currentIndex === index ? 'bg-gray-100 border border-blue-300' : ''"
-          @mouseenter="currentIndex = index"
-        >
-          <p>{{ index + 1 }}</p>
-          <div class="break-words whitespace-normal">
-            {{ item.TimeFriendly }}
-          </div>
-          <div>
+      <template v-if="tableList.length">
+        <div v-for="(item, index) in tableList" :key="index" class="m-2">
+          <div
+            :id="`log-item-${index}`"
+            class="grid grid-cols-[1%_5%_70%] gap-5"
+            :class="currentIndex === index ? 'bg-gray-100 border border-blue-300' : ''"
+            @mouseenter="currentIndex = index"
+          >
+            <p>{{ index + 1 }}</p>
+            <div class="break-words whitespace-normal">
+              {{ item.TimeFriendly }}
+            </div>
             <div>
-              <ElButton link type="primary">
-                <Icon icon="vi-ep:copy-document" @click="handleCopy(item)"></Icon>
-              </ElButton>
-              <ElButton
-                link
-                type="primary"
-                class="!border !border-gray-300"
-                @click="() => nextItem(index)"
+              <div>
+                <ElButton link type="primary">
+                  <Icon icon="vi-ep:copy-document" @click="handleCopy(item)"></Icon>
+                </ElButton>
+                <ElButton
+                  link
+                  type="primary"
+                  class="!border !border-gray-300"
+                  @click="() => nextItem(index)"
+                >
+                  <Icon icon="vi-ep:arrow-down"></Icon>
+                </ElButton>
+                <ElButton
+                  link
+                  type="primary"
+                  class="!border !border-gray-300"
+                  @click="() => prevItem(index)"
+                >
+                  <Icon icon="vi-ep:arrow-up"></Icon>
+                </ElButton>
+              </div>
+              <div
+                v-for="(value, key) in displayList(item)"
+                :key="key"
+                class="text-sm text-gray-600 py-1"
+                :class="item.display ? 'block' : 'hidden'"
               >
-                <Icon icon="vi-ep:arrow-down"></Icon>
-              </ElButton>
-              <ElButton
-                link
-                type="primary"
-                class="!border !border-gray-300"
-                @click="() => prevItem(index)"
-              >
-                <Icon icon="vi-ep:arrow-up"></Icon>
-              </ElButton>
+                <ElTag type="info" color="rgb(197 197 199)">
+                  <strong>{{ key }}:</strong>
+                </ElTag>
+                {{ value }}
+              </div>
+              <!-- <ElCollapse v-model="activeNames" :before-collapse="beforeCollapse">
+                <ElCollapseItem :name="index">
+                  <template #icon>
+                    <span @click.stop></span>
+                  </template>
+                  <template #title> </template>
+                </ElCollapseItem>
+              </ElCollapse> -->
             </div>
-            <div
-              v-for="(value, key) in displayList(item)"
-              :key="key"
-              class="text-sm text-gray-600 py-1"
-              :class="item.display ? 'block' : 'hidden'"
-            >
-              <ElTag type="info" color="rgb(197 197 199)">
-                <strong>{{ key }}:</strong>
-              </ElTag>
-              {{ value }}
-            </div>
-            <!-- <ElCollapse v-model="activeNames" :before-collapse="beforeCollapse">
-              <ElCollapseItem :name="index">
-                <template #icon>
-                  <span @click.stop></span>
-                </template>
-                <template #title> </template>
-              </ElCollapseItem>
-            </ElCollapse> -->
           </div>
         </div>
-      </div>
+      </template>
+      <ElEmpty :description="filterEmpty ? '未找到符合条件的数据' : '暂无数据'" v-else> </ElEmpty>
     </div>
     <div class="overflow-hidden h-68vh mt-4" v-else>
       <ElTable :data="tableList" border height="96%" v-if="tableList.length">
@@ -632,6 +651,7 @@ onMounted(() => {
           :prop="col.prop"
           :label="col.label"
           :width="col.width"
+          :tooltip-effect="true"
         >
           <template #default="scope">
             <span>{{ formatValue(scope.row[col.prop]) }}</span>
@@ -641,7 +661,7 @@ onMounted(() => {
       <ElTable :data="tableList" border height="96%" v-else>
         <ElTableColumn label="时间" align="center"> </ElTableColumn>
         <template #empty>
-          <ElEmpty> </ElEmpty>
+          <ElEmpty :description="filterEmpty ? '未找到符合条件的数据' : '暂无数据'"> </ElEmpty>
         </template>
       </ElTable>
     </div>

@@ -62,7 +62,6 @@ export const useTimeShortcuts = (list: TimeList[] | Ref<TimeList[]>, exactHour =
 
     return makeRangeByMs(totalMs)
   }
-
   return {
     fixedShortcuts,
     customDays,

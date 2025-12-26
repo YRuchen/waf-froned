@@ -25,7 +25,7 @@ import { CircleCloseFilled } from '@element-plus/icons-vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useIcon } from '@/hooks/web/useIcon'
 import { serverGroupItem } from '@/api/websiteSettingPanel/types'
-import { ro } from 'element-plus/es/locale'
+
 const props = defineProps({
   originList: {
     type: Array as PropType<serverGroupItem[]>,

@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, type PropType } from 'vue'
 import { ElDatePicker } from 'element-plus'
 
 const emit = defineEmits(['update:range'])
+const props = defineProps({
+  selectedRange: {
+    type: Array as unknown as PropType<[Date, Date]>,
+    default: () => [new Date(), new Date()]
+  }
+})
 const range = ref<[string, string] | ''>('')
 
 watch(range, (val) => {
@@ -10,6 +16,13 @@ watch(range, (val) => {
 })
 </script>
 
+<style lang="less" scoped>
+.active {
+  background-color: var(--el-color-primary);
+  color: var(--el-color-white);
+  border-radius: var(--primary-raduis);
+}
+</style>
 <template>
   <ElDatePicker
     v-model="range"

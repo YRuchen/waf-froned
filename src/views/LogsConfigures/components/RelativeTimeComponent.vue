@@ -1,12 +1,18 @@
 <script setup lang="tsx">
-import { useTimeShortcuts } from './useTimeShortcuts'
 import { Shortcut, TimeList } from '@/api/logsConfigure/types'
-import { ref, watch, reactive, nextTick, onMounted, computed } from 'vue'
 import { formatToDateTime } from '@/utils/dateUtil'
 import { ElSwitch } from 'element-plus'
+import { computed, onMounted, ref, type PropType } from 'vue'
+import { useTimeShortcuts } from './useTimeShortcuts'
 
 const emit = defineEmits(['update:range'])
-const exactHour = ref(false)
+const props = defineProps({
+  selectedRange: {
+    type: Array as unknown as PropType<[Date, Date]>,
+    default: () => [new Date(), new Date()]
+  }
+})
+const exactHour = ref(true)
 const minuteList: TimeList[] = [
   { text: '近1分钟', msOffset: 1 * 60 * 1000 },
   { text: '近5分钟', msOffset: 5 * 60 * 1000 },
@@ -49,17 +55,28 @@ const secondShortcuts = computed(() => {
 })
 const selectedShortcut = ref<Shortcut | null>(null)
 const range = ref<[Date, Date]>([new Date(), new Date()])
+/**比较时间 */
+const isSameRange = (a: [Date, Date], b: [Date, Date], epsilon = 10) => {
+  return (
+    Math.abs(a[0].getTime() - b[0].getTime()) <= epsilon &&
+    Math.abs(a[1].getTime() - b[1].getTime()) <= epsilon
+  )
+}
+
+const historyTimeShortcurs = ref<any[]>([])
 const handleClick = (short) => {
+  const valueRange = short.value()
+  historyTimeShortcurs.value.push({
+    text: short.text,
+    value: valueRange
+  })
   selectedShortcut.value = short
   range.value = short.value()
   emit('update:range', short.value(), short.text)
-}
 
-// watch(exactHour, () => {
-//   if (selectedShortcut.value) {
-//     range.value = selectedShortcut.value.value()
-//   }
-// })
+  // 更新 localStorage
+  localStorage.setItem('historyTimeShortcurs', JSON.stringify(historyTimeShortcurs.value))
+}
 
 onMounted(() => {
   if (dayShortcuts.value && dayShortcuts.value.length > 2) {
@@ -67,6 +84,13 @@ onMounted(() => {
   }
 })
 </script>
+<style lang="less" scoped>
+.active {
+  background-color: var(--el-color-primary);
+  color: var(--el-color-white);
+  border-radius: var(--primary-raduis);
+}
+</style>
 
 <template>
   <div>
@@ -87,9 +111,18 @@ onMounted(() => {
             v-for="(short, shortIndex) in item || []"
             :key="short?.text || `${index}-${shortIndex}`"
           >
-            <span v-if="short" @click="handleClick(short)" class="cursor-pointer my-1">
-              {{ short.text }}
-            </span>
+            <div
+              v-if="short"
+              @click="handleClick(short)"
+              class="cursor-pointer my-1 h-30px line-height-30px"
+            >
+              <span
+                class="p-2 h-full"
+                :class="isSameRange(props.selectedRange, short.value()) ? 'active' : ''"
+              >
+                {{ short.text }}
+              </span>
+            </div>
           </template>
         </div>
       </div>
@@ -103,9 +136,18 @@ onMounted(() => {
             v-for="(short, shortIndex) in item || []"
             :key="short?.text || `${index}-${shortIndex}`"
           >
-            <span v-if="short" @click="handleClick(short)" class="cursor-pointer my-1">
-              {{ short.text }}
-            </span>
+            <div
+              v-if="short"
+              @click="handleClick(short)"
+              class="cursor-pointer my-1 h-30px line-height-30px"
+            >
+              <span
+                class="p-2 h-full"
+                :class="isSameRange(props.selectedRange, short.value()) ? 'active' : ''"
+              >
+                {{ short.text }}
+              </span>
+            </div>
           </template>
         </div>
       </div>
