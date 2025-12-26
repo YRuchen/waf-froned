@@ -353,7 +353,7 @@ const action = (name: string, row?: TableItem, index?: number) => {
     originListItem.value.servers.push({
       address: '',
       port: '',
-      weight: '',
+      weight: '0',
       protol: ''
     })
   }

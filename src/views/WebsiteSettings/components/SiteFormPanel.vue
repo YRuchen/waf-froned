@@ -181,7 +181,7 @@ const ruleForm = reactive<RuleForm>({
         {
           address: '',
           port: '80',
-          weight: '',
+          weight: '0',
           protol: ''
         }
       ],

@@ -75,7 +75,7 @@ const addDict = (index) => {
       {
         address: '',
         port: '',
-        weight: '',
+        weight: '0',
         protol: ''
       }
     ],
