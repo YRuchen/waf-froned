@@ -66,6 +66,10 @@
 
   /** raduis*/
   --primary-raduis: 0.5rem;
+
+  --lager-raduis: 1rem;
+
+  --middle-raduis: 0.75rem;
 }
 
 .dark {

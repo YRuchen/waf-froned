@@ -142,9 +142,14 @@ const columns = reactive<TableColumn[]>([
       default: (data: any) => {
         // const row = data.row
         return (
-          <div class="grid grid-cols-3 mx-16 mt-4 mb-8">
+          <div class="grid grid-cols-3 mx-16">
             {configureText.map((items) => (
-              <ElDescriptions title={items.title} column={1}>
+              <ElDescriptions
+                column={1}
+                v-slots={{
+                  title: () => <span class="text-14px">{items.title}</span>
+                }}
+              >
                 {items.descriptionsItem.map((item) => (
                   <ElDescriptionsItem label={item.label}>
                     {accessConfiguration(item.prop, data.row)?.map((label) =>
