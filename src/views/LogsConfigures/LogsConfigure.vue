@@ -457,7 +457,7 @@ onMounted(() => {
     border-radius: var(--lager-raduis);
     border: 1px solid #ededed;
     overflow: auto;
-    height: 70vh;
+    height: 68vh;
     margin-top: 1rem;
     .log-item {
       padding: 12px;

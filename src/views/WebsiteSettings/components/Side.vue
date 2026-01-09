@@ -158,6 +158,8 @@ defineExpose({ activeGroupId })
   border: 1px solid #ededed;
   border-right: none;
   overflow-x: hidden;
+  border-top-left-radius: var(--primary-raduis);
+  border-bottom-left-radius: var(--primary-raduis);
 }
 .scrollbar {
   width: 100%;

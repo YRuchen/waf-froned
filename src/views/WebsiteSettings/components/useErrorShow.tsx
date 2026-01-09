@@ -1,28 +1,61 @@
 import { ref, computed } from 'vue'
 
+export interface TableError {
+  rowIndex: number
+  field: string
+  message: string
+  priority: number
+}
+
 export function useErrorShow() {
   const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
   const ipRegex =
     /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 
-  interface TableError {
-    rowIndex: number
-    field: string
-    message: string
-    priority: number
+  const tableErrors = ref<TableError[]>([])
+
+  // 第一个错误信息（用于显示提示）
+  const firstError = computed(() => {
+    if (tableErrors.value.length === 0) return ''
+    return tableErrors.value.sort((a, b) => a.priority - b.priority)[0].message
+  })
+
+  // 获取指定行的错误信息
+  const getRowErrors = (rowIndex: number): TableError[] => {
+    return tableErrors.value.filter((error) => error.rowIndex === rowIndex)
   }
 
-  const tableErrors = ref<TableError[]>([])
-  const firstError = computed(
-    () => tableErrors.value.sort((a, b) => a.priority - b.priority)[0].message
-  )
+  // 判断指定行是否有错误
+  const hasRowError = (rowIndex: number): boolean => {
+    return tableErrors.value.some((error) => error.rowIndex === rowIndex)
+  }
 
-  const showErrorTip = (servers: any) => {
+  // 判断指定行和字段是否有错误
+  const hasFieldError = (rowIndex: number, field: string): boolean => {
+    return tableErrors.value.some((error) => error.rowIndex === rowIndex && error.field === field)
+  }
+
+  // 获取所有行的错误信息（按行索引分组）
+  const getErrorsByRow = computed(() => {
+    const errorsByRow: Record<number, TableError[]> = {}
+    tableErrors.value.forEach((error) => {
+      if (!errorsByRow[error.rowIndex]) {
+        errorsByRow[error.rowIndex] = []
+      }
+      errorsByRow[error.rowIndex].push(error)
+    })
+    return errorsByRow
+  })
+
+  const validateServers = (servers: any[]): TableError[] => {
+    if (!servers || servers.length === 0) return []
+
     const nonEmptyRegions = servers.filter((item) => item.address)
     const allDomains = nonEmptyRegions.every((item) => domainRegex.test(item.address))
     const allIps = nonEmptyRegions.every((item) => ipRegex.test(item.address))
     const addresses = servers.map((item) => item.address)
     const isAllDifferent = new Set(addresses).size === addresses.length
+
     const FIELD_RULES = {
       protol: [
         {
@@ -86,7 +119,7 @@ export function useErrorShow() {
             errors.push({
               rowIndex,
               field,
-              message: `第 ${rowIndex + 1} 行 ${rule.message}`,
+              message: rule.message,
               priority: rule.priority
             })
             break
@@ -95,14 +128,23 @@ export function useErrorShow() {
       })
     })
 
-    tableErrors.value = errors
-    if (Object.keys(tableErrors.value).length) {
-      return firstError.value
-    } else {
-      return ''
-    }
+    return errors
   }
+
+  const showErrorTip = (servers: any[]) => {
+    const errors = validateServers(servers)
+    tableErrors.value = errors
+    return firstError.value
+  }
+
   return {
-    showErrorTip
+    tableErrors,
+    firstError,
+    getRowErrors,
+    hasRowError,
+    hasFieldError,
+    getErrorsByRow,
+    showErrorTip,
+    validateServers
   }
 }

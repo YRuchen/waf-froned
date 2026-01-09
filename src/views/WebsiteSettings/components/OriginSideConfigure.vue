@@ -37,151 +37,166 @@ const { t } = useI18n()
 const copyIcon = useIcon({ icon: 'vi-ep:copy-document' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
 
-const columns: TableColumn[] = [
-  {
-    field: 'protol',
-    label: '源站协议',
-    width: '130',
-    slots: {
-      default: ({ row, $index }) => {
-        return (
-          <ElFormItem
-            prop={`${$index}.protol`}
-            rules={[{ required: true, validator: validateName, trigger: 'change' }]}
-          >
-            <ElSelect v-model={row.protol} onChange={handleChangeProtol}>
-              <ElOption label="HTTP" value="1" />
-              <ElOption label="HTTPS" value="2" />
-            </ElSelect>
-          </ElFormItem>
-        )
+// 使用 useErrorShow 进行统一校验（需要在 columns 之前定义）
+const { showErrorTip, hasRowError, hasFieldError, validateServers, tableErrors } = useErrorShow()
+const errorMessage = ref('')
+
+// columns 需要响应 tableErrors 的变化，所以使用 computed
+const columns = computed<TableColumn[]>(() => {
+  // 访问 tableErrors.value 以确保响应式依赖
+  void tableErrors.value
+  return [
+    {
+      field: 'protol',
+      label: '源站协议',
+      width: '130',
+      slots: {
+        default: ({ row, $index }) => {
+          const hasError = hasFieldError($index, 'protol')
+          return (
+            <ElFormItem prop={`${$index}.protol`} class={hasError ? 'is-error' : ''}>
+              <ElSelect
+                v-model={row.protol}
+                onChange={handleChangeProtol}
+                class={hasError ? 'error-input' : ''}
+              >
+                <ElOption label="HTTP" value="1" />
+                <ElOption label="HTTPS" value="2" />
+              </ElSelect>
+            </ElFormItem>
+          )
+        }
       }
-    }
-  },
-  {
-    field: 'address',
-    label: '源站地址',
-    minWidth: '230',
-    slots: {
-      default: ({ row, $index }) => {
-        return (
-          <ElFormItem
-            prop={`${$index}.address`}
-            rules={[{ required: true, validator: validateRegion, trigger: 'blur' }]}
-          >
-            <ElInput v-model={row.address} placeholder="请填写源站地址" />
-          </ElFormItem>
-        )
-      }
-    }
-  },
-  {
-    field: 'port',
-    label: '源站端口',
-    minWidth: '120',
-    slots: {
-      default: ({ row, $index }) => {
-        return (
-          <ElFormItem
-            prop={`${$index}.port`}
-            rules={[{ required: true, validator: validateCount, trigger: 'blur' }]}
-          >
-            <ElInput
-              v-model={row.port}
-              placeholder="请填写源站端口"
-              onInput={(value: string) => {
-                row.port = value === '' ? undefined : Number(value)
-              }}
-            />
-          </ElFormItem>
-        )
-      }
-    }
-  },
-  {
-    field: 'weight',
-    label: '权重',
-    minWidth: '120',
-    slots: {
-      default: ({ row, $index }) => {
-        return (
-          <ElFormItem
-            prop={`${$index}.weight`}
-            rules={[{ required: true, validator: validatDesc, trigger: 'blur' }]}
-          >
-            <div class="flex flex-items-center">
+    },
+    {
+      field: 'address',
+      label: '源站地址',
+      minWidth: '230',
+      slots: {
+        default: ({ row, $index }) => {
+          const hasError = hasFieldError($index, 'address')
+          return (
+            <ElFormItem prop={`${$index}.address`} class={hasError ? 'is-error' : ''}>
               <ElInput
-                v-model={row.weight}
-                placeholder="请填写权重"
+                v-model={row.address}
+                placeholder="请填写源站地址"
+                class={hasError ? 'error-input' : ''}
+              />
+            </ElFormItem>
+          )
+        }
+      }
+    },
+    {
+      field: 'port',
+      label: '源站端口',
+      minWidth: '120',
+      slots: {
+        default: ({ row, $index }) => {
+          const hasError = hasFieldError($index, 'port')
+          return (
+            <ElFormItem prop={`${$index}.port`} class={hasError ? 'is-error' : ''}>
+              <ElInput
+                v-model={row.port}
+                placeholder="请填写源站端口"
+                class={hasError ? 'error-input' : ''}
                 onInput={(value: string) => {
-                  let val = Number(value)
-                  if (val < 0) val = 0
-                  else if (val > 100) val = 100
-                  row.weight = val
+                  row.port = value === '' ? undefined : Number(value)
                 }}
               />
-            </div>
-          </ElFormItem>
-        )
-      },
-      header: ({ column }) => (
-        <div class="flex items-center gap-4px">
-          <span>{column.label}</span>
-          <ElTooltip
-            effect="dark"
-            content="表示后端服务器收到请求的概率，支持设置 1-100 的任意整数，源站权重之和可以大于 100"
-            placement="top"
-            popper-style="max-width: 300px; white-space: normal;"
-          >
-            <Icon icon="vi-ep:question-filled" class="ml-1 !text-[var(--el-text-color-regular)]" />
-          </ElTooltip>
-        </div>
-      )
-    }
-  },
-  {
-    field: 'action',
-    label: t('tableDemo.action'),
-    slots: {
-      default: ({ row, $index }) => {
-        const deleteDisabled = originListItem.value.servers.length === 1
-        const deleteButton = (
-          <BaseButton
-            link
-            icon={deleteIcon}
-            disabled={deleteDisabled}
-            onClick={() => action('delete', row, $index)}
-          />
-        )
-
-        return (
-          <ElFormItem>
-            <div class="flex">
-              <BaseButton
-                link
-                icon={copyIcon}
-                disabled={allcount.value == 0}
-                onClick={() => action('edit', row, $index)}
-              ></BaseButton>
-              {deleteDisabled ? (
-                <ElTooltip
-                  effect="dark"
-                  content="至少保留一条"
-                  placement="top"
-                  popper-style="max-width: 300px; white-space: normal;"
-                >
-                  {deleteButton}
-                </ElTooltip>
-              ) : (
-                deleteButton
-              )}
-            </div>
-          </ElFormItem>
+            </ElFormItem>
+          )
+        }
+      }
+    },
+    {
+      field: 'weight',
+      label: '权重',
+      minWidth: '120',
+      slots: {
+        default: ({ row, $index }) => {
+          const hasError = hasFieldError($index, 'weight')
+          return (
+            <ElFormItem prop={`${$index}.weight`} class={hasError ? 'is-error' : ''}>
+              <div class="flex flex-items-center">
+                <ElInput
+                  v-model={row.weight}
+                  placeholder="请填写权重"
+                  class={hasError ? 'error-input' : ''}
+                  onInput={(value: string) => {
+                    let val = Number(value)
+                    if (val < 0) val = 0
+                    else if (val > 100) val = 100
+                    row.weight = val
+                  }}
+                />
+              </div>
+            </ElFormItem>
+          )
+        },
+        header: ({ column }) => (
+          <div class="flex items-center gap-4px">
+            <span>{column.label}</span>
+            <ElTooltip
+              effect="dark"
+              content="表示后端服务器收到请求的概率，支持设置 1-100 的任意整数，源站权重之和可以大于 100"
+              placement="top"
+              popper-style="max-width: 300px; white-space: normal;"
+            >
+              <Icon
+                icon="vi-ep:question-filled"
+                class="ml-1 !text-[var(--el-text-color-regular)]"
+              />
+            </ElTooltip>
+          </div>
         )
       }
+    },
+    {
+      field: 'action',
+      label: t('tableDemo.action'),
+      slots: {
+        default: ({ row, $index }) => {
+          const deleteDisabled = originListItem.value.servers.length === 1
+          const deleteButton = (
+            <BaseButton
+              link
+              icon={deleteIcon}
+              disabled={deleteDisabled}
+              onClick={() => action('delete', row, $index)}
+              class="!m-0"
+            />
+          )
+
+          return (
+            <ElFormItem>
+              <div class="flex">
+                <BaseButton
+                  link
+                  icon={copyIcon}
+                  disabled={allcount.value == 0}
+                  onClick={() => action('edit', row, $index)}
+                ></BaseButton>
+                {deleteDisabled ? (
+                  <ElTooltip
+                    effect="dark"
+                    content="至少保留一条"
+                    placement="top"
+                    popper-style="max-width: 300px; white-space: normal;"
+                  >
+                    {deleteButton}
+                  </ElTooltip>
+                ) : (
+                  deleteButton
+                )}
+              </div>
+            </ElFormItem>
+          )
+        }
+      }
     }
-  }
-]
+  ]
+})
 
 const props = defineProps({
   originList: {
@@ -211,131 +226,36 @@ const originListItem = ref<serverGroupItem>({
   servers: []
 })
 const { httpPorts, httpsPorts, originList } = toRefs(props)
-const showError = ref(0)
-const showErrorList = ref([
-  { key: 1, label: '源站地址不能为空' },
-  { key: 2, label: '请输入源站协议' },
-  { key: 3, label: '源站地址格式不对，请输入正确的域名地址或IP地址' },
-  { key: 4, label: '源站地址不支持混合回源' },
-  { key: 5, label: '源站端口不能为空' },
-  { key: 6, label: '源站权重不能为空' },
-  { key: 7, label: '后端服务器组重复' }
-])
 const allUsedPorts = ref<string[]>([])
+
 const handleChangeProtol = (value: string) => {
   originListItem.value.servers.map(
     (item) => ((item.protol = value), (item.port = value == '1' ? '80' : '443'))
   )
   originListItem.value.protocol = value == '1' ? 'HTTP' : 'HTTPS'
 }
-const validateName = (rule: any, value: any, callback: any) => {
-  if (value === '') {
-    showError.value = 2
-    setTimeout(() => {
-      callback(new Error('请输入源站协议'))
-    })
-  } else {
-    showError.value = 0
-    callback()
-  }
-}
-const validateRegion = (rule: any, value: any, callback: any) => {
-  const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
-  const ipRegex =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 
-  if (!value) {
-    // 源站地址不能为空
-    return callback(new Error(''))
-  }
-
-  const isDomain = domainRegex.test(value)
-  const isIp = ipRegex.test(value)
-
-  if (!isDomain && !isIp) {
-    setTimeout(() => {
-      showError.value = 3
-    })
-    return callback(new Error(''))
-  }
-
-  const nonEmptyRegions = originListItem.value.servers.filter((item) => item.address)
-
-  const allDomains = nonEmptyRegions.every((item) => domainRegex.test(item.address))
-  const allIps = nonEmptyRegions.every((item) => ipRegex.test(item.address))
-
-  const isSameAddress = new Set(originListItem.value.servers.map((item) => item.address)).size == 1
-
-  if ((isDomain && !allDomains) || (isIp && !allIps)) {
-    setTimeout(() => {
-      showError.value = 4
-    })
-    return callback(new Error(''))
-  }
-  if (originListItem.value.servers.length != 1 && isSameAddress) {
-    setTimeout(() => {
-      showError.value = 7
-    })
-    return callback(new Error(''))
-  }
-
-  showError.value = 0
-  return callback()
-}
-const validateCount = (rule: any, value: any, callback: any) => {
-  if (!value || value == '') {
-    // 源站端口不能为空
-    callback(new Error(''))
-  } else {
-    callback()
-  }
-}
-const validatDesc = (rule: any, value: any, callback: any) => {
-  if (value === '') {
-    // 源站权重不能为空
-    callback(new Error(''))
-  } else {
-    callback()
-  }
-}
-const isServerValid = (server: any): boolean => {
-  // 校验协议
-  if (!server.protol || server.protol === '') return false
-
-  // 校验地址
-  const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
-  const ipRegex =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
-
-  if (!server.address || !(domainRegex.test(server.address) || ipRegex.test(server.address)))
-    return false
-
-  // 校验端口
-  if (!server.port || server.port === '') return false
-
-  // 校验权重
-  if (!server.weight || server.weight === '') return false
-
-  return true
+// 行样式：错误行标红
+const getRowClassName = (_row: any, rowIndex: number) => {
+  return hasRowError(rowIndex) ? 'error-row' : ''
 }
 
-/** 优化后的提交校验函数，校验所有分组的服务器数据 */
+/** 提交校验函数，使用 useErrorShow 统一校验 */
 const submitForm = (): boolean => {
   let valid = true
 
   // 遍历所有分组
   for (const group of originList.value) {
-    for (const server of group.servers) {
-      if (!isServerValid(server)) {
-        ElMessage({
-          message: `分组 "${group.groupName}" 中存在无效的服务器配置，请检查后重新提交。`,
-          type: 'warning'
-        })
-        valid = false
-        break
-      }
+    const errors = validateServers(group.servers)
+
+    if (errors.length > 0) {
+      ElMessage({
+        message: `分组 "${group.groupName}" 中存在无效的服务器配置，请检查后重新提交。`,
+        type: 'warning'
+      })
+      valid = false
+      break
     }
-    if (!valid) break
   }
 
   return valid
@@ -397,7 +317,7 @@ const sideRef = ref<InstanceType<typeof Side>>()
 // 操作分组的时候，右侧table也跟着改变
 const getTableList = async (data: serverGroupItem) => {
   ruleFormRef.value?.clearValidate()
-  showError.value = 0
+  errorMessage.value = ''
   originListItem.value = data
   originListItem.value.servers = data.servers.map((item) => ({
     ...item,
@@ -422,7 +342,7 @@ const selectPort = (isCheck, port) => {
     selectedHttp.value = selectedHttp.value.filter((p) => p !== port)
   }
 }
-const handleChange = (val: string[]) => {
+const handleChange = () => {
   originListItem.value.accessPorts = JSON.parse(JSON.stringify(checkList.value))
 }
 /**全选 */
@@ -443,23 +363,18 @@ watch(
   () => sideRef.value?.activeGroupId,
   () => {
     nextTick(() => {
-      // 对每一行触发验证
-      ruleFormRef.value?.validateField()
+      // 重新校验当前分组
+      errorMessage.value = showErrorTip(originListItem.value.servers)
     })
   },
   { deep: true }
 )
-// table校验
-const { showErrorTip } = useErrorShow()
-const aaaaa = ref()
+
+// 监听服务器数据变化，实时校验
 watch(
-  () => originListItem.value,
-  (newVal) => {
-    aaaaa.value = showErrorTip(newVal.servers)
-    nextTick(() => {
-      // 对每一行触发验证
-      ruleFormRef.value?.validateField()
-    })
+  () => originListItem.value.servers,
+  () => {
+    errorMessage.value = showErrorTip(originListItem.value.servers)
   },
   { deep: true }
 )
@@ -476,16 +391,30 @@ defineExpose({
   getTableList
 })
 </script>
-<style></style>
+<style lang="less" scoped>
+.content-wrap {
+  border-top-right-radius: var(--primary-raduis);
+  border-bottom-right-radius: var(--primary-raduis);
+  padding-left: 20px;
+  padding-right: 20px;
+  border: 1px solid #ebeef5;
+}
+.grounp-content {
+  border-radius: var(--primary-raduis);
+  padding: 0.5rem;
+  background-color: #ededed;
+  margin-bottom: 1rem;
+}
+</style>
 <template>
   <div class="grid grid-cols-[15%_83%] h-530px">
     <Side @change="getTableList" v-model:originList="originList" ref="sideRef" />
-    <div class="p-x-20px border-1 border-solid border-#ebeef5">
-      <div class="m-b-2">
+    <div class="content-wrap">
+      <div class="my-2">
         <ElTag type="info" effect="dark" class="m-r-2">如果</ElTag>
         <span>接入端口输入</span>
       </div>
-      <div class="p-2 bg-[#ededed] m-b-6" v-if="originListItem.groupName === '默认分组'">
+      <div class="grounp-content" v-if="originListItem.groupName === '默认分组'">
         <p>全部端口</p>
         <p class="color-[#7e7777]">
           无需设置生效的接入端口范围，默认应用到所有未自定义配置回源规则的接入端口上
@@ -565,15 +494,13 @@ defineExpose({
         <Table
           :columns="columns"
           :data="originListItem.servers"
+          :row-class-name="getRowClassName"
           max-height="330"
           class="table-wrap"
         />
-        <span v-if="aaaaa" class="text-[var(--el-color-danger)]">
-          {{ aaaaa }}
+        <span v-if="errorMessage" class="text-[var(--el-color-danger)]">
+          {{ errorMessage }}
         </span>
-        <!-- <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
-          {{ showErrorList.find((item) => item.key == showError)?.label }}
-        </span> -->
       </ElForm>
       <div class="mt-3">
         <ElButton type="primary" plain size="small" @click="action('add')" v-if="allcount > 0">
@@ -589,6 +516,43 @@ defineExpose({
 .table-wrap {
   .el-form-item {
     margin: 0 !important;
+  }
+
+  // 错误行标红
+  :deep(.error-row) {
+    background-color: var(--el-color-danger-light-9) !important;
+
+    &:hover {
+      background-color: var(--el-color-danger-light-8) !important;
+    }
+  }
+
+  // 错误输入框标红
+  :deep(.error-input) {
+    .el-input__wrapper {
+      box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
+    }
+
+    &.is-focus .el-input__wrapper {
+      box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
+    }
+  }
+
+  :deep(.el-select.error-input) {
+    .el-input__wrapper {
+      box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
+    }
+
+    &.is-focus .el-input__wrapper {
+      box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
+    }
+  }
+
+  // ElFormItem 错误状态
+  :deep(.el-form-item.is-error) {
+    .el-input__wrapper {
+      box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
+    }
   }
 }
 </style>

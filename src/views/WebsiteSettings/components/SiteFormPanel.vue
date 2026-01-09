@@ -927,5 +927,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
+  border-radius: var(--lager-raduis);
 }
 </style>

@@ -29,7 +29,7 @@ const breadcrumbs = computed(() => {
 <template>
   <div
     v-if="props.showHeader || !currentRoute.meta?.hiddenHeader"
-    class="font-size-5 m-[var(--app-content-padding)]"
+    class="font-size-5 font-bold m-[var(--app-content-padding)]"
     :class="currentRoute.meta?.showBack ? 'cursor-pointer' : ''"
   >
     <!-- <span class="flex items-center">
@@ -38,7 +38,7 @@ const breadcrumbs = computed(() => {
     </span> -->
     <ElPageHeader v-if="currentRoute.meta?.showBack" @back="back">
       <template #title>
-        <span class="font-size-4"> 返回 </span>
+        <span class="text-lg"> 返回 </span>
       </template>
       <template #content>
         <ElBreadcrumb separator="/">
