@@ -572,12 +572,17 @@ export default defineComponent({
             </>
           )}
           {unref(getProps).pagination ? (
-            <ElPagination
-              v-model:pageSize={pageSizeRef.value}
-              v-model:currentPage={currentPageRef.value}
-              class="mt-10px"
-              {...unref(pagination)}
-            ></ElPagination>
+            <div class="flex justify-between items-center ">
+              {getSlot(slots, 'before-pagination') && (
+                <div>{getSlot(slots, 'before-pagination')}</div>
+              )}
+              <ElPagination
+                v-model:pageSize={pageSizeRef.value}
+                v-model:currentPage={currentPageRef.value}
+                class="mt-10px"
+                {...unref(pagination)}
+              ></ElPagination>
+            </div>
           ) : undefined}
         </div>
       )

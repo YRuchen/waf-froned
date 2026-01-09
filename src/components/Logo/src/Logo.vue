@@ -58,10 +58,10 @@ watch(
       ]"
       to="/"
     >
-      <img
+      <!-- <img
         src="@/assets/imgs/logo.png"
         class="w-[calc(var(--logo-height)-10px)] h-[calc(var(--logo-height)-10px)]"
-      />
+      /> --><span class="material-symbols-outlined" style="color: #1664ff"> network_locked </span>
       <div
         v-if="show"
         :class="[

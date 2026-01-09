@@ -398,60 +398,75 @@ const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d')!
 ctx.font = '14px Arial'
 
-// watchEffect(() => {
-//   if (!tableList.value?.length) {
-//     columns.value = rawColumns.value.map((col) => ({
-//       ...col,
-//       width: 120 // 默认宽度
-//     }))
-//     return
-//   }
+watchEffect(() => {
+  if (!tableList.value?.length) {
+    columns.value = rawColumns.value.map((col) => ({
+      ...col,
+      width: 120 // 默认宽度
+    }))
+    return
+  }
 
-//   const padding = 32 // 单元格左右留白
-//   const minWidth = 80
+  const padding = 32 // 单元格左右留白
+  const minWidth = 180
 
-//   columns.value = rawColumns.value.map((col) => {
-//     // ==== 计算表头宽度 ====
-//     let maxWidth = ctx.measureText(col.label).width
+  columns.value = rawColumns.value.map((col) => {
+    // ==== 计算表头宽度 ====
+    let maxWidth = ctx.measureText(col.label).width
 
-//     // ==== 遍历所有行 ====
-//     for (const row of tableList.value) {
-//       const cellValue = row[col.prop]
+    // ==== 遍历所有行 ====
+    for (const row of tableList.value) {
+      const cellValue = row[col.prop]
 
-//       // 对象 → 转成字符串显示
-//       let text = ''
-//       if (typeof cellValue === 'object' && cellValue !== null) {
-//         text = Object.entries(cellValue)
-//           .map(([k, v]) => `${k}:${v}`)
-//           .join(', ')
-//       } else {
-//         text = String(cellValue ?? '')
-//       }
+      // 对象 → 转成字符串显示
+      let text = ''
+      if (typeof cellValue === 'object' && cellValue !== null) {
+        text = Object.entries(cellValue)
+          .map(([k, v]) => `${k}:${v}`)
+          .join(', ')
+      } else {
+        text = String(cellValue ?? '')
+      }
 
-//       const width = ctx.measureText(text).width
-//       if (width > maxWidth) {
-//         maxWidth = width
-//       }
-//     }
+      const width = ctx.measureText(text).width
+      if (width > maxWidth) {
+        maxWidth = width
+      }
+    }
 
-//     // ==== 加 padding 并保证最小宽度 ====
-//     const computedWidth = Math.ceil(maxWidth + padding)
-//     return {
-//       ...col,
-//       width: Math.max(minWidth, computedWidth)
-//     }
-//   })
-// })
+    // ==== 加 padding 并保证最小宽度 ====
+    const computedWidth = Math.ceil(maxWidth + padding)
+    return {
+      ...col,
+      width: minWidth
+    }
+  })
+})
 
 onMounted(() => {
   getLogs()
 })
 </script>
-<style scoped>
+<style lang="less" scoped>
 .log-content {
   background-color: #ffffff !important;
   padding: 16px;
   border-radius: var(--primary-raduis);
+
+  .log-wrap {
+    border-radius: var(--lager-raduis);
+    border: 1px solid #ededed;
+    overflow: auto;
+    height: 70vh;
+    margin-top: 1rem;
+    .log-item {
+      padding: 12px;
+      border-radius: var(--lager-raduis);
+      display: grid;
+      grid-template-columns: 1% 5% 70%;
+      gap: 1.25rem;
+    }
+  }
 }
 </style>
 
@@ -582,12 +597,12 @@ onMounted(() => {
         />
       </div>
     </div>
-    <div class="overflow-auto h-70vh mt-4" ref="scrollContainer" v-if="!isTable">
+    <div class="log-wrap" ref="scrollContainer" v-if="!isTable">
       <template v-if="tableList.length">
         <div v-for="(item, index) in tableList" :key="index" class="m-2">
           <div
             :id="`log-item-${index}`"
-            class="grid grid-cols-[1%_5%_70%] gap-5"
+            class="log-item"
             :class="currentIndex === index ? 'bg-gray-100 border border-blue-300' : ''"
             @mouseenter="currentIndex = index"
           >
@@ -643,7 +658,16 @@ onMounted(() => {
       <ElEmpty :description="filterEmpty ? '未找到符合条件的数据' : '暂无数据'" v-else> </ElEmpty>
     </div>
     <div class="overflow-hidden h-68vh mt-4" v-else>
-      <ElTable :data="tableList" border height="96%" v-if="tableList.length">
+      <ElTable
+        :data="tableList"
+        border
+        height="96%"
+        show-overflow-tooltip
+        :tooltip-options="{
+          popperClass: 'tooltip-500'
+        }"
+        v-if="tableList.length"
+      >
         <ElTableColumn type="index"> </ElTableColumn>
         <ElTableColumn
           v-for="(col, index) in columns"
@@ -651,7 +675,6 @@ onMounted(() => {
           :prop="col.prop"
           :label="col.label"
           :width="col.width"
-          :tooltip-effect="true"
         >
           <template #default="scope">
             <span>{{ formatValue(scope.row[col.prop]) }}</span>

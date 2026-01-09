@@ -53,6 +53,7 @@ const filterIcon = useIcon({ icon: 'vi-ep:filter' })
 const refreshIcon = useIcon({ icon: 'vi-ep:refresh-right' })
 /**列表数据请求获取 */
 const { tableRegister, tableState, tableMethods } = useTable({
+  pageSize: 20,
   fetchDataApi: async () => {
     const { currentPage, pageSize } = tableState
     const res = await getTableListApi({
@@ -236,7 +237,7 @@ const columns = reactive<TableColumn[]>([
               onChange={() => {
                 const oldValue = data.row.responseCheckStatus
                 ElMessageBox({
-                  title: '更改相应数据检测',
+                  title: '更改响应数据检测',
                   message: (
                     <div>
                       {data.row.responseCheckStatus
@@ -246,7 +247,6 @@ const columns = reactive<TableColumn[]>([
                         style={{ color: '#409EFF', cursor: 'pointer' }}
                         onClick={() => {
                           // 点击“查看详情”后的操作
-                          ElMessage.info('这里可以先留位置')
                         }}
                       >
                         查看详情
@@ -257,7 +257,7 @@ const columns = reactive<TableColumn[]>([
                   cancelButtonText: '取消',
                   type: 'warning',
                   showCancelButton: true,
-                  confirmButtonClass: oldValue ? 'button-red' : ''
+                  confirmButtonClass: oldValue ? 'el-button--danger' : ''
                 })
                   .then(async () => {
                     const res = await updateFieldsApi({
@@ -297,56 +297,33 @@ const columns = reactive<TableColumn[]>([
             <ElButton type="primary" link onClick={() => action(data.row, 'logs')}>
               {data.row.logEnabled ? '关闭日志采集' : '开启日志采集'}
             </ElButton>
-            <ElDropdown
-              trigger="click"
-              v-slots={{
-                dropdown: () => (
-                  <ElDropdownMenu>
-                    <ElDropdownItem
-                      command="protect"
-                      onClick={() => action(data.row, 'protect')}
-                      style="display:none"
-                    >
-                      防护设置
-                    </ElDropdownItem>
-
-                    <ElDropdownItem
-                      command="delete"
-                      onClick={() => {
-                        ElMessageBox.confirm(
-                          '删除后网站将不再受到保护，并且安全策略将丢失，是否确认删除？',
-                          '网站删除',
-                          {
-                            confirmButtonText: '删除',
-                            cancelButtonText: '取消',
-                            confirmButtonClass: 'button-red',
-                            type: 'warning'
-                          }
-                        )
-                          .then(async () => {
-                            await deleteFieldsApi(data.row.id)
-                            ElMessage({
-                              type: 'success',
-                              message: '删除成功'
-                            })
-                            getList()
-                          })
-                          .catch(() => {})
-                      }}
-                    >
-                      <span class="text-[var(--el-color-danger)]">删除</span>
-                    </ElDropdownItem>
-                  </ElDropdownMenu>
+            <ElButton
+              type="danger"
+              link
+              onClick={() => {
+                ElMessageBox.confirm(
+                  '删除后网站将不再受到保护，并且安全策略将丢失，是否确认删除？',
+                  '网站删除',
+                  {
+                    confirmButtonText: '删除',
+                    cancelButtonText: '取消',
+                    confirmButtonClass: 'el-button--danger',
+                    type: 'error'
+                  }
                 )
+                  .then(async () => {
+                    await deleteFieldsApi(data.row.id)
+                    ElMessage({
+                      type: 'success',
+                      message: '删除成功'
+                    })
+                    getList()
+                  })
+                  .catch(() => {})
               }}
             >
-              <ElButton type="primary" link>
-                <ElIcon color="var(--el-color-primary)">
-                  <More />
-                </ElIcon>
-                {/* <Icon icon="ep:arrow-down" /> */}
-              </ElButton>
-            </ElDropdown>
+              删除
+            </ElButton>
           </div>
         )
       }
@@ -642,12 +619,7 @@ const handleCardSearch = (key, title) => {
   getList()
 }
 </script>
-<style>
-.button-red {
-  background-color: #d50d0d !important;
-  border-color: #d50d0d !important;
-}
-</style>
+
 <template>
   <ContentWrap>
     <div class="card-content">
@@ -739,40 +711,43 @@ const handleCardSearch = (key, title) => {
           @register="registerFilter"
         />
       </div>
-      <Table
-        ref="tableRef"
-        :columns="columns"
-        :data="dataList"
-        :loading="loading"
-        :border="false"
-        v-model:pageSize="pageSize"
-        v-model:currentPage="currentPage"
-        :pagination="{
-          total: total
-        }"
-        :stripe="true"
-        @selection-change="handleSelectionChange"
-        @register="tableRegister"
-        row-key="id"
-        class="table-content"
-      >
-        <template #empty>
-          <ElEmpty>
-            <template #description>
-              <span class="align-middle">暂无数据</span>
-              <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
-                新建站点
-              </ElButton>
-            </template>
-          </ElEmpty>
-        </template>
-      </Table>
-      <div class="mt-4">
-        <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
-        <!-- <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton> -->
-        <ElButton size="large" :disabled="totalSelection.length === 0" @click="handleLogsConfigure"
-          >日志配置</ElButton
+      <div class="table-content">
+        <Table
+          ref="tableRef"
+          :columns="columns"
+          :data="dataList"
+          :loading="loading"
+          :border="false"
+          v-model:pageSize="pageSize"
+          v-model:currentPage="currentPage"
+          :pagination="{
+            total: total
+          }"
+          :stripe="true"
+          @selection-change="handleSelectionChange"
+          @register="tableRegister"
+          row-key="id"
+          class="h-full"
+          height="92%"
         >
+          <template #empty>
+            <ElEmpty>
+              <template #description>
+                <span class="align-middle">暂无数据</span>
+                <ElButton link type="primary" @click="push('/websiteSettings/addSitePanel')">
+                  新建站点
+                </ElButton>
+              </template>
+            </ElEmpty>
+          </template>
+          <template #before-pagination>
+            <span class="mr-4">已选择{{ totalSelection.length ?? 0 }}条</span>
+            <!-- <ElButton size="large" :disabled="totalSelection.length === 0">添加到域名组</ElButton> -->
+            <ElButton :disabled="totalSelection.length === 0" @click="handleLogsConfigure"
+              >日志配置</ElButton
+            >
+          </template>
+        </Table>
       </div>
     </div>
   </ContentWrap>
@@ -894,12 +869,17 @@ const handleCardSearch = (key, title) => {
   border-radius: var(--primary-raduis);
   padding: 1rem;
   margin-bottom: 1rem;
-  min-height: calc(100vh - 14.9375rem);
+  height: calc(100vh - 14.5rem);
+  display: flex;
+  flex-direction: column;
 }
 
 .table-content {
-  border: 1px solid #dbdfe7;
-  border-radius: var(--primary-raduis);
+  // border: 1px solid #dbdfe7;
+  // border-radius: var(--primary-raduis);
+  // height: calc(100vh - 14.9375rem);
+  // position: relative;
+  height: 100%;
 }
 
 .icon-wrapper {

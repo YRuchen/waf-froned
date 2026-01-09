@@ -30,22 +30,10 @@ const onExpand = () => {
 </script>
 
 <template>
-  <BaseButton
-    v-if="showSearch"
-    type="primary"
-    :loading="searchLoading"
-    :icon="useIcon({ icon: 'vi-ep:search' })"
-    @click="onSearch"
-  >
+  <BaseButton v-if="showSearch" type="primary" :loading="searchLoading" @click="onSearch">
     {{ t('common.query') }}
   </BaseButton>
-  <BaseButton
-    v-if="showReset"
-    :loading="resetLoading"
-    plain
-    :icon="useIcon({ icon: 'vi-ep:refresh-right' })"
-    @click="onReset"
-  >
+  <BaseButton v-if="showReset" :loading="resetLoading" plain @click="onReset">
     {{ t('common.reset') }}
   </BaseButton>
   <BaseButton v-if="showExpand" :icon="useIcon({ icon: 'vi-ep:filter' })" plain @click="onExpand">

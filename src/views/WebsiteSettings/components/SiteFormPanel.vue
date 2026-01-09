@@ -1,46 +1,51 @@
 <script lang="tsx" setup>
-import { reactive, ref, h, onMounted, computed, nextTick, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { Table, TableColumn } from '@/components/Table'
-import { RuleForm, HTTP_PORTS, HTTPS_PORTS } from '@/api/websiteSettingPanel/types'
 import {
-  getTlsVersionsApi,
-  getTlstCiphersApi,
-  saveDomainsApi,
+  existsApi,
   getCertsApi,
   getDetailApi,
-  updateDomainsApi,
-  existsApi
+  getTlstCiphersApi,
+  getTlsVersionsApi,
+  saveDomainsApi,
+  updateDomainsApi
 } from '@/api/websiteSettingPanel'
-import { LoadBalancingList } from '@/api/websiteSettingPanel/types'
-import InputTags from './InputTags.vue'
 import {
+  HTTP_PORTS,
+  HTTPS_PORTS,
+  LoadBalancingList,
+  RuleForm
+} from '@/api/websiteSettingPanel/types'
+import { Table, TableColumn } from '@/components/Table'
+import {
+  ElButton,
+  ElCheckbox,
+  ElCheckboxGroup,
+  ElCol,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElDialog,
   ElForm,
   ElFormItem,
   ElInput,
-  ElSwitch,
-  ElCheckbox,
+  ElInputNumber,
+  ElInputTag,
+  ElMessage,
+  ElOption,
   ElRadio,
   ElRadioGroup,
-  ElButton,
-  ElInputNumber,
-  ElTooltip,
-  ElInputTag,
   ElRow,
-  ElCol,
   ElSelect,
-  ElOption,
-  ElDescriptions,
-  ElDescriptionsItem,
-  ElTag,
-  ElDialog,
+  ElSwitch,
   ElTable,
-  ElCheckboxGroup,
+  ElTag,
+  ElTooltip,
+  ElDivider,
   type FormInstance,
-  type FormRules,
   type FormItemRule,
-  ElMessage
+  type FormRules
 } from 'element-plus'
+import { computed, h, nextTick, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import InputTags from './InputTags.vue'
 
 import originSideConfigure from './OriginSideConfigure.vue'
 const route = useRoute()
@@ -859,7 +864,8 @@ onMounted(() => {
         </template>
       </div>
     </ElForm>
-    <div class="flex justify-end my-6">
+    <ElDivider />
+    <div class="flex justify-end mb-4">
       <ElButton @click="resetForm()">取消</ElButton>
       <ElButton type="primary" @click="handleSave()" :loading="loadingButton">提交</ElButton>
     </div>
@@ -917,7 +923,7 @@ onMounted(() => {
 .form-wrap {
   margin-left: 9rem;
   flex: 1;
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 0;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;

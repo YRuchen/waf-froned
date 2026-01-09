@@ -33,11 +33,11 @@
   --top-header-text-color: 'inherit';
 
   --top-header-hover-color: #f6f6f6;
-  /**旧的头部的顶部高度*/
+  /* 旧的头部的顶部高度*/
   --top-tool-height: 0;
-
-  --top-heard-height: 3.625rem;
-
+  /* 基座顶导高度*/
+  --top-heard-height: 3rem;
+  /* 收起展开占据的高度 */
   --top-bottom-height: 1.75rem;
 
   --top-tool-p-x: 0;

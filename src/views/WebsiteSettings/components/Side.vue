@@ -125,7 +125,7 @@ const remove = (e, row) => {
       cancelButtonText: '取消',
       customClass: 'myCustomClass',
       confirmButtonClass: 'el-button--danger',
-      type: 'warning'
+      type: 'error'
     }
   )
     .then(() => {
@@ -139,12 +139,6 @@ const remove = (e, row) => {
       ElMessage.success('删除成功')
     })
     .catch(() => {})
-
-  // const index = menuData.value.findIndex((item) => item.groupName === name)
-  // if (index !== -1) {
-  //   menuData.value.splice(index, 1)
-  // }
-  // handleSelect(menuData.value[menuData.value.length - 1])
 }
 const menuKey = ref(0)
 const handleSelect = (data: serverGroupItem) => {
@@ -275,7 +269,7 @@ defineExpose({ activeGroupId })
         >
           <span class="label">{{ item.groupName }}</span>
           <p class="button-wrap" v-if="item.groupName !== '默认分组'">
-            <ElTooltip effect="dark" content="重命名" placement="top">
+            <ElTooltip effect="dark" content="重命名" placement="top" :enterable="false">
               <Icon icon="vi-ep:edit" @click="(e) => editDictsort(e, item)"></Icon>
             </ElTooltip>
             <ElTooltip effect="dark" content="删除" placement="top" :enterable="false">

@@ -10,6 +10,8 @@ interface UseTableConfig {
    * 是否初始化的时候请求一次
    */
   immediate?: boolean
+  pageSize?: number
+  currentPage?: number
   fetchDataApi: () => Promise<{
     list: any[]
     total?: number
@@ -21,8 +23,8 @@ export const useTable = (config: UseTableConfig) => {
   const { immediate = true } = config
 
   const loading = ref(false)
-  const currentPage = ref(1)
-  const pageSize = ref(10)
+  const currentPage = ref(config.currentPage ?? 1)
+  const pageSize = ref(config.pageSize ?? 10)
   const total = ref(0)
   const dataList = ref<any[]>([])
   let isPageSizeChange = false

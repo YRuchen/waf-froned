@@ -31,6 +31,8 @@ import { Icon } from '@/components/Icon'
 import { Table, TableColumn } from '@/components/Table'
 import { BaseButton } from '@/components/Button'
 import { serverGroupItem, TableItem } from '@/api/websiteSettingPanel/types'
+import { useErrorShow } from './useErrorShow'
+
 const { t } = useI18n()
 const copyIcon = useIcon({ icon: 'vi-ep:copy-document' })
 const deleteIcon = useIcon({ icon: 'vi-ep:delete' })
@@ -142,27 +144,38 @@ const columns: TableColumn[] = [
     label: t('tableDemo.action'),
     slots: {
       default: ({ row, $index }) => {
+        const deleteDisabled = originListItem.value.servers.length === 1
+        const deleteButton = (
+          <BaseButton
+            link
+            icon={deleteIcon}
+            disabled={deleteDisabled}
+            onClick={() => action('delete', row, $index)}
+          />
+        )
+
         return (
           <ElFormItem>
-            <BaseButton
-              link
-              icon={copyIcon}
-              disabled={allcount.value == 0}
-              onClick={() => action('edit', row, $index)}
-            ></BaseButton>
-            <ElTooltip
-              effect="dark"
-              content="至少保留一条"
-              placement="top"
-              popper-style="max-width: 300px; white-space: normal;"
-            >
+            <div class="flex">
               <BaseButton
                 link
-                icon={deleteIcon}
-                disabled={originListItem.value.servers.length === 1}
-                onClick={() => action('delete', row, $index)}
+                icon={copyIcon}
+                disabled={allcount.value == 0}
+                onClick={() => action('edit', row, $index)}
               ></BaseButton>
-            </ElTooltip>
+              {deleteDisabled ? (
+                <ElTooltip
+                  effect="dark"
+                  content="至少保留一条"
+                  placement="top"
+                  popper-style="max-width: 300px; white-space: normal;"
+                >
+                  {deleteButton}
+                </ElTooltip>
+              ) : (
+                deleteButton
+              )}
+            </div>
           </ElFormItem>
         )
       }
@@ -232,9 +245,7 @@ const validateRegion = (rule: any, value: any, callback: any) => {
     /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 
   if (!value) {
-    setTimeout(() => {
-      showError.value = 1
-    })
+    // 源站地址不能为空
     return callback(new Error(''))
   }
 
@@ -274,23 +285,16 @@ const validateRegion = (rule: any, value: any, callback: any) => {
 const validateCount = (rule: any, value: any, callback: any) => {
   if (!value || value == '') {
     // 源站端口不能为空
-    setTimeout(() => {
-      showError.value = 5
-    })
     callback(new Error(''))
   } else {
-    showError.value = 0
     callback()
   }
 }
 const validatDesc = (rule: any, value: any, callback: any) => {
   if (value === '') {
-    setTimeout(() => {
-      showError.value = 6
-    })
+    // 源站权重不能为空
     callback(new Error(''))
   } else {
-    showError.value = 0
     callback()
   }
 }
@@ -434,9 +438,24 @@ const handleCheckedCitiesChange = (value: CheckboxValueType[]) => {
   checkAll.value = checkedCount === filteredPorts.value.length
   isIndeterminate.value = checkedCount > 0 && checkedCount < filteredPorts.value.length
 }
+
 watch(
   () => sideRef.value?.activeGroupId,
   () => {
+    nextTick(() => {
+      // 对每一行触发验证
+      ruleFormRef.value?.validateField()
+    })
+  },
+  { deep: true }
+)
+// table校验
+const { showErrorTip } = useErrorShow()
+const aaaaa = ref()
+watch(
+  () => originListItem.value,
+  (newVal) => {
+    aaaaa.value = showErrorTip(newVal.servers)
     nextTick(() => {
       // 对每一行触发验证
       ruleFormRef.value?.validateField()
@@ -549,9 +568,12 @@ defineExpose({
           max-height="330"
           class="table-wrap"
         />
-        <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
-          {{ showErrorList.find((item) => item.key == showError)?.label }}
+        <span v-if="aaaaa" class="text-[var(--el-color-danger)]">
+          {{ aaaaa }}
         </span>
+        <!-- <span v-if="showError > 0" class="text-[var(--el-color-danger)]">
+          {{ showErrorList.find((item) => item.key == showError)?.label }}
+        </span> -->
       </ElForm>
       <div class="mt-3">
         <ElButton type="primary" plain size="small" @click="action('add')" v-if="allcount > 0">
